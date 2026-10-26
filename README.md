@@ -26,9 +26,12 @@ Gereken: Windows 10 2004+ ya da Windows 11.
   açmaz. İmleç çıkınca ya da başka bir yere tıklayınca kapanır.
 - Müzik çalarken (Spotify, tarayıcı, Medya Oynatıcı, Apple Music…) pill genişler; açık adada oynatıcı
   var.
-- Sağ tık: **Açık tut**, **Tema**, **Ekran**, **Dil**, **ISLe8'den çık**.
-- Oturum açılınca kendiliğinden başlasın istersen (W6'ya kadar elle): ISLe8.exe'ye bir kısayol
-  oluştur, Win+R › `shell:startup` ile açılan klasöre koy.
+- Sağ tık: **Açık tut**, **Ayarlar…**, **Tema**, **Ekran**, **Dil**, **ISLe8'den çık**.
+- Bildirim alanındaki kapsül simgesi: tıklayınca Ayarlar açılır, sağ tıklayınca **Ayarlar…** ve
+  **ISLe8'den çık**. Windows 11 yeni simgeleri görev çubuğundaki **^** okunun altına koyar; oradan
+  görev çubuğuna sürükleyebilirsin. ISLe8 çalışırken yeniden açmak da Ayarlar'ı açar.
+- Oturum açılınca kendiliğinden başlasın: **Ayarlar › Genel › Girişte başlat**. ISLe8'in klasörünü
+  taşırsan kayıt bir sonraki açılışta yeni yere döner.
 
 ### Günlük ve ayarlar
 
@@ -96,7 +99,12 @@ powershell -ExecutionPolicy Bypass -File scripts\measure.ps1 -Seconds 60
 ```
 
 Müzik çalarken: `-Label muzik`. Hedefler DESIGN.md › Performans bütçesi'nde (boşta CPU < %0,1,
-bellek < 80 MB).
+bellek < 80 MB). Bir tarayıcı sekmesi arka planda çalıyor olabilir; "boşta" ölçümünden önce ve sonra
+medya durumunu kaydet:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\media-state.ps1
+```
 
 ### MSIX imzalama (ileride, W6)
 

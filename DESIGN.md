@@ -116,6 +116,24 @@ iletip durumu çiziyor. Süreler testlerde elle ilerletilen bir saatle sınanıy
 sekmeleri var diye). PORTING.md §4 ile Mac'teki 0 + 50 ms'ye dönüldü; 50 ms'lik süzme, pill'in
 üstünden geçen imleci zaten eliyor (TESTING.md › W1 adım 1). Rahatsız ederse tek bir ayar.
 
+### Tray, Ayarlar ve ikinci açılış (W1)
+
+- **Tray:** `Shell_NotifyIcon` ile bildirim alanında bir kapsül (Mac'teki `capsule.fill`); koyu görev
+  çubuğunda beyaz, açıkta siyah, ölçeğe göre boyutlu (`scripts/make-icons.ps1`). Tıklama Ayarlar'ı
+  açar, bağlam menüsü Mac'teki gibi yalnızca "Ayarlar…" ve "ISLe8'den çık". Kendi penceresi yok; adanın
+  penceresinin mesajlarını dinliyor. Explorer yeniden başlayınca (`TaskbarCreated`) kendini yeniden ekler.
+- **Ayarlar penceresi:** Sıradan bir WinUI penceresi, Mica, solda menü, kartlı bölümler. Ada hep koyu;
+  Ayarlar Windows'un açık/koyu modunu izliyor (`UISettings`). İlk açılınca kuruluyor, kapanınca
+  bırakılıyor. Bölümler W1 adımlarıyla geliyor; şu an Genel.
+- **İkinci açılış:** `AppInstance.RedirectActivationToAsync` ile çalışan örneğe gidiyor, o da Ayarlar'ı
+  açıyor (ön plana çıkabilmesi için yeni süreç `AllowSetForegroundWindow` veriyor).
+- **Dil ve içe aktarma:** Mac'teki gibi ISLe8'i yeniden başlatıyor (`AppInstance.Restart`); bütün
+  pencereler yeni dille kuruluyor. W0'da sağ tık menüsündeki dil canlı değişiyordu; tek yola indi.
+- **Girişte başlat:** Paketsizken `HKCU\…\Run`; anahtar tek kayıt olduğu için düğme Windows'un gerçekte
+  ne yapacağını gösteriyor. Klasör taşınırsa açılışta onarılıyor. Paketliyken `StartupTask` (9. adım).
+- **Etkin ekran:** Ada, öne getirdiğin pencerenin ekranına geçiyor. `SetWinEventHook(EVENT_SYSTEM_FOREGROUND)`
+  yalnızca bu modda kurulu; masaüstüne tıklanınca imlecin ekranı sayılıyor.
+
 ### DPI (Per-Monitor v2)
 
 - `app.manifest`: `dpiAwareness = PerMonitorV2`.

@@ -3,6 +3,50 @@
 Her maddeyi işaretle; olmayan varsa günlükle birlikte not et (README › Günlük ve ayarlar). W1'in
 adımları en üstte, W0'ın listesi altta.
 
+## W1 · Adım 2: tray ve Ayarlar penceresi (2026-10-27)
+
+Debug ve Release (JIT). Ekran seçimi, girişte başlatma ve yedekleme mantığı Core testlerinde
+(`GeneralSettingsTests`; 104'ten 123'e).
+
+**Tray**
+- [x] Simge Windows'a kaydoluyor; Windows 11 onu taşma menüsüne (**^**) koyuyor (beklenen davranış).
+- [ ] Koyu görev çubuğunda beyaz, açıkta siyah kapsül; temayı değiştirince simge de değişiyor.
+- [x] Simgeye tıklayınca Ayarlar açılıyor (canlı).
+- [x] Sağ tık › **Ayarlar…** ve **ISLe8'den çık** çalışıyor; menü dışarı tıklayınca kapanıyor (canlı).
+- [x] ISLe8'den çıkınca simge bildirim alanından hemen kalkıyor (canlı).
+
+**Ayarlar penceresi**
+- [x] ISLe8 çalışırken yeniden açmak Ayarlar'ı açıyor (ikinci süreç 96 ms'de çıkıyor).
+- [x] Pencere 880×680 DIP, ekranın ortasında; Mica, solda Genel, Türkçe metinler Mac'teki gibi.
+- [x] W0'dan kalan gecikmeler göçten sonra "0,00 sn" ve "0,35 sn" görünüyor.
+- [ ] Windows açık moddayken pencere açık, koyu moddayken koyu; açıkken değiştirince de geçiyor.
+- [ ] Sağ tık › **Ayarlar…** pencereyi açıyor; açıkken yeniden istemek onu öne getiriyor.
+
+**Genel**
+- [x] **Girişte başlat** açılınca `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` › `ISLe8` yazılıyor,
+      kapatınca siliniyor; oturumu kapatıp açınca ISLe8 başlıyor (canlı).
+- [x] **Ekran** › Ana ekran / Etkin ekran / bir monitör: ada hemen oraya geçiyor; açıklama değişiyor (canlı, tek monitör).
+- [ ] Etkin ekran: başka monitördeki bir pencereyi öne getirince ada o monitöre geçiyor.
+- [x] **Dil** değişince ISLe8 yeniden başlıyor ve her şey yeni dilde (canlı).
+- [x] **Açılma** › Tıklayınca: ada üzerine gelince yalnızca büyüyor, tıklayınca açılıyor; Açılma gecikmesi
+      kartı gizleniyor (canlı).
+- [x] Gecikme kaydırıcıları adanın davranışını hemen değiştiriyor (canlı).
+- [x] **Dışa aktar…** bir JSON yazıyor; **İçe aktar…** onu okuyup yeniden başlıyor; başka bir dosya
+      "Ayarlar içe aktarılamadı" diyor (canlı).
+
+**Ölçüm** (`measure.ps1 -Seconds 60`, açıldıktan 30 sn sonra, ada ve Ayarlar kapalı, Release JIT). Medya durumu
+artık ölçümle birlikte SMTC'den okunuyor.
+
+| Tarih | Yapı | Durum | CPU | Özel bellek | Çalışma kümesi |
+|---|---|---|---|---|---|
+| 2026-10-27 | W1 adım 2, Release JIT x64 | Chrome'da video **çalıyor** (geniş pill, ses çubukları) | %0,299 (müzik hedefi < %1) | 42,0 MB | 148,1 MB |
+| 2026-10-27 | W1 adım 2, Release JIT x64 | **Boşta:** Chrome duraklatılmış (ölçümden önce ve sonra `media-state.ps1`), 11 dk çalıştıktan sonra | %0,004 (hedef < %0,1) | 41,9 MB | 148,2 MB |
+
+- [x] Boşta (medya duraklatılmış) CPU < %0,1. Adım 1'in %0,010'luk ölçümünde medya durumu
+      kaydedilmemişti; bundan sonra her ölçüm `scripts\media-state.ps1` ile birlikte. Çalarken harcananın
+      bir kısmı, ada kapalıyken de her SMTC olayında oynatıcının yeniden çizilmesinden (PORTING.md §3.1;
+      4. adımda düzelecek).
+
 ## W1 · Adım 1: ada kuralları ve ayar modeli (2026-10-26)
 
 Windows 11 Pro 26300, 3840×2160 %150, Debug ve Release (JIT). Fare otomasyonla gezdirildi (`SendInput`);

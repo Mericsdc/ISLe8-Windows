@@ -20,16 +20,23 @@ internal sealed unsafe class IslandWindow : IDisposable
     /// <summary>A registered message, so it can't clash with anything WinUI uses on its own window.</summary>
     private static readonly uint AppBarCallback = Win32.RegisterWindowMessage("ISLe8.AppBar");
 
+    /// <summary>The foreground hook's procedure is static; it reaches the window through here.</summary>
+    private static IslandWindow? s_followingForeground;
+
     private readonly AppSettings _settings;
     private readonly Func<DipSize> _expandedSize;
     private readonly DispatcherQueue _queue;
     private readonly AppWindow _appWindow;
+    private readonly List<Func<uint, nint, nint, nint?>> _messageHandlers = [];
     private GCHandle _self;
     private bool _subclassed;
     private nint _blurRegion;
     private bool _appBarRegistered;
     private bool _placePending;
     private PixelRect? _hitRegion;
+    private nint _foregroundHook;
+    /// <summary>The monitor of the window you last brought forward, for Settings › Screen › Active.</summary>
+    private nint _activeMonitor;
 
     public IslandWindow(AppSettings settings, Func<DipSize> expandedSize)
     {
@@ -80,11 +87,15 @@ internal sealed unsafe class IslandWindow : IDisposable
         RemoveDecorations();
     }
 
+    /// <summary>Lets another part of ISLe8 (the tray icon) take messages sent to this window. Return null to pass one on.</summary>
+    public void AddMessageHandler(Func<uint, nint, nint, nint?> handler) => _messageHandlers.Add(handler);
+
     /// <summary>Puts the window at the top centre of the chosen monitor, sized for that monitor's DPI.</summary>
     public void Place()
     {
         _placePending = false;
-        Monitor = Monitors.Pick(_settings);
+        FollowForeground(_settings.Monitor == MonitorChoice.Active);
+        Monitor = Monitors.Pick(_settings, _activeMonitor);
         var layout = IslandLayout.Compute(Monitor.Bounds, Monitor.WorkArea, Monitor.Scale, _expandedSize());
         Win32.SetWindowPos(
             Hwnd, Win32.HWND_TOPMOST,
@@ -148,6 +159,7 @@ internal sealed unsafe class IslandWindow : IDisposable
 
     public void Dispose()
     {
+        FollowForeground(false);
         Detach();
         if (_blurRegion != 0)
         {
@@ -229,6 +241,10 @@ internal sealed unsafe class IslandWindow : IDisposable
             if (wParam == Win32.ABN_FULLSCREENAPP) OnFullscreenApp(lParam != 0);
             return 0;
         }
+        foreach (var handler in _messageHandlers)
+        {
+            if (handler(message, wParam, lParam) is { } handled) return handled;
+        }
         switch (message)
         {
             // No non-client area, whatever styles WinUI puts back: the client fills the window.
@@ -275,6 +291,50 @@ internal sealed unsafe class IslandWindow : IDisposable
     /// <summary>The desktop and the taskbar also count as "full screen" to the shell.</summary>
     private static bool IsDesktop(nint hwnd) =>
         Win32.ClassName(hwnd) is "Progman" or "WorkerW" or "Shell_TrayWnd" or "Shell_SecondaryTrayWnd";
+
+    /// <summary>
+    /// Settings › Screen › Active: the island moves to the monitor of whatever window you bring
+    /// forward. Windows says when the foreground window changes, so nothing polls, and the hook is
+    /// only installed in that mode.
+    /// </summary>
+    private void FollowForeground(bool follow)
+    {
+        if (follow == (_foregroundHook != 0)) return;
+        if (follow)
+        {
+            s_followingForeground = this;
+            _foregroundHook = Win32.SetWinEventHook(
+                Win32.EVENT_SYSTEM_FOREGROUND, Win32.EVENT_SYSTEM_FOREGROUND, 0, &ForegroundProc, 0, 0,
+                Win32.WINEVENT_OUTOFCONTEXT | Win32.WINEVENT_SKIPOWNPROCESS);
+            if (_foregroundHook == 0) Log.Info("active screen: no foreground hook");
+            _activeMonitor = MonitorOf(Win32.GetForegroundWindow());
+        }
+        else
+        {
+            Win32.UnhookWinEvent(_foregroundHook);
+            _foregroundHook = 0;
+            _activeMonitor = 0;
+            if (s_followingForeground == this) s_followingForeground = null;
+        }
+    }
+
+    /// <summary>The desktop spans every monitor; for it, the monitor under the pointer that clicked it.</summary>
+    private static nint MonitorOf(nint window)
+    {
+        if (window == 0) return 0;
+        if (IsDesktop(window) && Win32.GetCursorPos(out var cursor)) return Win32.MonitorFromPoint(cursor, Win32.MONITOR_DEFAULTTONEAREST);
+        return Win32.MonitorFromWindow(window, Win32.MONITOR_DEFAULTTONEAREST);
+    }
+
+    [UnmanagedCallersOnly]
+    private static void ForegroundProc(nint hook, uint @event, nint hwnd, int idObject, int idChild, uint thread, uint time)
+    {
+        if (s_followingForeground is not { } window) return;
+        var monitor = MonitorOf(hwnd);
+        if (monitor == 0 || monitor == window.Monitor.Handle) return;
+        window._activeMonitor = monitor;
+        window.RequestPlace();
+    }
 
     [UnmanagedCallersOnly]
     private static nint SubclassProc(nint hwnd, uint message, nint wParam, nint lParam, nuint id, nuint refData)

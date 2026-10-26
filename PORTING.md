@@ -398,7 +398,9 @@ Her modülde: Mac dosyaları → Windows karşılığı → önemli davranışla
 - **Ayarlar (Mac ile aynı bölümler):** Genel, Görünüm, Düzen, Kısayollar, Medya, Raf, Pano, Bildirimler, Sistem, Widget'lar, Ajanlar. "Kilit Ekranı" yok.
 - **Genel bölümü:**
   - Açılma: üzerine gelince / tıklayınca; açılma ve kapanma gecikmesi.
-  - Ekran: otomatik / ana / etkin / adla.
+  - Ekran: ana / etkin / adla. Mac'teki "otomatik" (notch'lu ekran, yoksa ana ekran) Windows'ta ana
+    ekranla aynı olacağı için yok; Mac'in ana ekran açıklaması da ("Menü çubuğunun olduğu ekran")
+    Windows'a göre yazıldı.
   - Dil: Sistem / Türkçe / English; değişince yeniden başlatır.
   - Ayarları JSON olarak dışa/içe aktarma.
 - **Kabul:** Şu an JSON'dan değişen her ayar pencereden değişebiliyor.

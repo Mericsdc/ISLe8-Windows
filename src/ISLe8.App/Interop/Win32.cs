@@ -52,6 +52,27 @@ internal struct DWM_BLURBEHIND
 }
 
 [StructLayout(LayoutKind.Sequential)]
+internal unsafe struct NOTIFYICONDATAW
+{
+    public uint cbSize;
+    public nint hWnd;
+    public uint uID;
+    public uint uFlags;
+    public uint uCallbackMessage;
+    public nint hIcon;
+    public fixed char szTip[128];
+    public uint dwState;
+    public uint dwStateMask;
+    public fixed char szInfo[256];
+    /// <summary>uTimeout or uVersion.</summary>
+    public uint uVersion;
+    public fixed char szInfoTitle[64];
+    public uint dwInfoFlags;
+    public Guid guidItem;
+    public nint hBalloonIcon;
+}
+
+[StructLayout(LayoutKind.Sequential)]
 internal struct DispatcherQueueOptions
 {
     public int dwSize;
@@ -93,6 +114,35 @@ internal static unsafe partial class Win32
     public const uint WM_NCCALCSIZE = 0x0083;
     public const uint WM_DPICHANGED = 0x02E0;
     public const nint SPI_SETWORKAREA = 0x002F;
+
+    public const uint WM_NULL = 0x0000;
+    public const uint WM_CONTEXTMENU = 0x007B;
+
+    public const uint NIM_ADD = 0;
+    public const uint NIM_MODIFY = 1;
+    public const uint NIM_DELETE = 2;
+    public const uint NIM_SETVERSION = 4;
+    public const uint NIF_MESSAGE = 0x01;
+    public const uint NIF_ICON = 0x02;
+    public const uint NIF_TIP = 0x04;
+    public const uint NIF_SHOWTIP = 0x80;
+    public const uint NOTIFYICON_VERSION_4 = 4;
+    public const uint NIN_SELECT = 0x0400;
+    public const uint NIN_KEYSELECT = 0x0401;
+
+    public const uint IMAGE_ICON = 1;
+    public const uint LR_LOADFROMFILE = 0x10;
+    public const int SM_CXSMICON = 49;
+
+    public const uint MF_STRING = 0x0000;
+    public const uint MF_SEPARATOR = 0x0800;
+    public const uint TPM_RIGHTBUTTON = 0x0002;
+    public const uint TPM_NONOTIFY = 0x0080;
+    public const uint TPM_RETURNCMD = 0x0100;
+
+    public const uint EVENT_SYSTEM_FOREGROUND = 0x0003;
+    public const uint WINEVENT_OUTOFCONTEXT = 0x0000;
+    public const uint WINEVENT_SKIPOWNPROCESS = 0x0002;
 
     public const int WH_MOUSE_LL = 14;
     public const nint WM_LBUTTONDOWN = 0x0201;
@@ -205,6 +255,55 @@ internal static unsafe partial class Win32
 
     [LibraryImport("kernel32.dll", EntryPoint = "GetModuleHandleW", StringMarshalling = StringMarshalling.Utf16)]
     public static partial nint GetModuleHandle(string? name);
+
+    [LibraryImport("shell32.dll", EntryPoint = "Shell_NotifyIconW")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool Shell_NotifyIcon(uint message, ref NOTIFYICONDATAW data);
+
+    [LibraryImport("user32.dll", EntryPoint = "LoadImageW", StringMarshalling = StringMarshalling.Utf16)]
+    public static partial nint LoadImage(nint instance, string name, uint type, int width, int height, uint flags);
+
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool DestroyIcon(nint icon);
+
+    [LibraryImport("user32.dll")]
+    public static partial int GetSystemMetricsForDpi(int index, uint dpi);
+
+    [LibraryImport("user32.dll")]
+    public static partial nint CreatePopupMenu();
+
+    [LibraryImport("user32.dll", EntryPoint = "AppendMenuW", StringMarshalling = StringMarshalling.Utf16)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool AppendMenu(nint menu, uint flags, nuint id, string? text);
+
+    [LibraryImport("user32.dll")]
+    public static partial int TrackPopupMenuEx(nint menu, uint flags, int x, int y, nint hwnd, nint parameters);
+
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool DestroyMenu(nint menu);
+
+    [LibraryImport("user32.dll", EntryPoint = "PostMessageW")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool PostMessage(nint hwnd, uint message, nint wParam, nint lParam);
+
+    [LibraryImport("user32.dll")]
+    public static partial nint SetWinEventHook(uint eventMin, uint eventMax, nint module, delegate* unmanaged<nint, uint, nint, int, int, uint, uint, void> proc, uint processId, uint threadId, uint flags);
+
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool UnhookWinEvent(nint hook);
+
+    [LibraryImport("user32.dll")]
+    public static partial nint MonitorFromPoint(POINT point, uint flags);
+
+    [LibraryImport("user32.dll")]
+    public static partial uint GetDpiForWindow(nint hwnd);
+
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool AllowSetForegroundWindow(uint processId);
 
     [LibraryImport("CoreMessaging.dll")]
     public static partial int CreateDispatcherQueueController(DispatcherQueueOptions options, out nint controller);

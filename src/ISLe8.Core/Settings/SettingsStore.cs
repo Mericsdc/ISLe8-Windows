@@ -12,11 +12,7 @@ public sealed class SettingsStore(string filePath)
     {
         try
         {
-            if (!File.Exists(FilePath)) return new AppSettings();
-            var settings = JsonSerializer.Deserialize(File.ReadAllText(FilePath), IsleJsonContext.Default.AppSettings)
-                ?? new AppSettings();
-            settings.Normalize();
-            return settings;
+            return File.Exists(FilePath) ? Import(File.ReadAllText(FilePath)) : new AppSettings();
         }
         catch (Exception e) when (e is JsonException or IOException or UnauthorizedAccessException or NotSupportedException)
         {
@@ -39,12 +35,28 @@ public sealed class SettingsStore(string filePath)
         {
             Directory.CreateDirectory(Path.GetDirectoryName(FilePath)!);
             var temporary = FilePath + ".tmp";
-            File.WriteAllText(temporary, JsonSerializer.Serialize(settings, IsleJsonContext.Default.AppSettings));
+            File.WriteAllText(temporary, Export(settings));
             File.Move(temporary, FilePath, overwrite: true);
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
             Log.Error(e, "settings");
         }
+    }
+
+    /// <summary>Every setting as one JSON document: what settings.json holds and what Settings › Back up writes.</summary>
+    public static string Export(AppSettings settings) => JsonSerializer.Serialize(settings, IsleJsonContext.Default.AppSettings);
+
+    /// <summary>
+    /// Reads settings written by <see cref="Export"/>, from this or an older version, brought back into
+    /// range. Throws <see cref="JsonException"/> (or <see cref="NotSupportedException"/>) when the text is
+    /// not a settings object.
+    /// </summary>
+    public static AppSettings Import(string json)
+    {
+        var settings = JsonSerializer.Deserialize(json, IsleJsonContext.Default.AppSettings)
+            ?? throw new JsonException("Not ISLe8 settings");
+        settings.Normalize();
+        return settings;
     }
 }

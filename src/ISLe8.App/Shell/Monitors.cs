@@ -39,25 +39,21 @@ internal static unsafe class Monitors
         return found.OrderBy(monitor => monitor.Bounds.X).ThenBy(monitor => monitor.Bounds.Y).ToList();
     }
 
-    /// <summary>The monitor the settings ask for; the main one if it is gone.</summary>
-    public static MonitorInfo Pick(AppSettings settings)
+    /// <summary>The monitor the settings ask for (<see cref="DisplayChoice"/>); <paramref name="active"/> is the one you last used.</summary>
+    public static MonitorInfo Pick(AppSettings settings, nint active = 0)
     {
         var all = All();
-        if (settings.Monitor == MonitorChoice.Named)
-        {
-            foreach (var monitor in all)
-            {
-                if (monitor.Device == settings.MonitorDevice) return monitor;
-            }
-        }
-        foreach (var monitor in all)
-        {
-            if (monitor.IsPrimary) return monitor;
-        }
-        return all.Count > 0
-            ? all[0]
+        var index = DisplayChoice.Pick(
+            all.Select(monitor => new DisplaySummary(monitor.Device, monitor.IsPrimary)).ToList(),
+            settings,
+            all.FindIndex(monitor => monitor.Handle == active && active != 0));
+        return index >= 0
+            ? all[index]
             : new MonitorInfo(0, "", new PixelRect(0, 0, 1920, 1080), new PixelRect(0, 0, 1920, 1040), 96, true);
     }
+
+    /// <summary>The DPI of the main monitor, where the taskbar and its notification area are.</summary>
+    public static uint PrimaryDpi() => All().FirstOrDefault(monitor => monitor.IsPrimary) is { Handle: not 0 } primary ? primary.Dpi : 96;
 
     public static bool TryGet(nint monitor, out MonitorInfo info)
     {

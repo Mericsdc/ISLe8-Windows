@@ -16,6 +16,9 @@ internal static class L
 
     public static string Language { get; private set; } = "system";
 
+    /// <summary>Numbers are written the way the island's language writes them: "0,35" in Turkish, "0.35" in English.</summary>
+    public static CultureInfo Culture => Language == "system" ? CultureInfo.CurrentUICulture : CultureInfo.GetCultureInfo(Language);
+
     public static void Use(string language)
     {
         Language = language;
@@ -47,5 +50,5 @@ internal static class L
     }
 
     public static string Format(string key, params object[] args) =>
-        string.Format(CultureInfo.CurrentCulture, Get(key), args);
+        string.Format(Culture, Get(key), args);
 }

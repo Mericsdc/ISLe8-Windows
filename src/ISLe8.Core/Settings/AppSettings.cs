@@ -10,6 +10,8 @@ public enum MonitorChoice
     Primary,
     /// <summary>The display in <see cref="AppSettings.MonitorDevice"/>; the main one if it is unplugged.</summary>
     Named,
+    /// <summary>Wherever you last clicked or brought a window forward.</summary>
+    Active,
 }
 
 /// <summary>How the island opens: on its own when the pointer rests on it, or only when clicked.</summary>

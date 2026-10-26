@@ -96,4 +96,109 @@
   <data name="Theme_ember" xml:space="preserve">
     <value>Ember</value>
   </data>
+  <data name="Tray_Settings" xml:space="preserve">
+    <value>Settings…</value>
+    <comment>mac: Ayarlar…</comment>
+  </data>
+  <data name="Menu_DisplayActive" xml:space="preserve">
+    <value>Active screen</value>
+    <comment>mac: Etkin ekran</comment>
+  </data>
+  <data name="Settings_Title" xml:space="preserve">
+    <value>ISLe8 Settings</value>
+    <comment>mac: ISLe8 Ayarları</comment>
+  </data>
+  <data name="Settings_General" xml:space="preserve">
+    <value>General</value>
+    <comment>mac: Genel</comment>
+  </data>
+  <data name="Settings_OpenAtLogin" xml:space="preserve">
+    <value>Open at login</value>
+    <comment>mac: Girişte başlat</comment>
+  </data>
+  <data name="Settings_ScreenPrimaryNote" xml:space="preserve">
+    <value>Windows' main screen (Settings &gt; System &gt; Display).</value>
+  </data>
+  <data name="Settings_ScreenActiveNote" xml:space="preserve">
+    <value>Moves to the screen you click on or bring a window forward on.</value>
+    <comment>mac: Tıkladığın ya da öne aldığın pencerenin ekranına geçer.</comment>
+  </data>
+  <data name="Settings_ScreenNamedNote" xml:space="preserve">
+    <value>While this screen isn't connected, the island uses the main screen.</value>
+  </data>
+  <data name="Settings_ScreenDisconnected" xml:space="preserve">
+    <value>{0} (not connected)</value>
+    <comment>mac: %@ (bağlı değil)</comment>
+  </data>
+  <data name="Settings_LanguageNote" xml:space="preserve">
+    <value>ISLe8 restarts when the language changes.</value>
+    <comment>mac: Dil değişince ISLe8 yeniden başlar.</comment>
+  </data>
+  <data name="Settings_Behavior" xml:space="preserve">
+    <value>Behavior</value>
+    <comment>mac: Davranış</comment>
+  </data>
+  <data name="Settings_OpenMode" xml:space="preserve">
+    <value>Opens</value>
+    <comment>mac: Açılma</comment>
+  </data>
+  <data name="Settings_OpenOnHover" xml:space="preserve">
+    <value>On hover</value>
+    <comment>mac: Üzerine gelince</comment>
+  </data>
+  <data name="Settings_OpenOnClick" xml:space="preserve">
+    <value>On click</value>
+    <comment>mac: Tıklayınca</comment>
+  </data>
+  <data name="Settings_OpenDelay" xml:space="preserve">
+    <value>Open delay</value>
+    <comment>mac: Açılma gecikmesi</comment>
+  </data>
+  <data name="Settings_CloseDelay" xml:space="preserve">
+    <value>Close delay</value>
+    <comment>mac: Kapanma gecikmesi</comment>
+  </data>
+  <data name="Settings_Seconds" xml:space="preserve">
+    <value>{0} s</value>
+    <comment>mac: %@ sn</comment>
+  </data>
+  <data name="Settings_Backup" xml:space="preserve">
+    <value>Back up settings</value>
+    <comment>mac: Ayarları yedekle</comment>
+  </data>
+  <data name="Settings_Export" xml:space="preserve">
+    <value>Export…</value>
+    <comment>mac: Dışa aktar…</comment>
+  </data>
+  <data name="Settings_Import" xml:space="preserve">
+    <value>Import…</value>
+    <comment>mac: İçe aktar…</comment>
+  </data>
+  <data name="Settings_BackupNote" xml:space="preserve">
+    <value>All settings are written to one JSON file you can keep or move to another PC. Importing restarts ISLe8.</value>
+  </data>
+  <data name="Settings_BackupFileName" xml:space="preserve">
+    <value>ISLe8 Settings.json</value>
+    <comment>mac: ISLe8 Ayarları.json</comment>
+  </data>
+  <data name="Settings_ImportFailed" xml:space="preserve">
+    <value>Couldn't import the settings</value>
+  </data>
+  <data name="Settings_ImportFailedDetail" xml:space="preserve">
+    <value>This file isn't ISLe8 settings, or it is damaged.</value>
+  </data>
+  <data name="Settings_ExportFailed" xml:space="preserve">
+    <value>Couldn't export the settings</value>
+  </data>
+  <data name="Settings_Version" xml:space="preserve">
+    <value>Version</value>
+    <comment>mac: Sürüm</comment>
+  </data>
+  <data name="Settings_Developer" xml:space="preserve">
+    <value>Developer</value>
+    <comment>mac: Geliştirici</comment>
+  </data>
+  <data name="Common_OK" xml:space="preserve">
+    <value>OK</value>
+  </data>
 </root>

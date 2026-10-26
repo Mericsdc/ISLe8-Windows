@@ -25,6 +25,7 @@ internal static class Glyphs
     public const string Display = "";
     public const string Language = "";
     public const string Quit = "";
+    public const string Settings = "";
 }
 
 internal static class ThemeColors

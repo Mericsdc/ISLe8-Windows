@@ -51,6 +51,17 @@ internal sealed class IslandController : IDisposable
         _outsideClicks = new OutsideClickWatcher(_queue, OnClickedOutside);
     }
 
+    /// <summary>The one settings object; the settings window changes it in place.</summary>
+    public AppSettings Settings => _settings;
+
+    /// <summary>The island's window, which also takes the tray icon's messages.</summary>
+    public nint WindowHandle => _window.Hwnd;
+
+    public void AddWindowMessageHandler(Func<uint, nint, nint, nint?> handler) => _window.AddMessageHandler(handler);
+
+    /// <summary>Moves the island to the screen the settings ask for now.</summary>
+    public void PlaceIsland() => _window.Place();
+
     public void Start()
     {
         Rebuild();
@@ -356,6 +367,9 @@ internal sealed class IslandController : IDisposable
         var pin = new ToggleMenuFlyoutItem { Text = L.Get("Menu_Pin"), IsChecked = _model.IsPinned, Icon = new FontIcon { Glyph = Glyphs.Pin } };
         pin.Click += (_, _) => _model.SetPinned(pin.IsChecked);
         menu.Items.Add(pin);
+        var settings = new MenuFlyoutItem { Text = L.Get("Tray_Settings"), Icon = new FontIcon { Glyph = Glyphs.Settings } };
+        settings.Click += (_, _) => ((App)Application.Current).OpenSettings();
+        menu.Items.Add(settings);
         menu.Items.Add(new MenuFlyoutSeparator());
 
         var themes = new MenuFlyoutSubItem { Text = L.Get("Menu_Theme"), Icon = new FontIcon { Glyph = Glyphs.Palette } };
@@ -372,13 +386,16 @@ internal sealed class IslandController : IDisposable
         menu.Items.Add(themes);
 
         var displays = new MenuFlyoutSubItem { Text = L.Get("Menu_Display"), Icon = new FontIcon { Glyph = Glyphs.Display } };
-        displays.Items.Add(Choice(L.Get("Menu_DisplayPrimary"), "display", _settings.Monitor == MonitorChoice.Primary, () =>
+        foreach (var (choice, key) in new[] { (MonitorChoice.Primary, "Menu_DisplayPrimary"), (MonitorChoice.Active, "Menu_DisplayActive") })
         {
-            _settings.Monitor = MonitorChoice.Primary;
-            _settings.MonitorDevice = null;
-            Save();
-            _window.Place();
-        }));
+            displays.Items.Add(Choice(L.Get(key), "display", _settings.Monitor == choice, () =>
+            {
+                _settings.Monitor = choice;
+                _settings.MonitorDevice = null;
+                Save();
+                _window.Place();
+            }));
+        }
         foreach (var monitor in Monitors.All())
         {
             var device = monitor.Device;
@@ -399,10 +416,11 @@ internal sealed class IslandController : IDisposable
         {
             languages.Items.Add(Choice(name, "language", _settings.Language == code, () =>
             {
+                if (_settings.Language == code) return;
                 _settings.Language = code;
                 Save();
-                L.Use(code);
-                Rebuild();
+                // As in Settings: every window is built in the new language from the start.
+                ((App)Application.Current).Restart();
             }));
         }
         menu.Items.Add(languages);
