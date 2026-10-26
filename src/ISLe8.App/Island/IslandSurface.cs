@@ -23,7 +23,10 @@ internal sealed class IslandSurface
     private readonly CompositionRoundedRectangleGeometry _clipGeometry;
     private readonly CompositionSpriteShape _shape;
     private readonly ShapeVisual _shapeVisual;
-    private readonly LayerVisual _layer;
+    private readonly ContainerVisual _root;
+    private readonly ShapeVisual _maskVisual;
+    private readonly CompositionVisualSurface _maskSurface;
+    private readonly SpriteVisual _shadowVisual;
     private readonly DropShadow _shadow;
     private readonly bool _animationsEnabled = new Windows.UI.ViewManagement.UISettings().AnimationsEnabled;
     private IslandTheme _theme = IslandTheme.NotchBlack;
@@ -42,17 +45,31 @@ internal sealed class IslandSurface
         _shapeVisual = _compositor.CreateShapeVisual();
         _shapeVisual.Shapes.Add(_shape);
 
+        // The shadow is cast by an empty sprite through a mask: a live copy of the same shape. A
+        // LayerVisual would be simpler, but in a per-pixel-alpha window it draws as an opaque,
+        // unscaled black box that hides the pill.
+        _maskVisual = _compositor.CreateShapeVisual();
+        var mask = _compositor.CreateSpriteShape(_shapeGeometry);
+        mask.FillBrush = _compositor.CreateColorBrush(Windows.UI.Color.FromArgb(255, 0, 0, 0));
+        _maskVisual.Shapes.Add(mask);
+        _maskSurface = _compositor.CreateVisualSurface();
+        _maskSurface.SourceVisual = _maskVisual;
+
         _shadow = _compositor.CreateDropShadow();
         // Blur + offset stay within IslandMetrics.ShadowMargin, or the window edge cuts the shadow.
         _shadow.BlurRadius = 24;
         _shadow.Offset = new Vector3(0, 8, 0);
         _shadow.Color = Windows.UI.Color.FromArgb(255, 0, 0, 0);
         _shadow.Opacity = 0;
+        _shadow.Mask = _compositor.CreateSurfaceBrush(_maskSurface);
 
-        _layer = _compositor.CreateLayerVisual();
-        _layer.Shadow = _shadow;
-        _layer.Children.InsertAtTop(_shapeVisual);
-        ElementCompositionPreview.SetElementChildVisual(backgroundHost, _layer);
+        _shadowVisual = _compositor.CreateSpriteVisual();
+        _shadowVisual.Shadow = _shadow;
+
+        _root = _compositor.CreateContainerVisual();
+        _root.Children.InsertAtTop(_shadowVisual);
+        _root.Children.InsertAtTop(_shapeVisual);
+        ElementCompositionPreview.SetElementChildVisual(backgroundHost, _root);
 
         _clipGeometry = _compositor.CreateRoundedRectangleGeometry();
         ElementCompositionPreview.GetElementVisual(area).Clip = _compositor.CreateGeometricClip(_clipGeometry);
@@ -62,8 +79,11 @@ internal sealed class IslandSurface
     {
         _layout = layout;
         var canvas = new Vector2((float)layout.Canvas.Width, (float)layout.Canvas.Height);
-        _layer.Size = canvas;
+        _root.Size = canvas;
         _shapeVisual.Size = canvas;
+        _maskVisual.Size = canvas;
+        _maskSurface.SourceSize = canvas;
+        _shadowVisual.Size = canvas;
         _areaOffset = new Vector2((float)layout.Area.X, (float)layout.Area.Y);
         ApplyBrush();
     }

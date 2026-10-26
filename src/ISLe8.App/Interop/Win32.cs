@@ -90,6 +90,7 @@ internal static unsafe partial class Win32
     public const uint WM_SETTINGCHANGE = 0x001A;
     public const uint WM_DISPLAYCHANGE = 0x007E;
     public const uint WM_NCDESTROY = 0x0082;
+    public const uint WM_NCCALCSIZE = 0x0083;
     public const uint WM_DPICHANGED = 0x02E0;
     public const nint SPI_SETWORKAREA = 0x002F;
 

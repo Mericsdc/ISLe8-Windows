@@ -75,6 +75,9 @@ internal sealed unsafe class IslandWindow : IDisposable
         Place();
         // Shown without activation, so starting ISLe8 never takes focus from what you are doing.
         _appWindow.Show(false);
+        // Showing puts the presenter's dialog frame back; without this a white 2 DIP border shows.
+        StripFrame();
+        RemoveDecorations();
     }
 
     /// <summary>Puts the window at the top centre of the chosen monitor, sized for that monitor's DPI.</summary>
@@ -180,8 +183,12 @@ internal sealed unsafe class IslandWindow : IDisposable
             hRgnBlur = _blurRegion,
         };
         Win32.DwmEnableBlurBehindWindow(Hwnd, in blur);
+        RemoveDecorations();
+    }
 
-        // Windows 11 rounds and outlines top-level windows; the island draws its own shape.
+    /// <summary>Windows 11 rounds and outlines top-level windows; the island draws its own shape.</summary>
+    private void RemoveDecorations()
+    {
         var corner = Win32.DWMWCP_DONOTROUND;
         Win32.DwmSetWindowAttribute(Hwnd, Win32.DWMWA_WINDOW_CORNER_PREFERENCE, &corner, sizeof(int));
         var border = Win32.DWMWA_COLOR_NONE;
@@ -224,6 +231,9 @@ internal sealed unsafe class IslandWindow : IDisposable
         }
         switch (message)
         {
+            // No non-client area, whatever styles WinUI puts back: the client fills the window.
+            case Win32.WM_NCCALCSIZE when wParam != 0:
+                return 0;
             // WinUI resizes the window to the suggested rectangle first; the island then lays itself
             // out again for the new DPI, which also covers moving to another monitor.
             case Win32.WM_DPICHANGED:
