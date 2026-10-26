@@ -132,6 +132,9 @@ Ortak olan sözleşme: aynı 7 tema ve aynı tema JSON'u (Mac'te dışa aktarıl
 yay değerleri, aynı Türkçe/İngilizce metinler, aynı faz adları. Birinde bunlardan biri değişince
 diğerine de taşınır.
 
+Mac'teki sistemlerin buraya nasıl taşınacağı, modül modül Mac kaynak dosyaları, davranış ayrıntıları,
+eksikler ve kabul kriterleriyle [PORTING.md](PORTING.md)'de.
+
 ---
 
 ## Klasörler
