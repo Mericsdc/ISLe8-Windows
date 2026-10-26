@@ -148,3 +148,11 @@ tests/ISLe8.Core.Tests xUnit; Mac'te de çalışır
 scripts/               run.ps1, publish.ps1, measure.ps1, check-on-mac.sh, make-assets.swift
 .github/workflows/     release.yml (etiketle yayın), windows.yml (elle derleme denetimi)
 ```
+
+---
+
+## Lisans
+
+Kod [Apache License 2.0](LICENSE) ile lisanslı. **ISLe8** ve **LRXe8** adları, logoları ve uygulama simgesi bu lisansa dahil değil; bir çatal dağıtacaksan kendi adını ve simgesini kullan ([TRADEMARKS.md](TRADEMARKS.md)). Telif ve üçüncü taraf bildirimleri [NOTICE](NOTICE) dosyasında.
+
+Windows, Microsoft Corporation'ın; Apple ve Dynamic Island, Apple Inc.'in markalarıdır. ISLe8 bağımsız bir projedir.

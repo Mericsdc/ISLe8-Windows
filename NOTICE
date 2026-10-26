@@ -1,0 +1,9 @@
+ISLe8 for Windows
+Copyright 2026 Meriç Sadıç (LRXe8)
+
+Licensed under the Apache License, Version 2.0 (see LICENSE). The ISLe8 and
+LRXe8 names and logos are not licensed under it (see TRADEMARKS.md).
+
+Release builds include components of the .NET runtime and the Windows App SDK
+from Microsoft Corporation, restored from NuGet (see the .csproj files). They
+remain under their own license terms.
