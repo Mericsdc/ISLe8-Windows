@@ -1,6 +1,52 @@
-# W0 test listesi
+# Test listesi
 
-Her maddeyi işaretle; olmayan varsa günlükle birlikte not et (README › Günlük ve ayarlar).
+Her maddeyi işaretle; olmayan varsa günlükle birlikte not et (README › Günlük ve ayarlar). W1'in
+adımları en üstte, W0'ın listesi altta.
+
+## W1 · Adım 1: ada kuralları ve ayar modeli (2026-10-26)
+
+Windows 11 Pro 26300, 3840×2160 %150, Debug ve Release (JIT). Fare otomasyonla gezdirildi (`SendInput`);
+açık olup olmadığı, pill'in altındaki bir noktanın adanın penceresine düşüp düşmediğiyle ölçüldü. "Canlı"
+işaretli maddeleri kullanıcı kendisi denedi.
+Kuralların kendisi yeni Core testleriyle (71'den 104'e) elle ilerletilen bir saatte sınanıyor (`IslandModelTests`).
+
+**Üzerine gelince (varsayılan)**
+- [x] İmleç pill'e varınca ada 57 ms'de açılıyor (gecikme 0, en az 50 ms süzme).
+- [x] Pill'in üstünde 20 ms kalan imleç açmıyor (iki deneme); 80 ms kalan açıyor.
+- [x] İmleç çıktıktan 250 ms sonra hâlâ açık; 350 ms'de kapanmaya başlıyor.
+- [x] Açılış ve kapanışta içerik %94'ten büyüyerek beliriyor, %90'a küçülerek siliniyor; kabuk pill'e
+      katlanırken boş kutu kalmıyor (canlı, gözle).
+- [x] Açılış Mac'teki ISLe8'e göre belirgin yavaş ya da hızlı değil (canlı).
+- [x] Üst ortadaki tarayıcı sekmelerine giderken ada istenmeden açılmıyor (canlı, gecikme 0 + 50 ms).
+
+**Tıklayınca modu** (`settings.json` › `"openMode": "click"`; ayar penceresi 2. adımda)
+- [x] İmleç pill'de 1,5 sn durunca ada açılmıyor; pill 298×48'den 324×57 px'e büyüyor (+18 × 6 DIP).
+- [x] Pill'e tıklayınca açılıyor; imleç çıkınca kapanıyor.
+
+**Sabitleme, menü, dışarı tıklama**
+- [x] Kapanma gecikmesi 1,5 sn iken: tıklamadan 2,1 sn'de, imleç çıkıp masaüstüne tıklayınca 0,9 sn'de
+      kapanıyor (kalan süre yayın oturması).
+- [x] Sağ tık › **Açık tut**: imleç uzaktayken ve dışarı tıklayınca açık kalıyor; menüde işaretli.
+- [x] Açık tut kaldırılınca imleç dışarıdaysa kapanma gecikmesiyle kapanıyor (canlı).
+- [x] Sağ tık menüsü dışarı tıklayınca kapanıyor (canlı).
+
+**Diğer**
+- [ ] Ayarlar › Erişilebilirlik › Görsel efektler › **Animasyon efektleri** kapalıyken yay yerine kısa,
+      yumuşak bir geçiş var; içerik yalnızca soluyor.
+- [x] W0'dan kalan `settings.json` (sürüm 1, 150/250 ms) yeni varsayılanlara (0 / 0,35 sn) geçiyor,
+      eski alanlar yazılmıyor (Core testi; bu bilgisayardaki dosya ilk ayar değişikliğinde yeniden yazılır).
+- [x] Mac'ten gelen metinler Mac'teki gibi: `.resw` girdilerinde `mac: <anahtar>` yorumu, test Mac reposu
+      yanındayken iki dili karşılaştırıyor. Hizalanan: Keep Open, Screen, Main screen, System/Sistem, Artwork Color.
+
+**Ölçüm** (`scripts\measure.ps1 -Seconds 60`, açıldıktan 30 sn sonra, ada kapalı). Bu bilgisayarda Native AOT
+bağlayıcısı yok; Release `publish.ps1 -NoAot` (JIT, kendi .NET'iyle) ölçüldü. AOT yapısı (Release zip'i) ayrıca
+ölçülmedi; W0'da AOT'nin çalışma kümesi JIT'inkinden belirgin düşüktü.
+
+| Tarih | Yapı | Durum | CPU | Özel bellek | Çalışma kümesi |
+|---|---|---|---|---|---|
+| 2026-10-26 | W1 adım 1, Release JIT x64 | Ada kapalı, 60 sn; Chrome açıktı, medya durumu kaydedilmedi | %0,010 (hedef < %0,1) | 37,3 MB (hedef < 80 MB) | 138,5 MB |
+
+# W0 test listesi
 
 ## İlk Windows çalıştırması (2026-10-26)
 

@@ -94,6 +94,11 @@ internal static unsafe partial class Win32
     public const uint WM_DPICHANGED = 0x02E0;
     public const nint SPI_SETWORKAREA = 0x002F;
 
+    public const int WH_MOUSE_LL = 14;
+    public const nint WM_LBUTTONDOWN = 0x0201;
+    public const nint WM_RBUTTONDOWN = 0x0204;
+    public const nint WM_MBUTTONDOWN = 0x0207;
+
     public const uint MONITOR_DEFAULTTONEAREST = 2;
     public const uint MONITORINFOF_PRIMARY = 1;
     public const int MDT_EFFECTIVE_DPI = 0;
@@ -187,6 +192,19 @@ internal static unsafe partial class Win32
 
     [LibraryImport("shell32.dll")]
     public static partial nuint SHAppBarMessage(uint message, ref APPBARDATA data);
+
+    [LibraryImport("user32.dll", EntryPoint = "SetWindowsHookExW")]
+    public static partial nint SetWindowsHookEx(int hookType, delegate* unmanaged<int, nint, nint, nint> proc, nint module, uint threadId);
+
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool UnhookWindowsHookEx(nint hook);
+
+    [LibraryImport("user32.dll")]
+    public static partial nint CallNextHookEx(nint hook, int code, nint wParam, nint lParam);
+
+    [LibraryImport("kernel32.dll", EntryPoint = "GetModuleHandleW", StringMarshalling = StringMarshalling.Utf16)]
+    public static partial nint GetModuleHandle(string? name);
 
     [LibraryImport("CoreMessaging.dll")]
     public static partial int CreateDispatcherQueueController(DispatcherQueueOptions options, out nint controller);

@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using ISLe8.Core.Theming;
@@ -74,8 +75,76 @@ public partial class ResourceTests
         Assert.All(used, key => Assert.Contains(key, strings.Keys));
     }
 
+    /// <summary>
+    /// A text that also exists on the Mac carries <c>mac: &lt;its Turkish key&gt;</c> as its comment and must
+    /// read exactly as there, in both languages. Checked where the Mac repo sits beside this one
+    /// (PORTING.md); CI has no copy, so there the test has nothing to compare.
+    /// </summary>
+    [Fact]
+    public void TextsFromTheMacReadAsOnTheMac()
+    {
+        var catalogPath = Path.Combine(RepoRoot, "..", "ISLe8-macOS", "ISLe8", "Resources", "Localizable.xcstrings");
+        var mapped = MacKeys();
+        Assert.NotEmpty(mapped);
+        if (!File.Exists(catalogPath)) return;
+
+        using var catalog = JsonDocument.Parse(File.ReadAllText(catalogPath));
+        var macStrings = catalog.RootElement.GetProperty("strings");
+        var mismatches = new List<string>();
+        foreach (var (language, macLanguage) in new[] { ("tr-TR", "tr"), ("en-US", "en") })
+        {
+            var strings = Strings(language);
+            foreach (var (key, macKey) in mapped)
+            {
+                if (!macStrings.TryGetProperty(macKey, out var entry))
+                {
+                    mismatches.Add($"{key}: \"{macKey}\" is not in the Mac catalog");
+                    continue;
+                }
+                var expected = FromMacFormat(MacText(entry, macKey, macLanguage));
+                if (strings[key] != expected) mismatches.Add($"{language} {key}: \"{strings[key]}\", Mac says \"{expected}\"");
+            }
+        }
+        Assert.Empty(mismatches);
+    }
+
+    private static Dictionary<string, string> MacKeys() =>
+        XDocument.Load(Path.Combine(RepoRoot, "src", "ISLe8.App", "Strings", "tr-TR", "Resources.resw"))
+            .Root!.Elements("data")
+            .Select(data => (Key: (string)data.Attribute("name")!, Comment: (string?)data.Element("comment") ?? ""))
+            .Where(item => item.Comment.StartsWith("mac: ", StringComparison.Ordinal))
+            .ToDictionary(item => item.Key, item => item.Comment["mac: ".Length..]);
+
+    /// <summary>The source language is Turkish, so a Turkish text may be the key itself.</summary>
+    private static string MacText(JsonElement entry, string key, string language) =>
+        entry.TryGetProperty("localizations", out var localizations)
+        && localizations.TryGetProperty(language, out var localization)
+        && localization.TryGetProperty("stringUnit", out var unit)
+            ? unit.GetProperty("value").GetString()!
+            : language == "tr" ? key : throw new InvalidOperationException($"\"{key}\" has no {language} text on the Mac");
+
+    /// <summary>"%@", "%lld" and "%1$@" become "{0}"; "%%" becomes "%".</summary>
+    internal static string FromMacFormat(string text)
+    {
+        var next = 0;
+        return MacPlaceholder().Replace(text, match => match.Value == "%%" ? "%"
+            : match.Groups["position"].Success ? $"{{{int.Parse(match.Groups["position"].Value) - 1}}}"
+            : $"{{{next++}}}");
+    }
+
+    [Fact]
+    public void MacPlaceholdersBecomeWindowsOnes()
+    {
+        Assert.Equal("Ekran {0} · %{1}", FromMacFormat("Ekran %@ · %%%lld"));
+        Assert.Equal("{1} / {0}", FromMacFormat("%2$@ / %1$@"));
+        Assert.Equal("{0} dk", FromMacFormat("%.0f dk"));
+    }
+
     private static string[] Placeholders(string text) =>
         Placeholder().Matches(text).Select(match => match.Value).Order().ToArray();
+
+    [GeneratedRegex(@"%%|%(?:(?<position>\d+)\$)?(?:@|l{0,2}d|\.?\d*f)")]
+    private static partial Regex MacPlaceholder();
 
     [GeneratedRegex(@"\{\d+\}")]
     private static partial Regex Placeholder();

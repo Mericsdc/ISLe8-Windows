@@ -22,7 +22,8 @@ Gereken: Windows 10 2004+ ya da Windows 11.
 
 ### Kullanım
 
-- İmleci üstteki pill'de ~150 ms tut ya da pill'e tıkla: ada açılır. İmleç çıkınca kapanır.
+- İmleci üstteki pill'in üstünde bir an tut ya da pill'e tıkla: ada açılır. Üstünden geçip giden imleç
+  açmaz. İmleç çıkınca ya da başka bir yere tıklayınca kapanır.
 - Müzik çalarken (Spotify, tarayıcı, Medya Oynatıcı, Apple Music…) pill genişler; açık adada oynatıcı
   var.
 - Sağ tık: **Açık tut**, **Tema**, **Ekran**, **Dil**, **ISLe8'den çık**.

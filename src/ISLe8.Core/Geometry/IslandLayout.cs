@@ -19,13 +19,15 @@ public static class IslandMetrics
     public const double PillHeight = 32;
     public const double IdlePillWidth = 200;
     public const double CompactPillWidth = 260;
-    public const double PillCornerRadius = PillHeight / 2;
     public const double ExpandedCornerRadius = 24;
     /// <summary>Room around the open island for its shadow (blur 24 + offset 8).</summary>
     public const double ShadowMargin = 36;
 
     /// <summary>The pill takes the mouse this far beyond its edge, so its hairline and the spring's overshoot aren't cut off.</summary>
     public const double HitSlop = 2;
+
+    /// <summary>In click mode a resting pointer swells the pill by this much (IslandModel.swift, <c>.peek</c>).</summary>
+    public static readonly DipSize PeekGrowth = new(18, 6);
     /// <summary>The open island keeps at least this far from the monitor's sides and the work area's bottom.</summary>
     public const double SideInset = 16;
 
@@ -63,16 +65,29 @@ public sealed record IslandLayout
 
     public DipRect Pill(PillKind kind) => kind == PillKind.Compact ? CompactPill : IdlePill;
 
+    /// <summary>The pill swollen a little under a resting pointer, still centred and hanging from the same top. Relative to <see cref="Area"/>.</summary>
+    public DipRect Peek(PillKind kind)
+    {
+        var pill = Pill(kind);
+        var width = Math.Min(pill.Width + IslandMetrics.PeekGrowth.Width, Expanded.Width);
+        return new DipRect(pill.X - (width - pill.Width) / 2, pill.Y, width, pill.Height + IslandMetrics.PeekGrowth.Height);
+    }
+
     /// <summary>
     /// The part of the window that takes the mouse while the island is a pill: the pill itself,
     /// stretched up to the top edge so flinging the mouse to the top of the screen still hits it.
     /// Relative to the window, in physical pixels.
     /// </summary>
-    public PixelRect PillRegion(PillKind kind)
+    public PixelRect PillRegion(PillKind kind) => TopAnchoredRegion(Pill(kind));
+
+    /// <summary>The same for the peek, so the swollen pill keeps the pointer that swelled it.</summary>
+    public PixelRect PeekRegion(PillKind kind) => TopAnchoredRegion(Peek(kind));
+
+    private PixelRect TopAnchoredRegion(DipRect shape)
     {
-        var pill = Pill(kind).Offset(Area.X, Area.Y);
+        var rect = shape.Offset(Area.X, Area.Y);
         var slop = IslandMetrics.HitSlop;
-        return Clip(new DipRect(pill.X - slop, 0, pill.Width + 2 * slop, pill.Bottom + slop).ToPixels(Scale));
+        return Clip(new DipRect(rect.X - slop, 0, rect.Width + 2 * slop, rect.Bottom + slop).ToPixels(Scale));
     }
 
     /// <summary>The open island's column in window pixels: leaving it closes the island.</summary>

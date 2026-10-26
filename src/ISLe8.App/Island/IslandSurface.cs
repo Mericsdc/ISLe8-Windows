@@ -150,6 +150,60 @@ internal sealed class IslandSurface
         visual.Opacity = opacity;
     }
 
+    /// <summary>
+    /// The open island's content, shown (true) or hidden at once, without animating. Hidden, it sits
+    /// at the scale it grows from, ready for <see cref="Reveal"/>.
+    /// </summary>
+    public static void SetContentShown(FrameworkElement content, bool shown)
+    {
+        var visual = ElementCompositionPreview.GetElementVisual(content);
+        visual.StopAnimation("Opacity");
+        visual.StopAnimation("Scale");
+        visual.Opacity = shown ? 1 : 0;
+        visual.Scale = shown ? Vector3.One : new Vector3(MotionTimings.ContentScaleIn, MotionTimings.ContentScaleIn, 1);
+    }
+
+    /// <summary>
+    /// The open island's content settles in just behind the shell, growing from 94 % at its top edge,
+    /// and folds away to 90 % with it, so the island never shrinks as an empty box (IslandView.swift).
+    /// With "Animation effects" off it only fades.
+    /// </summary>
+    public void Reveal(FrameworkElement content, bool show)
+    {
+        var visual = ElementCompositionPreview.GetElementVisual(content);
+        visual.CenterPoint = new Vector3((float)(content.Width / 2), 0, 0);
+
+        var easing = show
+            ? _compositor.CreateCubicBezierEasingFunction(new Vector2(0, 0), new Vector2(0.58f, 1)) // ease-out
+            : _compositor.CreateCubicBezierEasingFunction(new Vector2(0.42f, 0), new Vector2(1, 1)); // ease-in
+        var delay = show ? MotionTimings.ContentDelay : TimeSpan.Zero;
+        var duration = show ? MotionTimings.ContentFadeIn : MotionTimings.ContentFadeOut;
+        if (!_animationsEnabled)
+        {
+            delay = TimeSpan.Zero;
+            duration = MotionTimings.ReducedMotion;
+        }
+
+        var fade = _compositor.CreateScalarKeyFrameAnimation();
+        fade.InsertKeyFrame(1f, show ? 1f : 0f, easing);
+        fade.Duration = duration;
+        fade.DelayTime = delay;
+        visual.StartAnimation("Opacity", fade);
+
+        if (!_animationsEnabled)
+        {
+            visual.StopAnimation("Scale");
+            visual.Scale = Vector3.One;
+            return;
+        }
+        var to = show ? 1f : MotionTimings.ContentScaleOut;
+        var scale = _compositor.CreateVector3KeyFrameAnimation();
+        scale.InsertKeyFrame(1f, new Vector3(to, to, 1), easing);
+        scale.Duration = duration;
+        scale.DelayTime = delay;
+        visual.StartAnimation("Scale", scale);
+    }
+
     private void Animate(CompositionRoundedRectangleGeometry geometry, DipRect rect, double cornerRadius, Vector2 offset, SpringSpec spring)
     {
         var position = new Vector2((float)rect.X, (float)rect.Y) + offset;
@@ -158,10 +212,10 @@ internal sealed class IslandSurface
 
         if (!_animationsEnabled)
         {
-            // Windows' "Animation effects" is off: a short, plain transition instead of a spring.
-            geometry.StartAnimation("Offset", Linear(position));
-            geometry.StartAnimation("Size", Linear(size));
-            geometry.StartAnimation("CornerRadius", Linear(corner));
+            // Windows' "Animation effects" is off: a short ease-in-out instead of a spring.
+            geometry.StartAnimation("Offset", Eased(position));
+            geometry.StartAnimation("Size", Eased(size));
+            geometry.StartAnimation("CornerRadius", Eased(corner));
             return;
         }
         geometry.StartAnimation("Offset", Spring(position, spring));
@@ -178,10 +232,11 @@ internal sealed class IslandSurface
         return animation;
     }
 
-    private Vector2KeyFrameAnimation Linear(Vector2 target)
+    /// <summary>Instead of a spring when "Animation effects" is off: 160 ms ease-in-out, as on the Mac.</summary>
+    private Vector2KeyFrameAnimation Eased(Vector2 target)
     {
         var animation = _compositor.CreateVector2KeyFrameAnimation();
-        animation.InsertKeyFrame(1f, target);
+        animation.InsertKeyFrame(1f, target, _compositor.CreateCubicBezierEasingFunction(new Vector2(0.42f, 0), new Vector2(0.58f, 1)));
         animation.Duration = MotionTimings.ReducedMotion;
         return animation;
     }

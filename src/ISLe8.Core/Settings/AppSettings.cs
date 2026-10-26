@@ -12,24 +12,40 @@ public enum MonitorChoice
     Named,
 }
 
+/// <summary>How the island opens: on its own when the pointer rests on it, or only when clicked.</summary>
+[JsonConverter(typeof(LenientEnumConverter<OpenMode>))]
+public enum OpenMode
+{
+    Hover,
+    /// <summary>Resting on the island only swells it a little (peek); a click opens it.</summary>
+    Click,
+}
+
 public sealed class AppSettings
 {
+    /// <summary>2: delays in seconds, as on the Mac. 1 kept them in milliseconds.</summary>
+    public const int CurrentVersion = 2;
+
     public static IReadOnlyList<string> Languages { get; } = ["system", "tr-TR", "en-US"];
 
-    public int Version { get; set; } = 1;
+    public int Version { get; set; } = CurrentVersion;
     public string ThemeId { get; set; } = "ember";
     public List<IslandTheme> CustomThemes { get; set; } = [];
 
     /// <summary>"system", "tr-TR" or "en-US".</summary>
     public string Language { get; set; } = "system";
 
-    /// <summary>
-    /// The pointer rests this long on the pill before it opens. On Windows the top of the screen is
-    /// also where title bars and browser tabs are, so it is not 0 as on the Mac.
-    /// </summary>
-    public int HoverDelayMs { get; set; } = 150;
+    public OpenMode OpenMode { get; set; } = OpenMode.Hover;
 
-    public int CloseDelayMs { get; set; } = 250;
+    /// <summary>
+    /// Seconds the pointer rests on the pill before it opens (hover mode). 0 opens at once; the island
+    /// still waits <see cref="Island.IslandModel.MinimumOpenDelay"/> so a pointer passing over doesn't open it.
+    /// </summary>
+    public double OpenDelay { get; set; }
+
+    /// <summary>Seconds after the pointer leaves the open island before it closes.</summary>
+    public double CloseDelay { get; set; } = 0.35;
+
     public double AnimationSpeed { get; set; } = 1;
     public bool HideInFullscreen { get; set; } = true;
     public bool AudioBars { get; set; } = true;
@@ -38,20 +54,44 @@ public sealed class AppSettings
     /// <summary>A Win32 device name such as <c>\\.\DISPLAY2</c>.</summary>
     public string? MonitorDevice { get; set; }
 
+    /// <summary>Version 1's open delay in milliseconds. Read once by <see cref="Normalize"/>, then dropped.</summary>
+    public int? HoverDelayMs { get; set; }
+
+    /// <summary>Version 1's close delay in milliseconds. Read once by <see cref="Normalize"/>, then dropped.</summary>
+    public int? CloseDelayMs { get; set; }
+
     [JsonIgnore]
     public IslandTheme Theme =>
         CustomThemes.FirstOrDefault(theme => theme.Id == ThemeId)
         ?? IslandTheme.Presets.FirstOrDefault(theme => theme.Id == ThemeId)
         ?? IslandTheme.NotchBlack;
 
-    /// <summary>Brings a hand-edited or older file back into range.</summary>
+    /// <summary>Brings a hand-edited or older file up to date and back into range.</summary>
     public void Normalize()
     {
-        HoverDelayMs = Math.Clamp(HoverDelayMs, 0, 2000);
-        CloseDelayMs = Math.Clamp(CloseDelayMs, 0, 3000);
-        AnimationSpeed = double.IsFinite(AnimationSpeed) ? Math.Clamp(AnimationSpeed, 0.25, 4) : 1;
+        Migrate();
+        // The ranges of the Mac's settings sliders; animation speed as far as its model allows.
+        OpenDelay = Clamp(OpenDelay, 0, 1, 0);
+        CloseDelay = Clamp(CloseDelay, 0, 1.5, 0.35);
+        AnimationSpeed = Clamp(AnimationSpeed, 0.5, 2, 1);
         if (!Languages.Contains(Language)) Language = "system";
         CustomThemes = (CustomThemes ?? []).Where(theme => theme is not null).Select(theme => theme.Normalized()).ToList();
         if (Monitor == MonitorChoice.Named && string.IsNullOrWhiteSpace(MonitorDevice)) Monitor = MonitorChoice.Primary;
     }
+
+    /// <summary>
+    /// Version 1 wrote 150 and 250 ms because those were its defaults; they become the Mac's 0 and
+    /// 0.35 s. A delay someone chose by hand is kept.
+    /// </summary>
+    private void Migrate()
+    {
+        if (HoverDelayMs is { } open) OpenDelay = open == 150 ? 0 : open / 1000.0;
+        if (CloseDelayMs is { } close) CloseDelay = close == 250 ? 0.35 : close / 1000.0;
+        HoverDelayMs = null;
+        CloseDelayMs = null;
+        Version = CurrentVersion;
+    }
+
+    private static double Clamp(double value, double min, double max, double fallback) =>
+        double.IsFinite(value) ? Math.Clamp(value, min, max) : fallback;
 }

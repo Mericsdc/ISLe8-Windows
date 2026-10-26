@@ -163,10 +163,11 @@ Her modülde: Mac dosyaları → Windows karşılığı → önemli davranışla
 - **Windows:**
   - `Microsoft.Windows.System.Power.PowerManager` olayları (yüzde, şarj durumu, güç kaynağı).
   - Watt: `Windows.Devices.Power.Battery.AggregateBattery.GetReport().ChargeRateInMilliwatts`, **yalnızca ada açıkken** okunur.
+  - **Mac'ten farkı:** Mac adaptörden giren gücü gösterir; Windows'ta adaptör gücünü veren genel bir API yok. `ChargeRateInMilliwatts` **pile giren** gücü verir: pil dolunca ya da şarj durunca 0 ya da boştur, boşalırken eksidir. Bu yüzden Windows'ta W çipi yalnızca pil gerçekten şarj olurken görünür ve açıklaması "Pile giren güç" olur.
 - **Davranış:**
   - Şarja takınca ve çıkarınca §2'deki **durum kulakları** (banner değil). %20'de ve %10'da (kritik) uyarı banner'ı. "Tam şarj oldu" bildirimi yok.
   - Başlık çipi: %10 altı kırmızı, %20 altı turuncu, şarjda yeşil.
-  - Şarjda başlıkta "⚡ 61 W".
+  - Şarj olurken başlıkta "⚡ 61 W" (yukarıdaki fark).
 - **Kabul:** Takma/çıkarma ve eşiklerde banner çıkıyor; W yalnızca açıkken okunuyor (ölçümle).
 
 ### 3.4 Kamera/mikrofon göstergesi ve uyanık tut (plana eklenmeli: W3)
@@ -204,9 +205,9 @@ Her modülde: Mac dosyaları → Windows karşılığı → önemli davranışla
 
 - **Mac:** [CalendarModule.swift][mac-calendar], [CalendarViews.swift][mac-calendarviews]
 - **Windows:**
-  - `AppointmentManager.RequestStoreAsync(AllCalendarsReadOnly)` (`appointments` yeteneği, paket kimliği gerekir). Değişiklikler `AppointmentStore.StoreChanged` ile izlenir.
-  - Windows Takvim/Posta'ya eklenmemiş hesaplar (yeni Outlook, Google) için **ICS abonelik bağlantısı** ayarı (salt okunur) önerilir.
-  - **Hızlı ekleme:** `AppointmentManager.ShowAddAppointmentAsync`. Win32'de pencere tutamacıyla (`IInitializeWithWindow`) çağrılır. Uygulama başka takvimlere doğrudan yazamaz; sistem penceresi açılır.
+  - **Asıl kaynak ICS abonelik bağlantısı** (salt okunur; Outlook, Google ve iCloud takvimlerinin "gizli/ICS adresi"). Paket kimliği gerektirmez.
+  - **Ek kaynak:** `AppointmentManager.RequestStoreAsync(AllCalendarsReadOnly)` (`appointments` yeteneği, paket kimliği gerekir), değişiklikler `AppointmentStore.StoreChanged` ile. Bu depoyu dolduran Windows Posta ve Takvim uygulamasının desteği 2024 sonunda bitti ve yeni Outlook bu depoya yazmıyor; çoğu Windows 11'de boş döner. Bu yüzden asıl yol değil.
+  - **Hızlı ekleme:** `AppointmentManager.ShowAddAppointmentAsync` statik bir UWP çağrısı; Win32 penceresi için bir interop arabirimi (`IInitializeWithWindow` benzeri) belgelenmemiş, masaüstünde çalışıp çalışmadığı ilk adımda denenmeli. Çalışmazsa yedek: geçici bir `.ics` dosyası yazıp varsayılan takvim uygulamasında açmak. Uygulama başka takvimlere doğrudan yazamaz.
 - **Davranış:**
   - **Geniş:** Ay görünümü, ilk gün kullanıcının yerel ayarından. Bugün vurgu renginde dolu daire, seçili gün halka. Etkinlikli günlerde takvim renginde nokta; çok günlük etkinlik her günü işaretler. Ay başlığına tıklamak bugüne döner.
   - Gün listesi: saat (ya da "Tüm gün"), başlık, ayrıntı satırı (toplantı hizmeti adı, yoksa konum, yoksa takvim adı). Toplantı linki varsa katıl düğmesi.
@@ -464,7 +465,7 @@ Her modülde: Mac dosyaları → Windows karşılığı → önemli davranışla
 ## 4. DESIGN.md §4 ile farklar
 
 - **Plana eklenmesi gerekenler:** ses/parlaklık göstergesi (§3.2), kamera/mikrofon göstergesi ve uyanık tut (§3.4), komut paleti (§3.16), ayarlar penceresi (§3.17), takvim hızlı ekleme (§3.6), `isle8.exe` konsol yardımcısı (§1), Notlar (§3.19), Sistem sekmesi ve LAN (§3.20), klavye temizliği (§3.21), özel günler (§3.22), iPhone/iPad pilleri (§3.14), durum kulakları (§2).
-- **Öne alınması gereken:** MSIX paket kimliği. Bildirim aynası, takvim, App Execution Alias ve `StartupTask` hepsi paket kimliği istiyor. Kimlik kararı W1'de verilmeli (tam MSIX ya da harici konumlu "sparse" paket). Sürüm zip'leri bu kararla değişir.
+- **Öne alınması gereken:** MSIX paket kimliği. Bildirim aynası, App Execution Alias ve `StartupTask` paket kimliği istiyor; takvim yalnızca ek kaynağı (AppointmentStore) için istiyor, asıl yolu ICS (§3.6). Kimlik kararı W1'de verilmeli (tam MSIX ya da harici konumlu "sparse" paket). Sürüm zip'leri bu kararla değişir.
 - **Varsayılan değişiklikleri:** Tasarruf modu varsayılan açık. Açılma gecikmesi 0. Bütün sekmeler aynı yükseklikte.
 
 ## 5. Önerilen aşama sırası

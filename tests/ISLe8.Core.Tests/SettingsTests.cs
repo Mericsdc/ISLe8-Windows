@@ -20,7 +20,51 @@ public sealed class SettingsTests : IDisposable
 
         Assert.Equal("ember", settings.Theme.Id);
         Assert.Equal("system", settings.Language);
-        Assert.Equal(150, settings.HoverDelayMs);
+        Assert.Equal(OpenMode.Hover, settings.OpenMode);
+        Assert.Equal(0, settings.OpenDelay);
+        Assert.Equal(0.35, settings.CloseDelay);
+    }
+
+    [Fact]
+    public void AVersionOneFileTakesTheNewDefaultsAndDropsItsMilliseconds()
+    {
+        Directory.CreateDirectory(_folder);
+        File.WriteAllText(FilePath, """{ "version": 1, "themeId": "midnight", "hoverDelayMs": 150, "closeDelayMs": 250 }""");
+        var store = new SettingsStore(FilePath);
+
+        var settings = store.Load();
+        store.Save(settings);
+
+        Assert.Equal(0, settings.OpenDelay);
+        Assert.Equal(0.35, settings.CloseDelay);
+        Assert.Equal("midnight", settings.ThemeId);
+        Assert.Equal(AppSettings.CurrentVersion, settings.Version);
+        var written = File.ReadAllText(FilePath);
+        Assert.DoesNotContain("DelayMs", written);
+        Assert.Contains("\"openDelay\"", written);
+    }
+
+    [Fact]
+    public void AVersionOneDelayChosenByHandIsKept()
+    {
+        Directory.CreateDirectory(_folder);
+        File.WriteAllText(FilePath, """{ "version": 1, "hoverDelayMs": 400, "closeDelayMs": 800 }""");
+
+        var settings = new SettingsStore(FilePath).Load();
+
+        Assert.Equal(0.4, settings.OpenDelay);
+        Assert.Equal(0.8, settings.CloseDelay);
+    }
+
+    [Fact]
+    public void OpenModeReadsInAnyCaseAndSurvivesAnUnknownValue()
+    {
+        Directory.CreateDirectory(_folder);
+        File.WriteAllText(FilePath, """{ "openMode": "CLICK" }""");
+        Assert.Equal(OpenMode.Click, new SettingsStore(FilePath).Load().OpenMode);
+
+        File.WriteAllText(FilePath, """{ "openMode": "wave" }""");
+        Assert.Equal(OpenMode.Hover, new SettingsStore(FilePath).Load().OpenMode);
     }
 
     [Fact]
@@ -76,12 +120,20 @@ public sealed class SettingsTests : IDisposable
     [Fact]
     public void NormalizeClampsHandEditedValues()
     {
-        var settings = new AppSettings { HoverDelayMs = -5, AnimationSpeed = 40, Language = "xx", Monitor = MonitorChoice.Named };
+        var settings = new AppSettings
+        {
+            OpenDelay = -5,
+            CloseDelay = double.NaN,
+            AnimationSpeed = 40,
+            Language = "xx",
+            Monitor = MonitorChoice.Named,
+        };
 
         settings.Normalize();
 
-        Assert.Equal(0, settings.HoverDelayMs);
-        Assert.Equal(4, settings.AnimationSpeed);
+        Assert.Equal(0, settings.OpenDelay);
+        Assert.Equal(0.35, settings.CloseDelay);
+        Assert.Equal(2, settings.AnimationSpeed);
         Assert.Equal("system", settings.Language);
         Assert.Equal(MonitorChoice.Primary, settings.Monitor);
     }

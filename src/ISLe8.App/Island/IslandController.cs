@@ -1,5 +1,6 @@
 using ISLe8.Core.Diagnostics;
 using ISLe8.Core.Geometry;
+using ISLe8.Core.Island;
 using ISLe8.Core.Motion;
 using ISLe8.Core.Settings;
 using ISLe8.Core.Theming;
@@ -17,40 +18,23 @@ using Microsoft.UI.Xaml.Media.Imaging;
 namespace ISLe8.Island;
 
 /// <summary>
-/// Runs the island: pill ⇄ open on hover, the pill widening while music plays, the right-click
-/// menu, and rebuilding the view when the theme or language changes.
+/// Draws the island in whatever state <see cref="IslandModel"/> puts it: pill, peek or open, the
+/// pill widening while music plays. Feeds the model pointer, menu and media events, and rebuilds
+/// the view when the theme or language changes.
 /// </summary>
 internal sealed class IslandController : IDisposable
 {
-    /// <summary>Players report "paused" for a moment between tracks; the pill waits this long before narrowing.</summary>
-    private const int PillShrinkDelayMs = 1500;
-
-    /// <summary>A finger lifting is not leaving: an island opened by touch stays this long.</summary>
-    private const int TouchCloseDelayMs = 4000;
-
-    private enum State
-    {
-        Collapsed,
-        Expanded,
-    }
-
     private readonly SettingsStore _store;
     private readonly AppSettings _settings;
     private readonly DispatcherQueue _queue;
     private readonly MediaService _media;
     private readonly IslandWindow _window;
-    private readonly DispatcherQueueTimer _openTimer;
-    private readonly DispatcherQueueTimer _closeTimer;
-    private readonly DispatcherQueueTimer _shrinkTimer;
+    private readonly IslandModel _model;
+    private readonly OutsideClickWatcher _outsideClicks;
     private IslandView _view = null!;
     private IslandSurface _surface = null!;
-    private State _state = State.Collapsed;
-    /// <summary>The pill the island shows, or will show, while closed.</summary>
-    private PillKind _pill = PillKind.Idle;
-    /// <summary>False while the shape is still moving after a close.</summary>
+    /// <summary>False while the shape is still moving after it shrank.</summary>
     private bool _settled = true;
-    private bool _pinned;
-    private bool _menuOpen;
     private nint _foregroundBeforeMenu;
     private string? _artworkKey;
 
@@ -63,17 +47,16 @@ internal sealed class IslandController : IDisposable
 
         _media = new MediaService(_queue);
         _window = new IslandWindow(_settings, () => IslandMetrics.DefaultExpanded);
-        _openTimer = OneShot(Expand);
-        _closeTimer = OneShot(Collapse);
-        _shrinkTimer = OneShot(() =>
-        {
-            if (_media.Current?.IsPlaying != true) SetPill(PillKind.Idle);
-        });
+        _model = new IslandModel(_settings, new DispatcherClock(_queue));
+        _outsideClicks = new OutsideClickWatcher(_queue, OnClickedOutside);
     }
 
     public void Start()
     {
         Rebuild();
+        _model.StateChanged += OnStateChanged;
+        _model.PillChanged += OnPillChanged;
+        _model.Changed += OnModelChanged;
         _window.LayoutChanged += ApplyLayout;
         _window.FullscreenChanged += _ => UpdateBars();
         _window.Show();
@@ -84,9 +67,7 @@ internal sealed class IslandController : IDisposable
 
     public void Dispose()
     {
-        _openTimer.Stop();
-        _closeTimer.Stop();
-        _shrinkTimer.Stop();
+        _outsideClicks.Dispose();
         _view.Player.SetActive(false);
         _view.Bars.Stop();
         _media.Dispose();
@@ -109,8 +90,9 @@ internal sealed class IslandController : IDisposable
         }
 
         _view = new IslandView(theme, _media, _queue);
-        _view.Area.PointerEntered += OnPointerEntered;
-        _view.Area.PointerExited += OnPointerExited;
+        _view.Area.PointerEntered += (_, e) => UpdateHover(e, touchInside: true);
+        _view.Area.PointerMoved += (_, e) => UpdateHover(e, touchInside: true);
+        _view.Area.PointerExited += (_, e) => UpdateHover(e, touchInside: false);
         _view.Area.PointerPressed += OnPointerPressed;
         _view.Area.ContextFlyout = BuildMenu();
         _view.Root.Loaded += (_, _) =>
@@ -131,20 +113,19 @@ internal sealed class IslandController : IDisposable
     /// <summary>A new monitor, DPI or view: everything jumps to where it belongs, without animating.</summary>
     private void ApplyLayout(IslandLayout layout)
     {
-        var expanded = _state == State.Expanded;
+        var state = _model.State;
+        var expanded = state == IslandState.Expanded;
+        var shape = Shape(layout, state);
         _settled = true;
         _view.ApplyLayout(layout);
         _surface.SetLayout(layout);
-        _surface.JumpTo(
-            expanded ? layout.Expanded : layout.Pill(_pill),
-            expanded ? IslandMetrics.ExpandedCornerRadius : IslandMetrics.PillCornerRadius,
-            shadow: expanded);
-        _window.SetHitRegion(expanded ? layout.ExpandedRegion : layout.PillRegion(_pill));
+        _surface.JumpTo(shape, Corner(shape, state), shadow: expanded);
+        _window.SetHitRegion(Region(layout, state));
 
         _view.ExpandedLayer.Visibility = expanded ? Visibility.Visible : Visibility.Collapsed;
         _view.ExpandedLayer.IsHitTestVisible = expanded;
-        IslandSurface.SetOpacity(_view.ExpandedLayer, expanded ? 1 : 0);
-        IslandSurface.SetOpacity(_view.PillLayer, !expanded && _pill == PillKind.Compact ? 1 : 0);
+        IslandSurface.SetContentShown(_view.ExpandedLayer, expanded);
+        IslandSurface.SetOpacity(_view.PillLayer, !expanded && _model.Pill == PillKind.Compact ? 1 : 0);
         _view.Player.SetActive(expanded);
         UpdateBars();
     }
@@ -160,110 +141,138 @@ internal sealed class IslandController : IDisposable
         _window.RequestPlace();
     }
 
-    // MARK: Open and close
+    // MARK: States
 
-    private void Expand()
+    private DipRect Shape(IslandLayout layout, IslandState state) => state switch
     {
-        if (_state == State.Expanded || _window.Layout is not { } layout) return;
-        _state = State.Expanded;
-        _settled = false;
-        _closeTimer.Stop();
+        IslandState.Expanded => layout.Expanded,
+        IslandState.Peek => layout.Peek(_model.Pill),
+        _ => layout.Pill(_model.Pill),
+    };
 
-        _window.SetHitRegion(layout.ExpandedRegion);
-        if (_view.ExpandedLayer.Visibility == Visibility.Collapsed)
-        {
-            // Back from fully closed; mid-close, the player fades back in from where it is.
-            _view.ExpandedLayer.Visibility = Visibility.Visible;
-            IslandSurface.SetOpacity(_view.ExpandedLayer, 0);
-        }
-        _view.ExpandedLayer.IsHitTestVisible = true;
-        _surface.Fade(_view.ExpandedLayer, 1, MotionTimings.ContentDelay, MotionTimings.ContentFadeIn);
-        _surface.Fade(_view.PillLayer, 0, TimeSpan.Zero, MotionTimings.ContentFadeOut);
-        _surface.MorphTo(layout.Expanded, IslandMetrics.ExpandedCornerRadius, Spring(SpringSpec.Open), shadow: true, Settle);
+    /// <summary>Pills and the peek are fully round at the ends; the open island has its own corners.</summary>
+    private static double Corner(DipRect shape, IslandState state) =>
+        state == IslandState.Expanded ? IslandMetrics.ExpandedCornerRadius : shape.Height / 2;
 
-        _view.Player.SetActive(true);
-        UpdateBars();
-    }
-
-    private void Collapse()
+    /// <summary>The part of the window that takes the mouse in <paramref name="state"/>, in window pixels.</summary>
+    private PixelRect Region(IslandLayout layout, IslandState state) => state switch
     {
-        if (_state == State.Collapsed || _pinned || _menuOpen || _window.Layout is not { } layout) return;
-        _state = State.Collapsed;
-        _settled = false;
+        IslandState.Expanded => layout.ExpandedRegion,
+        IslandState.Peek => layout.PeekRegion(_model.Pill),
+        _ => layout.PillRegion(_model.Pill),
+    };
 
-        _view.Player.SetActive(false);
-        _view.ExpandedLayer.IsHitTestVisible = false;
-        _surface.Fade(_view.ExpandedLayer, 0, TimeSpan.Zero, MotionTimings.ContentFadeOut);
-        if (_pill == PillKind.Compact)
-        {
-            _surface.Fade(_view.PillLayer, 1, MotionTimings.ContentDelay, MotionTimings.ContentFadeIn);
-        }
-        _surface.MorphTo(layout.Pill(_pill), IslandMetrics.PillCornerRadius, Spring(SpringSpec.Close), shadow: false, Settle);
-    }
-
-    /// <summary>The shape came to rest. Once closed, the player leaves the tree and the window shrinks to the pill.</summary>
-    private void Settle()
-    {
-        if (_state != State.Collapsed || _window.Layout is not { } layout) return;
-        _settled = true;
-        _view.ExpandedLayer.Visibility = Visibility.Collapsed;
-        _window.SetHitRegion(layout.PillRegion(_pill));
-        UpdateBars();
-    }
-
-    private SpringSpec Spring(SpringSpec spring) => spring.WithSpeed(_settings.AnimationSpeed);
-
-    /// <summary>The part of the window that counts as "on the island" right now, in window pixels.</summary>
+    /// <summary>The part of the window that counts as "on the island" right now: only the island itself.</summary>
     private PixelRect? HoverRegion => _window.Layout is not { } layout
         ? null
-        : _state == State.Expanded ? layout.AreaRegion : layout.PillRegion(_pill);
+        : _model.State switch
+        {
+            IslandState.Expanded => layout.AreaRegion,
+            IslandState.Peek => layout.PeekRegion(_model.Pill),
+            _ => layout.PillRegion(_model.Pill),
+        };
+
+    private void OnStateChanged(IslandState from)
+    {
+        if (_window.Layout is not { } layout) return;
+        var state = _model.State;
+        var shape = Shape(layout, state);
+        _settled = false;
+
+        if (state == IslandState.Expanded)
+        {
+            _window.SetHitRegion(layout.ExpandedRegion);
+            if (_view.ExpandedLayer.Visibility == Visibility.Collapsed)
+            {
+                // Back from fully closed; mid-close, the content grows back from where it is.
+                _view.ExpandedLayer.Visibility = Visibility.Visible;
+                IslandSurface.SetContentShown(_view.ExpandedLayer, false);
+            }
+            _view.ExpandedLayer.IsHitTestVisible = true;
+            _surface.Reveal(_view.ExpandedLayer, show: true);
+            _surface.Fade(_view.PillLayer, 0, TimeSpan.Zero, MotionTimings.ContentFadeOut);
+            _view.Player.SetActive(true);
+        }
+        else if (from == IslandState.Expanded)
+        {
+            _view.Player.SetActive(false);
+            _view.ExpandedLayer.IsHitTestVisible = false;
+            _surface.Reveal(_view.ExpandedLayer, show: false);
+            if (_model.Pill == PillKind.Compact)
+            {
+                _surface.Fade(_view.PillLayer, 1, MotionTimings.ContentDelay, MotionTimings.ContentFadeIn);
+            }
+        }
+
+        // Growing takes the bigger mouse region now; shrinking keeps it until the shape has settled.
+        if (state == IslandState.Peek) _window.SetHitRegion(Region(layout, state));
+        _surface.MorphTo(shape, Corner(shape, state), Spring(), shadow: state == IslandState.Expanded, Settle);
+        UpdateBars();
+    }
+
+    /// <summary>Widens or narrows the resting pill; while open, the model only remembers it for the next close.</summary>
+    private void OnPillChanged()
+    {
+        if (_model.State == IslandState.Expanded || _window.Layout is not { } layout) return;
+        var compact = _model.Pill == PillKind.Compact;
+        var shape = Shape(layout, _model.State);
+
+        if (_settled && compact) _window.SetHitRegion(Region(layout, _model.State));
+        _settled = false;
+        _surface.Fade(
+            _view.PillLayer, compact ? 1 : 0,
+            compact ? MotionTimings.ContentDelay : TimeSpan.Zero,
+            compact ? MotionTimings.ContentFadeIn : MotionTimings.ContentFadeOut);
+        _surface.MorphTo(shape, Corner(shape, _model.State), Spring(), shadow: false, Settle);
+        UpdateBars();
+    }
+
+    /// <summary>The shape came to rest. Back at the pill, the player leaves the tree and the mouse region shrinks to it.</summary>
+    private void Settle()
+    {
+        if (_model.State == IslandState.Expanded || _window.Layout is not { } layout) return;
+        _settled = true;
+        if (_model.State == IslandState.Pill) _view.ExpandedLayer.Visibility = Visibility.Collapsed;
+        _window.SetHitRegion(Region(layout, _model.State));
+        UpdateBars();
+    }
+
+    private void OnModelChanged()
+    {
+        _outsideClicks.Enabled = _model.WantsOutsideClicks;
+        UpdateBars();
+    }
+
+    private SpringSpec Spring() =>
+        (_model.IsGrowing ? SpringSpec.Open : SpringSpec.Close).WithSpeed(_settings.AnimationSpeed);
 
     // MARK: Pointer
 
-    private void OnPointerEntered(object sender, PointerRoutedEventArgs e)
-    {
-        _closeTimer.Stop();
-        if (_state != State.Collapsed || _menuOpen) return;
-        if (_settings.HoverDelayMs <= 0) Expand();
-        else Restart(_openTimer, _settings.HoverDelayMs);
-    }
-
-    private void OnPointerExited(object sender, PointerRoutedEventArgs e)
+    /// <summary>
+    /// Pointer events bubble from the island's buttons, and the column they come from is bigger
+    /// than the island while it is a pill or shrinking back to one. So every event is checked
+    /// against where the cursor really is; only the island itself counts. A touch has no cursor.
+    /// </summary>
+    private void UpdateHover(PointerRoutedEventArgs e, bool touchInside)
     {
         var touch = e.Pointer.PointerDeviceType == PointerDeviceType.Touch;
-        // Pointer events bubble, so leaving a button inside the island lands here too. Ask the
-        // system where the mouse really is; the event's own position may be the last one inside.
-        if (!touch && HoverRegion is { } region && _window.CursorIn(region)) return;
-
-        _openTimer.Stop();
-        if (_state == State.Expanded && !_pinned && !_menuOpen)
-        {
-            Restart(_closeTimer, touch ? TouchCloseDelayMs : _settings.CloseDelayMs);
-        }
+        var inside = touch ? touchInside : HoverRegion is { } region && _window.CursorIn(region);
+        if (inside != _model.IsHovering) _model.SetHovering(inside, touch);
     }
 
     /// <summary>A click or tap on the pill opens it at once, without waiting for the hover delay.</summary>
     private void OnPointerPressed(object sender, PointerRoutedEventArgs e)
     {
         var point = e.GetCurrentPoint(_view.Area);
-        if (_state != State.Collapsed || !(point.Properties.IsLeftButtonPressed || e.Pointer.PointerDeviceType == PointerDeviceType.Touch)) return;
-        _openTimer.Stop();
-        Expand();
+        if (_model.State == IslandState.Expanded || !(point.Properties.IsLeftButtonPressed || e.Pointer.PointerDeviceType == PointerDeviceType.Touch)) return;
+        _model.Click();
     }
 
-    private DispatcherQueueTimer OneShot(Action action)
+    /// <summary>The hook saw a click somewhere; it only counts if it was off the island.</summary>
+    private void OnClickedOutside()
     {
-        var timer = _queue.CreateTimer();
-        timer.IsRepeating = false;
-        timer.Tick += (_, _) => action();
-        return timer;
-    }
-
-    private static void Restart(DispatcherQueueTimer timer, int milliseconds)
-    {
-        timer.Stop();
-        timer.Interval = TimeSpan.FromMilliseconds(milliseconds);
-        timer.Start();
+        if (HoverRegion is { } region && _window.CursorIn(region)) return;
+        _model.ClickedOutside();
     }
 
     // MARK: Media
@@ -272,42 +281,15 @@ internal sealed class IslandController : IDisposable
     {
         _view.Player.Refresh();
         LoadArtwork();
-
-        if (_media.Current?.IsPlaying == true)
-        {
-            _shrinkTimer.Stop();
-            SetPill(PillKind.Compact);
-        }
-        else if (_pill == PillKind.Compact && !_shrinkTimer.IsRunning)
-        {
-            Restart(_shrinkTimer, PillShrinkDelayMs);
-        }
+        _model.SetLive(_media.Current?.IsPlaying == true);
         UpdateBars();
     }
 
-    /// <summary>Widens or narrows the closed pill; while open, only remembers it for the next close.</summary>
-    private void SetPill(PillKind pill)
-    {
-        if (pill == _pill) return;
-        _pill = pill;
-        if (_state != State.Collapsed || _window.Layout is not { } layout) return;
-
-        // Growing takes the wider region now; shrinking keeps it until the shape has settled.
-        if (_settled && pill == PillKind.Compact) _window.SetHitRegion(layout.PillRegion(pill));
-        _settled = false;
-        _surface.Fade(
-            _view.PillLayer, pill == PillKind.Compact ? 1 : 0,
-            pill == PillKind.Compact ? MotionTimings.ContentDelay : TimeSpan.Zero,
-            pill == PillKind.Compact ? MotionTimings.ContentFadeIn : MotionTimings.ContentFadeOut);
-        _surface.MorphTo(layout.Pill(pill), IslandMetrics.PillCornerRadius, Spring(SpringSpec.Open), shadow: false, Settle);
-        UpdateBars();
-    }
-
-    /// <summary>Bars only move while they can be seen: compact pill, playing, window shown.</summary>
+    /// <summary>Bars only move while they can be seen: the wide pill or its peek, playing, window shown.</summary>
     private void UpdateBars()
     {
-        var visible = _state == State.Collapsed
-            && _pill == PillKind.Compact
+        var visible = _model.State != IslandState.Expanded
+            && _model.Pill == PillKind.Compact
             && _media.Current?.IsPlaying == true
             && _settings.AudioBars
             && !_window.IsHiddenForFullscreen;
@@ -352,9 +334,7 @@ internal sealed class IslandController : IDisposable
         var menu = new MenuFlyout { ShouldConstrainToRootBounds = false };
         menu.Opening += (_, _) =>
         {
-            _menuOpen = true;
-            _openTimer.Stop();
-            _closeTimer.Stop();
+            _model.SetMenuOpen(true, pointerInside: true);
             // The island never takes focus, but a menu only closes on an outside click once its
             // window has it. Handed back when the menu closes.
             _foregroundBeforeMenu = _window.TakeForeground();
@@ -362,11 +342,9 @@ internal sealed class IslandController : IDisposable
         };
         menu.Closed += (_, _) =>
         {
-            _menuOpen = false;
             _window.ReturnForeground(_foregroundBeforeMenu);
             _foregroundBeforeMenu = 0;
-            var inside = HoverRegion is { } region && _window.CursorIn(region);
-            if (!inside && _state == State.Expanded && !_pinned) Restart(_closeTimer, _settings.CloseDelayMs);
+            _model.SetMenuOpen(false, pointerInside: HoverRegion is { } region && _window.CursorIn(region));
         };
         return menu;
     }
@@ -375,12 +353,8 @@ internal sealed class IslandController : IDisposable
     {
         menu.Items.Clear();
 
-        var pin = new ToggleMenuFlyoutItem { Text = L.Get("Menu_Pin"), IsChecked = _pinned, Icon = new FontIcon { Glyph = Glyphs.Pin } };
-        pin.Click += (_, _) =>
-        {
-            _pinned = pin.IsChecked;
-            if (_pinned) Expand();
-        };
+        var pin = new ToggleMenuFlyoutItem { Text = L.Get("Menu_Pin"), IsChecked = _model.IsPinned, Icon = new FontIcon { Glyph = Glyphs.Pin } };
+        pin.Click += (_, _) => _model.SetPinned(pin.IsChecked);
         menu.Items.Add(pin);
         menu.Items.Add(new MenuFlyoutSeparator());
 

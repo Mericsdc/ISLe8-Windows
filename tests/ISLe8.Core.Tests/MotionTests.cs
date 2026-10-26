@@ -16,6 +16,18 @@ public class MotionTests
     {
         Assert.Equal(0.17, SpringSpec.Open.WithSpeed(2).Response, precision: 6);
         Assert.Equal(SpringSpec.Open.DampingFraction, SpringSpec.Open.WithSpeed(2).DampingFraction);
-        Assert.Equal(0.34 * 4, SpringSpec.Open.WithSpeed(0.01).Response, precision: 6);
+        // Held to 0.5–2, as on the Mac.
+        Assert.Equal(0.34 * 2, SpringSpec.Open.WithSpeed(0.01).Response, precision: 6);
+        Assert.Equal(0.34 / 2, SpringSpec.Open.WithSpeed(9).Response, precision: 6);
+    }
+
+    [Fact]
+    public void ContentSettlesInAndFoldsAwayLikeTheMac()
+    {
+        Assert.Equal(60, MotionTimings.ContentDelay.TotalMilliseconds);
+        Assert.Equal(220, MotionTimings.ContentFadeIn.TotalMilliseconds);
+        Assert.Equal(160, MotionTimings.ContentFadeOut.TotalMilliseconds);
+        Assert.Equal(0.94f, MotionTimings.ContentScaleIn);
+        Assert.Equal(0.9f, MotionTimings.ContentScaleOut);
     }
 }

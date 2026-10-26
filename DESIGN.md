@@ -97,18 +97,24 @@ Arayüz C# ile kuruluyor (`Ui.Text`, `Ui.IconButton`, `IslandView`…). Nedenler
 
 ### Hover
 
+Kurallar Mac'le aynı (PORTING.md §2) ve `ISLe8.Core.Island.IslandModel`'de; uygulama yalnızca olayları
+iletip durumu çiziyor. Süreler testlerde elle ilerletilen bir saatle sınanıyor.
+
 | Olay | Davranış |
 |---|---|
-| İmleç pill'e girdi | 150 ms sonra açılır (ayar: 0–2000 ms) |
-| Bu sürede çıktı | Açılmaz (üstten geçen fare adayı açmasın) |
-| Pill'e tıklandı | Hemen açılır |
-| İmleç açık adadan çıktı | 250 ms sonra kapanır (ayar). Çıkış, olayın konumuyla değil `GetCursorPos` ile doğrulanıyor (adanın içindeki bir düğmeden çıkmak adadan çıkmak sayılmıyor). |
+| İmleç pill'e girdi (üzerine gelince modu) | Açılma gecikmesinden sonra (varsayılan 0, ayar 0–1 sn) doğrudan açılır; ara aşama yok. Gecikme 0 olsa da imleç en az 50 ms durmalı: üstünden geçen imleç açmaz |
+| İmleç pill'e girdi (tıklayınca modu) | 60 ms sonra pill hafifçe büyür (peek: +18 × 6 DIP); tıklayınca açılır |
+| Pill'e tıklandı | Her iki modda hemen açılır |
+| İmleç adadan çıktı | Açıksa 0,35 sn sonra kapanır (ayar 0–1,5 sn), peek ise 50 ms'de geri döner |
+| Hover alanı | Yalnızca adanın kendisi (pill, peek ya da açık ada); pencerenin geri kalanı sayılmaz. Her giriş, çıkış ve hareket olayı `GetCursorPos` ile doğrulanıyor: adanın içindeki bir düğmeden çıkmak adadan çıkmak sayılmıyor, kapanırken büyük kalan pencere bölgesine girmek de adaya girmek sayılmıyor |
+| Dışarı tıklama | Ada açıkken ve imleç üstünde değilken başka yere tıklamak adayı hemen kapatır (sabitliyse kapatmaz). Ada odak almadığı için Windows bunu bildirmiyor; düşük seviyeli bir fare kancası yalnızca bu durumdayken kurulu (`OutsideClickWatcher`) |
 | Dokunma | Dokununca açılır; parmak kalkınca 4 sn açık kalır |
 | Müzik durdu | Pill 1,5 sn sonra daralır, şarkı geçişindeki kısa "duraklatıldı" raporlarında titremesin |
-| Sağ tık | Menü: Açık tut, Tema, Ekran, Dil, Çık. Menü açıkken ada kapanmaz. Menü açılırken ada geçici olarak öne alınıyor (dışarı tıklayınca kapansın diye), kapanınca odak önceki pencereye dönüyor. |
+| Sağ tık | Menü: Açık tut, Tema, Ekran, Dil, Çık. Menü açıkken ada ne açılır ne kapanır; kapanınca imleç dışarıdaysa ada kapanma gecikmesiyle kapanır. Menü açılırken ada geçici olarak öne alınıyor (dışarı tıklayınca kapansın diye), kapanınca odak önceki pencereye dönüyor. Mac'te bu menü yok (sabitleme ve ayarlar başlıktaki düğmelerde); Windows alışkanlığı olduğu için duruyor |
 
-**Mac'ten farkı:** Mac'te gecikme 0. Windows'ta üst orta, ekranı kaplayan pencerelerin başlık çubuğu
-ve tarayıcı sekmeleri; 0 ms ile ada sekmeye uzanırken sürekli açılırdı. Varsayılan 150 ms.
+**Gecikme kararı:** W0'da Windows'a özgü 150 ms seçilmişti (üst ortada başlık çubukları ve tarayıcı
+sekmeleri var diye). PORTING.md §4 ile Mac'teki 0 + 50 ms'ye dönüldü; 50 ms'lik süzme, pill'in
+üstünden geçen imleci zaten eliyor (TESTING.md › W1 adım 1). Rahatsız ederse tek bir ayar.
 
 ### DPI (Per-Monitor v2)
 
@@ -135,10 +141,14 @@ ve tarayıcı sekmeleri; 0 ms ile ada sekmeye uzanırken sürekli açılırdı. 
 
 ### Hareket
 
-- Açılış `response 0,34 / damping 0,78`, kapanış `0,28 / 0,95` (Mac Faz 7 değerleri).
+- Büyüyen geçiş (açılma, peek, pill'in genişlemesi) `response 0,34 / damping 0,78`, küçülen
+  `0,28 / 0,95` (Mac Faz 7 değerleri). Animasyon hızı çarpanı ayarda 0,6–1,6, modelde 0,5–2'ye
+  sıkıştırılır.
 - Composition'ın `Period` değeri `response / 2π` olarak veriliyor (bkz. Riskler).
-- İçerik kabuktan 80 ms sonra 180 ms'de beliriyor, kapanışta 110 ms'de siliniyor.
-- Windows'ta "Animasyon efektleri" kapalıysa yay yerine 160 ms'lik düz geçiş.
+- İçerik Mac'teki gibi: açılışta kabuktan 60 ms sonra 220 ms'de, üst kenara bağlı olarak %94'ten
+  büyüyerek ve belirerek (ease-out); kapanışta 160 ms'de %90'a küçülüp silinerek (ease-in). Böylece
+  kabuk pill'e katlanırken boş bir kutu kalmıyor.
+- Windows'ta "Animasyon efektleri" kapalıysa yay yerine 160 ms'lik ease-in-out; içerik yalnızca solar.
 
 ---
 
@@ -151,7 +161,7 @@ ve tarayıcı sekmeleri; 0 ms ile ada sekmeye uzanırken sürekli açılırdı. 
 | Bu bilgisayarın pili | IOKit | `Microsoft.Windows.System.Power.PowerManager` olayları | W1 |
 | Hava | Open-Meteo, saat diliminden şehir | Aynısı; `TimeZoneInfo.TryConvertWindowsIdToIanaId` ile "Turkey Standard Time" → `Europe/Istanbul` | W1 |
 | Zamanlayıcı / Pomodoro | | `DispatcherQueueTimer` (yalnızca görünürken), bitince `AppNotificationManager` | W1 |
-| Home (3 sütun) + dock | SwiftUI | Takvim ayı + günün etkinlikleri · büyük oynatıcı · hava (hissedilen, nem, rüzgar, UV, 5 saat, 5 gün); Pano / Kompakt / Minimal düzen | W1 |
+| Home (3 sütun) + dock | SwiftUI | Takvim ayı + günün etkinlikleri · büyük oynatıcı · hava (hissedilen, nem, rüzgar, UV, 5 saat, 5 gün); Geniş / Kompakt / Minimal düzen ("Pano" değil: Pano bir sekme) | W1 |
 | Pano geçmişi | changeCount, SQLite + FTS5 | `AddClipboardFormatListener` (`WM_CLIPBOARDUPDATE`), Microsoft.Data.Sqlite + FTS5. `ExcludeClipboardContentFromMonitorProcessing`, `CanIncludeInClipboardHistory = 0` ya da `CanUploadToCloudClipboard = 0` taşıyan içerik (parola yöneticileri) kaydedilmez | W2 |
 | Raf | sürükle-bırak, AirDrop | Pill'e sürükle-bırak (OLE drop), Share UI (`IDataTransferManagerInterop.ShowShareUIForWindow`; Nearby Share dahil) | W2 |
 | Bildirim aynası | usernoted veritabanı | `UserNotificationListener` (MSIX + `userNotificationListener` yeteneği + kullanıcı izni) | W3 |
@@ -222,7 +232,7 @@ Her faz `scripts/measure.ps1` ile biter; bütçe aşılırsa faz bitmiş sayılm
 | Platformlar | x64 ve ARM64 (32 bit yok) |
 | En düşük Windows | Windows 10 2004 (19041) |
 | Varsayılan tema | Ember |
-| Hover gecikmesi | 150 ms (Mac'te 0) |
+| Açılma gecikmesi | 0, en az 50 ms süzme; Mac ile aynı (W0'da 150 ms'ydi; PORTING.md §4) |
 | Test | Kullanıcının Windows bilgisayarı; Mac'te derleme denetimi |
 | Klasör | `~/Documents/LRXe8/ISLe8-Windows` |
 

@@ -14,6 +14,7 @@
   </resheader>
   <data name="Media_NothingPlaying" xml:space="preserve">
     <value>Şu an bir şey çalmıyor</value>
+    <comment>mac: Şu an bir şey çalmıyor</comment>
   </data>
   <data name="Media_NothingPlayingHint" xml:space="preserve">
     <value>Spotify'da, tarayıcıda ya da Medya Oynatıcı'da bir şey başlat.</value>
@@ -26,51 +27,65 @@
   </data>
   <data name="Media_Previous" xml:space="preserve">
     <value>Önceki</value>
+    <comment>mac: Önceki</comment>
   </data>
   <data name="Media_Next" xml:space="preserve">
     <value>Sonraki</value>
+    <comment>mac: Sonraki</comment>
   </data>
   <data name="Media_Shuffle" xml:space="preserve">
     <value>Karışık çal</value>
+    <comment>mac: Karışık çal</comment>
   </data>
   <data name="Media_Repeat" xml:space="preserve">
     <value>Tekrarla</value>
+    <comment>mac: Tekrarla</comment>
   </data>
   <data name="Menu_Pin" xml:space="preserve">
     <value>Açık tut</value>
+    <comment>mac: Açık tut</comment>
   </data>
   <data name="Menu_Theme" xml:space="preserve">
     <value>Tema</value>
+    <comment>mac: Tema</comment>
   </data>
   <data name="Menu_Display" xml:space="preserve">
     <value>Ekran</value>
+    <comment>mac: Ekran</comment>
   </data>
   <data name="Menu_DisplayPrimary" xml:space="preserve">
     <value>Ana ekran</value>
+    <comment>mac: Ana ekran</comment>
   </data>
   <data name="Menu_DisplayItem" xml:space="preserve">
     <value>Ekran {0} · {1}×{2} · %{3}</value>
   </data>
   <data name="Menu_Language" xml:space="preserve">
     <value>Dil</value>
+    <comment>mac: Dil</comment>
   </data>
   <data name="Menu_LanguageSystem" xml:space="preserve">
-    <value>Sistem dili</value>
+    <value>Sistem</value>
+    <comment>mac: Sistem</comment>
   </data>
   <data name="Menu_Quit" xml:space="preserve">
     <value>ISLe8'den çık</value>
+    <comment>mac: ISLe8'den çık</comment>
   </data>
   <data name="Theme_notch_black" xml:space="preserve">
     <value>Notch Black</value>
+    <comment>mac: Notch Black</comment>
   </data>
   <data name="Theme_graphite" xml:space="preserve">
     <value>Graphite</value>
   </data>
   <data name="Theme_glass" xml:space="preserve">
     <value>Cam</value>
+    <comment>mac: Cam</comment>
   </data>
   <data name="Theme_artwork" xml:space="preserve">
     <value>Kapak rengi</value>
+    <comment>mac: Kapak rengi</comment>
   </data>
   <data name="Theme_lrx_mono" xml:space="preserve">
     <value>LRX Mono</value>

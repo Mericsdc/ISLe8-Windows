@@ -119,4 +119,35 @@ public class IslandLayoutTests
 
         Assert.Equal(1, layout.Scale);
     }
+
+    [Theory]
+    [InlineData(PillKind.Idle)]
+    [InlineData(PillKind.Compact)]
+    public void APeekIsThePillSwollenAroundItsMiddle(PillKind kind)
+    {
+        var layout = On(1920, 1080, 1.0);
+        var pill = layout.Pill(kind);
+
+        var peek = layout.Peek(kind);
+
+        Assert.Equal(pill.Width + 18, peek.Width);
+        Assert.Equal(pill.Height + 6, peek.Height);
+        Assert.Equal(pill.Y, peek.Y);
+        Assert.Equal(pill.X + pill.Width / 2, peek.X + peek.Width / 2, precision: 6);
+    }
+
+    [Fact]
+    public void APeekKeepsThePointerThatSwelledIt()
+    {
+        var layout = On(3840, 2160, 1.5);
+
+        var pill = layout.PillRegion(PillKind.Idle);
+        var peek = layout.PeekRegion(PillKind.Idle);
+
+        Assert.Equal(0, peek.Y);
+        Assert.True(peek.X <= pill.X && peek.Right >= pill.Right && peek.Bottom > pill.Bottom);
+        // Half-pixel edges round outwards, like the pill's.
+        var target = (IslandMetrics.IdlePillWidth + IslandMetrics.PeekGrowth.Width + 2 * IslandMetrics.HitSlop) * 1.5;
+        Assert.InRange(peek.Width, target, target + 2);
+    }
 }
