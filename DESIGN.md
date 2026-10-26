@@ -88,7 +88,9 @@ Arayüz C# ile kuruluyor (`Ui.Text`, `Ui.IconButton`, `IslandView`…). Nedenler
 - **Şekil Composition'da:** Tek bir `CompositionRoundedRectangleGeometry` pill ile açık ada arasında
   yaylanıyor; aynı değerlerle ikinci bir geometri içeriği kırpıyor. XAML düzeni yalnızca monitör ya
   da DPI değişince çalışıyor, animasyon sırasında hiç çalışmıyor.
-- **Gölge:** `LayerVisual` + `DropShadow`, yalnızca açıkken görünür.
+- **Gölge:** Boş bir `SpriteVisual`'ın `DropShadow`'u; maskesi şeklin canlı kopyası
+  (`CompositionVisualSurface`), böylece gölge yayla birlikte büyüyor. Yalnızca açıkken görünür.
+  `LayerVisual` + `DropShadow` bu pencerede pill'in üstüne opak siyah bir kutu çiziyor (Riskler 1).
 - **Tam ekran:** Pencere boşluk ayırmayan bir AppBar olarak kayıtlı; kabuk, tam ekran bir uygulama
   (oyun, video, sunum) açılıp kapanınca `ABN_FULLSCREENAPP` gönderiyor. Adanın monitöründeyse ada
   gizleniyor. Polling yok.
@@ -180,15 +182,17 @@ Her faz `scripts/measure.ps1` ile biter; bütçe aşılırsa faz bitmiş sayılm
 
 ## 6. Riskler ve Windows'ta doğrulanacaklar
 
-Bu Mac'te Windows uygulaması çalışmıyor. Aşağıdakiler derleniyor ama ilk Windows çalıştırmasında
-gözle doğrulanmalı:
+İlk Windows çalıştırmasında (2026-10-26, TESTING.md) 1–3 doğrulandı; geri kalanı bekliyor.
 
-1. **Saydam pencere:** Saydam sistem arka planı + DWM blur-behind tekniği. Pill'in çevresi siyah ya da
-   beyaz görünürse yedek plan: WinUIEx'in `TransparentTintBackdrop`'u.
-2. **`AppWindow.Show(false)`:** Pencere odak çalmadan açılıyor; içerik çizilmezse `Window.Activate()`
-   bir kez çağrılır (açılışta bir kez odak alır).
-3. **`SetWindowRgn` + WinUI:** Bölgenin hem fareyi hem çizimi kırpması bekleniyor. Pill'in yanına
-   tıklayınca alttaki pencereye geçmeli.
+1. **Saydam pencere:** Saydam sistem arka planı + DWM blur-behind tekniği **çalışıyor**. İki tuzak
+   çıktı ve düzeltildi: `LayerVisual` gölgesi opak siyah bir kutu çiziyordu (maskeli `DropShadow`'a
+   geçildi), `AppWindow.Show()` `WS_DLGFRAME`'i geri koyup 2 DIP beyaz çerçeve çiziyordu (çerçeve
+   gösterimden sonra yeniden sökülüyor, `WM_NCCALCSIZE` istemci alanını pencerenin tamamı yapıyor).
+2. **`AppWindow.Show(false)`:** İçerik `Window.Activate()` olmadan da çiziliyor ve girdi alıyor; odak
+   çalınmıyor.
+3. **`SetWindowRgn` + WinUI:** Bölge hem fareyi hem çizimi kırpıyor; pill'in yanındaki nokta alttaki
+   pencereye gidiyor. Not: fare otomasyonuyla test ederken `SetCursorPos` WinUI'ye pointer olayı
+   vermiyor; gerçek bir hareket (`SendInput`) gerekiyor.
 4. **Yay hızı:** Composition `Period` = `response / 2π` varsayımı. Açılış Mac'tekinden belirgin
    yavaş ya da hızlıysa `SpringSpec.CompositionPeriod` tek satırda değişir.
 5. **SMTC farkları:** Karışık çal/tekrarla her uygulamada desteklenmiyor (düğme devre dışı görünür).
@@ -228,4 +232,4 @@ gözle doğrulanmalı:
 
 | Faz | Durum | Not |
 |---|---|---|
-| W0 · İskelet | Yazıldı (2026-10-26), Windows'ta henüz çalıştırılmadı | Mac'te: uygulama kodu WinUI 3 / Windows App SDK 2.5.1'e karşı uyarısız derleniyor, 71 Core testi geçiyor. Windows'ta README'deki W0 test listesi bekleniyor. |
+| W0 · İskelet | Windows 11'de çalışıyor (2026-10-26) | 71 Core testi geçiyor. İlk çalıştırmada iki çizim hatası bulunup düzeltildi (Riskler 1). Pencere, hover, menü, medya, tema ve 4K %150 doğrulandı; TESTING.md'de kalanlar ve Native AOT ölçümü bekliyor. Sürümler `release.yml` ile GitHub Releases'e zip olarak çıkıyor. |

@@ -1,0 +1,4 @@
+# The repo is edited on both macOS and Windows; keep line endings as .editorconfig says.
+* text=auto eol=lf
+*.ps1 text eol=crlf
+*.png binary

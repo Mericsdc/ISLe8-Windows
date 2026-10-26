@@ -8,4 +8,5 @@ BundleArtifacts/
 *.pfx
 TestResults/
 publish/
+artifacts/
 .DS_Store

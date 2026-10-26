@@ -1,5 +1,5 @@
 # Windows'ta derleme denetimi. Yalnızca elle çalışır (GitHub › Actions › windows › Run workflow),
-# böylece özel reponun Actions dakikaları her push'ta harcanmaz. README › "GitHub Actions".
+# böylece özel reponun Actions dakikaları her push'ta harcanmaz. Sürüm yayını: release.yml.
 name: windows
 
 on:
@@ -28,10 +28,11 @@ jobs:
 
       - name: Native AOT ile yayınla
         if: matrix.platform == 'x64'
-        run: dotnet publish src/ISLe8.App -c Release -r win-x64 -p:Platform=x64 -p:Unpackaged=true -o publish
+        shell: pwsh
+        run: ./scripts/publish.ps1 -Platform x64
 
       - uses: actions/upload-artifact@v4
         if: matrix.platform == 'x64'
         with:
           name: ISLe8-win-x64
-          path: publish
+          path: artifacts/*.zip
