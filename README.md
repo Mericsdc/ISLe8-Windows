@@ -69,7 +69,7 @@ powershell -ExecutionPolicy Bypass -File scripts\publish.ps1
 ```
 
 `artifacts\ISLe8-<sürüm>-win-x64.zip` üretir; Releases'teki dosyanın aynısı. `-Platform ARM64` ARM için,
-`-NoAot` C++ araçları olmayan bir bilgisayarda (JIT, kendi .NET'iyle; ~90 MB).
+`-NoAot` C++ araçları olmayan bir bilgisayarda (JIT, kendi .NET'iyle; ~65 MB).
 
 ### Sürüm yayınlama
 

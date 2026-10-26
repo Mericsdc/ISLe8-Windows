@@ -6,7 +6,7 @@
   IgnorableNamespaces="uap rescap">
 
   <!-- Publisher must match the signing certificate's subject (README: "MSIX imzalama"). -->
-  <Identity Name="com.lrxe8.isle8" Publisher="CN=LRXe8" Version="0.1.0.0" />
+  <Identity Name="com.lrxe8.isle8" Publisher="CN=LRXe8" Version="0.1.1.0" />
 
   <Properties>
     <DisplayName>ISLe8</DisplayName>

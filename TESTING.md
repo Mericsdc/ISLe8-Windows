@@ -4,9 +4,10 @@ Her maddeyi işaretle; olmayan varsa günlükle birlikte not et (README › Gün
 
 ## İlk Windows çalıştırması (2026-10-26)
 
-Windows 11 Pro 26300, tek monitör 3840×2160 %150, Debug (JIT) ve Release (kendi .NET'iyle JIT).
-Fare otomasyonla gezdirildi; medya, Windows.Media.Playback ile açılan sessiz bir test parçasıyla
-denendi (Spotify ile değil). İşaretli maddeler bu çalıştırmada görüldü.
+Windows 11 Pro 26300, tek monitör 3840×2160 %150. Önce Debug ve Release (kendi .NET'iyle JIT), sonra
+v0.1.0 Release'inin Native AOT x64 zip'i. Fare otomasyonla gezdirildi; medya önce
+Windows.Media.Playback ile açılan sessiz bir test parçasıyla, sonra Spotify ile denendi. İşaretli
+maddeler bu çalıştırmalarda görüldü. ARM64 zip'i derlendi ama ARM bir bilgisayarda denenmedi.
 
 Bulunup düzeltilenler:
 
@@ -18,6 +19,9 @@ Bulunup düzeltilenler:
    istemci alanını her zaman pencerenin tamamı yapıyor (`IslandWindow`).
 3. Bilgisayarda .NET 10 SDK yoktu (yalnızca .NET 6/8); `scripts\run.ps1` artık bunu söylüyor, `global.json`
    SDK sürümünü sabitliyor. Kullanmak için SDK gerekmesin diye Releases'te hazır zip var.
+4. **Zip'in yarısı kullanılmayan kütüphaneydi** (0.1.1). `Microsoft.WindowsAppSDK` üst paketi AI, ML
+   (`onnxruntime.dll`, `DirectML.dll`), Search, Widgets ve DWriteCore'u da getiriyordu. Uygulama artık
+   yalnızca WinUI, InteractiveExperiences, Foundation ve Runtime paketlerine başvuruyor.
 
 ## Pencere
 
@@ -49,7 +53,8 @@ Bulunup düzeltilenler:
 - [ ] Şarkı değişirken pill daralıp yeniden genişlemiyor.
 - [x] Çalan uygulamayı tamamen kapatınca ada çökmeden boş duruma geçiyor.
 - [x] Açık adada başlık ve "Sanatçı · Uygulama" doğru.
-- [ ] Kapak, ilerleme ve süreler doğru.
+- [x] Kapak, ilerleme ve süreler doğru (Spotify).
+- [x] Spotify duraklatılmışken pill dar, açık adada oynat simgesi var.
 - [ ] Oynat/duraklat, sonraki, önceki çalışıyor.
 - [ ] Kaydırıcıyla şarkıda ileri/geri gidilebiliyor (destekleyen uygulamalarda).
 - [ ] Karışık çal / tekrarla destekleyen uygulamada çalışıyor, desteklemeyende soluk.
@@ -87,3 +92,9 @@ Bulunup düzeltilenler:
 ## Ölçüm
 
 README › Ölçüm. Hedefler DESIGN.md › Performans bütçesi'nde.
+
+| Tarih | Yapı | Durum | CPU | Özel bellek | Çalışma kümesi |
+|---|---|---|---|---|---|
+| 2026-10-26 | v0.1.0, Native AOT x64 | Spotify çalıyor, ada kapalı, ses çubukları oynuyor, 30 sn | %0,43 (hedef < %1) | 37,3 MB (hedef < 80 MB) | 109,2 MB |
+
+- [ ] Boşta (müzik yok, ada kapalı) CPU < %0,1.

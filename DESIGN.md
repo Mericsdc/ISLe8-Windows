@@ -232,4 +232,4 @@ Her faz `scripts/measure.ps1` ile biter; bütçe aşılırsa faz bitmiş sayılm
 
 | Faz | Durum | Not |
 |---|---|---|
-| W0 · İskelet | Windows 11'de çalışıyor (2026-10-26) | 71 Core testi geçiyor. İlk çalıştırmada iki çizim hatası bulunup düzeltildi (Riskler 1). Pencere, hover, menü, medya, tema ve 4K %150 doğrulandı; TESTING.md'de kalanlar ve Native AOT ölçümü bekliyor. Sürümler `release.yml` ile GitHub Releases'e zip olarak çıkıyor. |
+| W0 · İskelet | Windows 11'de çalışıyor (2026-10-26) | 71 Core testi geçiyor. İlk çalıştırmada iki çizim hatası bulunup düzeltildi (Riskler 1). Pencere, hover, menü, medya (Spotify dahil), tema ve 4K %150 doğrulandı. Native AOT, müzik çalarken: CPU %0,43, özel bellek 37 MB (bütçe içinde); boşta ölçüm ve TESTING.md'de kalanlar bekliyor. Sürümler `release.yml` ile GitHub Releases'e zip olarak çıkıyor (0.1.1'den beri AI/ML kütüphanesiz). |
