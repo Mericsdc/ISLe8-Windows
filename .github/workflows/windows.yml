@@ -1,10 +1,8 @@
-# Bu depo bir GitHub reposuna gönderildiğinde her push'ta Windows'ta derler. Şu an hiçbir yere
-# gönderilmedi; README'deki "GitHub Actions" bölümüne bakın.
+# Windows'ta derleme denetimi. Yalnızca elle çalışır (GitHub › Actions › windows › Run workflow),
+# böylece özel reponun Actions dakikaları her push'ta harcanmaz. README › "GitHub Actions".
 name: windows
 
 on:
-  push:
-  pull_request:
   workflow_dispatch:
 
 jobs:

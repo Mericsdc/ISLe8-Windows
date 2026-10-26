@@ -167,10 +167,12 @@ scripts/check-on-mac.sh
    çalışır; işlev testi için yeterli. DPI, sanal makinenin çözünürlüğü ve Windows ölçeği değiştirilerek
    denenebilir; Parallels birden çok sanal ekran verebilir. CPU/bellek ölçümü gerçek bir PC'yi
    temsil etmez.
-3. **GitHub Actions (`windows-latest`).** `.github/workflows/windows.yml` hazır: her push'ta x64 ve
+3. **GitHub Actions (`windows-latest`).** Depo özel olarak
+   [github.com/Mericsdc/ISLe8-Windows](https://github.com/Mericsdc/ISLe8-Windows) adresinde.
+   `.github/workflows/windows.yml` yalnızca elle çalışır (Actions › windows › Run workflow): x64 ve
    ARM64 derler, Core testlerini çalıştırır, Native AOT ile yayınlayıp indirilebilir bir zip bırakır.
-   Arayüzü test edemez; yalnızca derlenebilirliği kanıtlar. Kullanmak için depoyu (özel) bir GitHub
-   reposuna göndermek gerekiyor; şimdiye kadar hiçbir yere gönderilmedi.
+   Push'ta kendiliğinden çalışmaz, çünkü özel repolarda Windows dakikaları iki kat sayılır. Arayüzü
+   test edemez; yalnızca derlenebilirliği kanıtlar.
 
 ---
 
