@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Media_NothingPlaying" xml:space="preserve">
+    <value>Nothing playing</value>
+  </data>
+  <data name="Media_NothingPlayingHint" xml:space="preserve">
+    <value>Start something in Spotify, a browser or Media Player.</value>
+  </data>
+  <data name="Media_UnknownTitle" xml:space="preserve">
+    <value>Unknown track</value>
+  </data>
+  <data name="Media_PlayPause" xml:space="preserve">
+    <value>Play / Pause</value>
+  </data>
+  <data name="Media_Previous" xml:space="preserve">
+    <value>Previous</value>
+  </data>
+  <data name="Media_Next" xml:space="preserve">
+    <value>Next</value>
+  </data>
+  <data name="Media_Shuffle" xml:space="preserve">
+    <value>Shuffle</value>
+  </data>
+  <data name="Media_Repeat" xml:space="preserve">
+    <value>Repeat</value>
+  </data>
+  <data name="Menu_Pin" xml:space="preserve">
+    <value>Keep open</value>
+  </data>
+  <data name="Menu_Theme" xml:space="preserve">
+    <value>Theme</value>
+  </data>
+  <data name="Menu_Display" xml:space="preserve">
+    <value>Display</value>
+  </data>
+  <data name="Menu_DisplayPrimary" xml:space="preserve">
+    <value>Main display</value>
+  </data>
+  <data name="Menu_DisplayItem" xml:space="preserve">
+    <value>Display {0} · {1}×{2} · {3}%</value>
+  </data>
+  <data name="Menu_Language" xml:space="preserve">
+    <value>Language</value>
+  </data>
+  <data name="Menu_LanguageSystem" xml:space="preserve">
+    <value>System language</value>
+  </data>
+  <data name="Menu_Quit" xml:space="preserve">
+    <value>Quit ISLe8</value>
+  </data>
+  <data name="Theme_notch_black" xml:space="preserve">
+    <value>Notch Black</value>
+  </data>
+  <data name="Theme_graphite" xml:space="preserve">
+    <value>Graphite</value>
+  </data>
+  <data name="Theme_glass" xml:space="preserve">
+    <value>Glass</value>
+  </data>
+  <data name="Theme_artwork" xml:space="preserve">
+    <value>Artwork</value>
+  </data>
+  <data name="Theme_lrx_mono" xml:space="preserve">
+    <value>LRX Mono</value>
+  </data>
+  <data name="Theme_midnight" xml:space="preserve">
+    <value>Midnight</value>
+  </data>
+  <data name="Theme_ember" xml:space="preserve">
+    <value>Ember</value>
+  </data>
+</root>

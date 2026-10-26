@@ -1,0 +1,11 @@
+bin/
+obj/
+AppPackages/
+BundleArtifacts/
+*.user
+*.suo
+.vs/
+*.pfx
+TestResults/
+publish/
+.DS_Store
