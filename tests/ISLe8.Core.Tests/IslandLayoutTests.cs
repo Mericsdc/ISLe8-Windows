@@ -4,7 +4,8 @@ namespace ISLe8.Core.Tests;
 
 public class IslandLayoutTests
 {
-    private static readonly DipSize Expanded = IslandMetrics.DefaultExpanded;
+    /// <summary>W0's open island; the layout's arithmetic doesn't depend on which size it is given.</summary>
+    private static readonly DipSize Expanded = new(560, 160);
 
     private static IslandLayout On(int width, int height, double scale, int x = 0, int y = 0) =>
         IslandLayout.Compute(new PixelRect(x, y, width, height), new PixelRect(x, y, width, height - 48), scale, Expanded);

@@ -14,6 +14,17 @@ public enum MonitorChoice
     Active,
 }
 
+/// <summary>How much Home shows; the Mac's names. Shown as Wide, Compact and Minimal ("Pano" is a tab).</summary>
+[JsonConverter(typeof(LenientEnumConverter<HomeStyle>))]
+public enum HomeStyle
+{
+    /// <summary>"Geniş": the full dashboard.</summary>
+    Dashboard,
+    Compact,
+    /// <summary>A single strip at Home; other tabs grow the island.</summary>
+    Minimal,
+}
+
 /// <summary>How the island opens: on its own when the pointer rests on it, or only when clicked.</summary>
 [JsonConverter(typeof(LenientEnumConverter<OpenMode>))]
 public enum OpenMode
@@ -49,6 +60,21 @@ public sealed class AppSettings
     public double CloseDelay { get; set; } = 0.35;
 
     public double AnimationSpeed { get; set; } = 1;
+
+    public HomeStyle HomeStyle { get; set; } = HomeStyle.Dashboard;
+
+    /// <summary>The open island's width in the wide layout, 680–980 DIPs (Settings › Appearance).</summary>
+    public double ExpandedWidth { get; set; } = 820;
+
+    /// <summary>The dock's tabs by id (<see cref="Island.IslandTabs.AllIds"/>), left to right.</summary>
+    public List<string> TabOrder { get; set; } = [.. Island.IslandTabs.AllIds];
+
+    public List<string> HiddenTabs { get; set; } = [];
+    public bool SwipeToChangeTabs { get; set; } = true;
+
+    /// <summary>Kept out of screenshots, recordings and shared screens.</summary>
+    public bool HideFromScreenCapture { get; set; }
+
     public bool HideInFullscreen { get; set; } = true;
     public bool AudioBars { get; set; } = true;
     public MonitorChoice Monitor { get; set; } = MonitorChoice.Primary;
@@ -76,6 +102,12 @@ public sealed class AppSettings
         OpenDelay = Clamp(OpenDelay, 0, 1, 0);
         CloseDelay = Clamp(CloseDelay, 0, 1.5, 0.35);
         AnimationSpeed = Clamp(AnimationSpeed, 0.5, 2, 1);
+        ExpandedWidth = Clamp(ExpandedWidth, 680, 980, 820);
+        // Known tabs in the saved order, then any the file doesn't mention; at least one shown.
+        var known = Island.IslandTabs.AllIds;
+        TabOrder = (TabOrder ?? []).Where(known.Contains).Distinct().Concat(known).Distinct().ToList();
+        HiddenTabs = (HiddenTabs ?? []).Where(known.Contains).Distinct().ToList();
+        if (HiddenTabs.Count >= known.Count) HiddenTabs.Clear();
         if (!Languages.Contains(Language)) Language = "system";
         CustomThemes = (CustomThemes ?? []).Where(theme => theme is not null).Select(theme => theme.Normalized()).ToList();
         if (Monitor == MonitorChoice.Named && string.IsNullOrWhiteSpace(MonitorDevice)) Monitor = MonitorChoice.Primary;

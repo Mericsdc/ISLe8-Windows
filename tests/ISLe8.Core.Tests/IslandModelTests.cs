@@ -316,8 +316,11 @@ public class IslandModelTests
 /// <summary>Time that only moves when a test says so; due timers run in order.</summary>
 internal sealed class ManualClock : IIslandClock
 {
+    private static readonly DateTimeOffset Start = new(2026, 10, 27, 9, 0, 0, TimeSpan.Zero);
     private readonly List<Timer> _timers = [];
     private TimeSpan _now;
+
+    public DateTimeOffset Now => Start + _now;
 
     public IDisposable After(TimeSpan delay, Action action)
     {

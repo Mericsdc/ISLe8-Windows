@@ -18,9 +18,9 @@ using Microsoft.UI.Xaml.Media.Imaging;
 namespace ISLe8.Island;
 
 /// <summary>
-/// Draws the island in whatever state <see cref="IslandModel"/> puts it: pill, peek or open, the
-/// pill widening while music plays. Feeds the model pointer, menu and media events, and rebuilds
-/// the view when the theme or language changes.
+/// Draws the island in whatever state <see cref="IslandModel"/> puts it: pill, peek or open on one
+/// of its tabs, the pill widening while music plays. Feeds the model pointer, menu, dock and media
+/// events, and rebuilds the view when the theme or language changes.
 /// </summary>
 internal sealed class IslandController : IDisposable
 {
@@ -31,6 +31,9 @@ internal sealed class IslandController : IDisposable
     private readonly IslandWindow _window;
     private readonly IslandModel _model;
     private readonly OutsideClickWatcher _outsideClicks;
+    /// <summary>Where the open island takes the hover, with the slack when it gets shorter.</summary>
+    private readonly HoverOutline _outline = new();
+    private readonly SwipeTracker _swipe = new();
     private IslandView _view = null!;
     private IslandSurface _surface = null!;
     /// <summary>False while the shape is still moving after it shrank.</summary>
@@ -46,7 +49,8 @@ internal sealed class IslandController : IDisposable
         L.Use(_settings.Language);
 
         _media = new MediaService(_queue);
-        _window = new IslandWindow(_settings, () => IslandMetrics.DefaultExpanded);
+        // The window is as big as the largest tab in the current layout; it never resizes while open.
+        _window = new IslandWindow(_settings, () => IslandSizes.Largest(_settings));
         _model = new IslandModel(_settings, new DispatcherClock(_queue));
         _outsideClicks = new OutsideClickWatcher(_queue, OnClickedOutside);
     }
@@ -62,12 +66,30 @@ internal sealed class IslandController : IDisposable
     /// <summary>Moves the island to the screen the settings ask for now.</summary>
     public void PlaceIsland() => _window.Place();
 
+    /// <summary>Settings › Appearance › Theme.</summary>
+    public void ApplyTheme() => Rebuild();
+
+    /// <summary>Settings › Appearance › Home layout or width: the window is sized again for the largest tab.</summary>
+    public void ApplyLayoutSettings() => _window.Place();
+
+    /// <summary>Settings › Layout › Tabs.</summary>
+    public void ApplyTabs()
+    {
+        _model.TabsChanged();
+        _view.Dock.SetTabs(_model.VisibleTabs, _model.Tab);
+    }
+
+    /// <summary>Settings › Appearance › Hide in screenshots and screen sharing.</summary>
+    public void ApplyCapture() => _window.SetExcludedFromCapture(_settings.HideFromScreenCapture);
+
     public void Start()
     {
         Rebuild();
         _model.StateChanged += OnStateChanged;
         _model.PillChanged += OnPillChanged;
+        _model.TabChanged += OnTabChanged;
         _model.Changed += OnModelChanged;
+        ApplyCapture();
         _window.LayoutChanged += ApplyLayout;
         _window.FullscreenChanged += _ => UpdateBars();
         _window.Show();
@@ -105,7 +127,20 @@ internal sealed class IslandController : IDisposable
         _view.Area.PointerMoved += (_, e) => UpdateHover(e, touchInside: true);
         _view.Area.PointerExited += (_, e) => UpdateHover(e, touchInside: false);
         _view.Area.PointerPressed += OnPointerPressed;
+        _view.Area.PointerWheelChanged += OnPointerWheelChanged;
         _view.Area.ContextFlyout = BuildMenu();
+        _view.Dock.SetTabs(_model.VisibleTabs, _model.Tab);
+        _view.Dock.Chosen += _model.Select;
+        _view.Header.SetPinned(_model.IsPinned);
+        _view.Header.PinClicked += () => _model.SetPinned(!_model.IsPinned);
+        _view.Header.SettingsClicked += () =>
+        {
+            // As on the Mac: the island steps aside for the window it opened.
+            ((App)Application.Current).OpenSettings();
+            _model.SetPinned(false);
+            _model.Close();
+        };
+        _view.ShowTab(_model.Tab);
         _view.Root.Loaded += (_, _) =>
         {
             if (_view.Root.XamlRoot is { } root) root.Changed += OnXamlRootChanged;
@@ -117,29 +152,39 @@ internal sealed class IslandController : IDisposable
 
         if (_window.Layout is { } layout) ApplyLayout(layout);
         _view.Player.Refresh();
+        _view.Strip.Refresh();
         _artworkKey = null;
         LoadArtwork();
     }
 
-    /// <summary>A new monitor, DPI or view: everything jumps to where it belongs, without animating.</summary>
+    /// <summary>A new monitor, DPI, layout or view: everything jumps to where it belongs, without animating.</summary>
     private void ApplyLayout(IslandLayout layout)
     {
         var state = _model.State;
         var expanded = state == IslandState.Expanded;
         var shape = Shape(layout, state);
+        var open = OpenRect(layout);
         _settled = true;
-        _view.ApplyLayout(layout);
+        _view.ApplyLayout(layout, open, _settings.HomeStyle, _model.Tab);
         _surface.SetLayout(layout);
         _surface.JumpTo(shape, Corner(shape, state), shadow: expanded);
         _window.SetHitRegion(Region(layout, state));
+        _outline.Reset(layout.OpenRegion(open));
 
         _view.ExpandedLayer.Visibility = expanded ? Visibility.Visible : Visibility.Collapsed;
         _view.ExpandedLayer.IsHitTestVisible = expanded;
         IslandSurface.SetContentShown(_view.ExpandedLayer, expanded);
         IslandSurface.SetOpacity(_view.PillLayer, !expanded && _model.Pill == PillKind.Compact ? 1 : 0);
-        _view.Player.SetActive(expanded);
+        UpdatePlayer();
         UpdateBars();
     }
+
+    /// <summary>The open island for the current tab in the current layout.</summary>
+    private DipRect OpenRect(IslandLayout layout) => layout.Open(IslandSizes.Open(_settings, _model.Tab));
+
+    /// <summary>The big player's clock only ticks while it can be seen: open, on Home, in a layout that shows it.</summary>
+    private void UpdatePlayer() => _view.Player.SetActive(
+        _model.State == IslandState.Expanded && _model.Tab == IslandTab.Home && _settings.HomeStyle != HomeStyle.Minimal);
 
     /// <summary>
     /// XAML draws at the window's DPI, the layout uses the monitor's. They should agree after every
@@ -156,14 +201,14 @@ internal sealed class IslandController : IDisposable
 
     private DipRect Shape(IslandLayout layout, IslandState state) => state switch
     {
-        IslandState.Expanded => layout.Expanded,
+        IslandState.Expanded => OpenRect(layout),
         IslandState.Peek => layout.Peek(_model.Pill),
         _ => layout.Pill(_model.Pill),
     };
 
-    /// <summary>Pills and the peek are fully round at the ends; the open island has its own corners.</summary>
-    private static double Corner(DipRect shape, IslandState state) =>
-        state == IslandState.Expanded ? IslandMetrics.ExpandedCornerRadius : shape.Height / 2;
+    /// <summary>Pills and the peek are fully round at the ends; the open island follows the theme's corners.</summary>
+    private double Corner(DipRect shape, IslandState state) =>
+        state == IslandState.Expanded ? IslandSizes.CornerRadius(_settings.Theme) : shape.Height / 2;
 
     /// <summary>The part of the window that takes the mouse in <paramref name="state"/>, in window pixels.</summary>
     private PixelRect Region(IslandLayout layout, IslandState state) => state switch
@@ -178,10 +223,18 @@ internal sealed class IslandController : IDisposable
         ? null
         : _model.State switch
         {
-            IslandState.Expanded => layout.AreaRegion,
+            IslandState.Expanded => layout.OpenRegion(OpenRect(layout)),
             IslandState.Peek => layout.PeekRegion(_model.Pill),
             _ => layout.PillRegion(_model.Pill),
         };
+
+    /// <summary>Whether the cursor is on the island; while open, through the outline and its slack.</summary>
+    private bool CursorOnIsland()
+    {
+        if (!_window.CursorPoint(out var x, out var y)) return false;
+        if (_model.State == IslandState.Expanded) return _outline.Contains(x, y);
+        return HoverRegion is { } region && region.Contains(x, y);
+    }
 
     private void OnStateChanged(IslandState from)
     {
@@ -193,6 +246,7 @@ internal sealed class IslandController : IDisposable
         if (state == IslandState.Expanded)
         {
             _window.SetHitRegion(layout.ExpandedRegion);
+            _outline.Reset(layout.OpenRegion(shape));
             if (_view.ExpandedLayer.Visibility == Visibility.Collapsed)
             {
                 // Back from fully closed; mid-close, the content grows back from where it is.
@@ -202,11 +256,9 @@ internal sealed class IslandController : IDisposable
             _view.ExpandedLayer.IsHitTestVisible = true;
             _surface.Reveal(_view.ExpandedLayer, show: true);
             _surface.Fade(_view.PillLayer, 0, TimeSpan.Zero, MotionTimings.ContentFadeOut);
-            _view.Player.SetActive(true);
         }
         else if (from == IslandState.Expanded)
         {
-            _view.Player.SetActive(false);
             _view.ExpandedLayer.IsHitTestVisible = false;
             _surface.Reveal(_view.ExpandedLayer, show: false);
             if (_model.Pill == PillKind.Compact)
@@ -218,7 +270,47 @@ internal sealed class IslandController : IDisposable
         // Growing takes the bigger mouse region now; shrinking keeps it until the shape has settled.
         if (state == IslandState.Peek) _window.SetHitRegion(Region(layout, state));
         _surface.MorphTo(shape, Corner(shape, state), Spring(), shadow: state == IslandState.Expanded, Settle);
+        UpdatePlayer();
         UpdateBars();
+    }
+
+    /// <summary>
+    /// A tab from the dock, a swipe, or the tab the island reopens on. In the wide and compact
+    /// layouts every tab has the island's size, so only the content crossfades; in the minimal one
+    /// Home is a strip and the island springs between the two heights.
+    /// </summary>
+    private void OnTabChanged(IslandTab from)
+    {
+        var tab = _model.Tab;
+        _view.Dock.SetSelected(tab);
+        if (_window.Layout is not { } layout) return;
+        var open = OpenRect(layout);
+        var before = layout.Open(IslandSizes.Open(_settings, from));
+        _view.SetOpen(open, _settings.HomeStyle, tab);
+
+        if (_model.State != IslandState.Expanded)
+        {
+            // Closed: the next opening simply shows it.
+            _view.ShowTab(tab);
+            _outline.Reset(layout.OpenRegion(open));
+            UpdatePlayer();
+            return;
+        }
+
+        var outgoing = _view.TabView(from);
+        var incoming = _view.TabView(tab);
+        incoming.Visibility = Visibility.Visible;
+        IslandSurface.SetOpacity(incoming, 0);
+        _surface.Crossfade(outgoing, incoming, () => outgoing.Visibility = Visibility.Collapsed);
+
+        if (open.Height != before.Height)
+        {
+            if (_window.CursorPoint(out var x, out var y)) _outline.Resize(layout.OpenRegion(open), x, y);
+            else _outline.Reset(layout.OpenRegion(open));
+            var spring = (open.Height > before.Height ? SpringSpec.Open : SpringSpec.Close).WithSpeed(_settings.AnimationSpeed);
+            _surface.MorphTo(open, Corner(open, IslandState.Expanded), spring, shadow: true, Settle);
+        }
+        UpdatePlayer();
     }
 
     /// <summary>Widens or narrows the resting pill; while open, the model only remembers it for the next close.</summary>
@@ -251,6 +343,7 @@ internal sealed class IslandController : IDisposable
     private void OnModelChanged()
     {
         _outsideClicks.Enabled = _model.WantsOutsideClicks;
+        _view.Header.SetPinned(_model.IsPinned);
         UpdateBars();
     }
 
@@ -267,8 +360,27 @@ internal sealed class IslandController : IDisposable
     private void UpdateHover(PointerRoutedEventArgs e, bool touchInside)
     {
         var touch = e.Pointer.PointerDeviceType == PointerDeviceType.Touch;
-        var inside = touch ? touchInside : HoverRegion is { } region && _window.CursorIn(region);
+        var inside = touch ? touchInside : CursorOnIsland();
         if (inside != _model.IsHovering) _model.SetHovering(inside, touch);
+    }
+
+    /// <summary>
+    /// Two fingers sideways on the open island switch tabs. On the shelf and the clipboard, whose
+    /// content will scroll sideways itself, only the header row and the dock take the gesture.
+    /// </summary>
+    private void OnPointerWheelChanged(object sender, PointerRoutedEventArgs e)
+    {
+        var point = e.GetCurrentPoint(_view.ExpandedLayer);
+        if (!point.Properties.IsHorizontalMouseWheel || _model.State != IslandState.Expanded || !_settings.SwipeToChangeTabs) return;
+        e.Handled = true;
+        if (_model.Tab is IslandTab.Shelf or IslandTab.Clipboard
+            && point.Position.Y > IslandSizes.HeaderHeight
+            && point.Position.Y < _view.ExpandedLayer.Height - IslandSizes.DockArea)
+        {
+            return;
+        }
+        var step = _swipe.Add(point.Properties.MouseWheelDelta, DateTimeOffset.Now);
+        if (step != 0) _model.SelectAdjacent(step);
     }
 
     /// <summary>A click or tap on the pill opens it at once, without waiting for the hover delay.</summary>
@@ -282,7 +394,7 @@ internal sealed class IslandController : IDisposable
     /// <summary>The hook saw a click somewhere; it only counts if it was off the island.</summary>
     private void OnClickedOutside()
     {
-        if (HoverRegion is { } region && _window.CursorIn(region)) return;
+        if (CursorOnIsland()) return;
         _model.ClickedOutside();
     }
 
@@ -291,6 +403,7 @@ internal sealed class IslandController : IDisposable
     private void OnMediaChanged()
     {
         _view.Player.Refresh();
+        _view.Strip.Refresh();
         LoadArtwork();
         _model.SetLive(_media.Current?.IsPlaying == true);
         UpdateBars();
@@ -355,7 +468,7 @@ internal sealed class IslandController : IDisposable
         {
             _window.ReturnForeground(_foregroundBeforeMenu);
             _foregroundBeforeMenu = 0;
-            _model.SetMenuOpen(false, pointerInside: HoverRegion is { } region && _window.CursorIn(region));
+            _model.SetMenuOpen(false, pointerInside: CursorOnIsland());
         };
         return menu;
     }

@@ -29,5 +29,6 @@ public class MotionTests
         Assert.Equal(160, MotionTimings.ContentFadeOut.TotalMilliseconds);
         Assert.Equal(0.94f, MotionTimings.ContentScaleIn);
         Assert.Equal(0.9f, MotionTimings.ContentScaleOut);
+        Assert.Equal(180, MotionTimings.TabCrossfade.TotalMilliseconds);
     }
 }

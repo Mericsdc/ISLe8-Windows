@@ -201,4 +201,114 @@
   <data name="Common_OK" xml:space="preserve">
     <value>Tamam</value>
   </data>
+  <data name="Tab_Home" xml:space="preserve">
+    <value>Home</value>
+    <comment>mac: Home</comment>
+  </data>
+  <data name="Tab_Shelf" xml:space="preserve">
+    <value>Raf</value>
+    <comment>mac: Raf</comment>
+  </data>
+  <data name="Tab_Clipboard" xml:space="preserve">
+    <value>Pano</value>
+    <comment>mac: Pano</comment>
+  </data>
+  <data name="Tab_Agents" xml:space="preserve">
+    <value>AI</value>
+    <comment>mac: AI</comment>
+  </data>
+  <data name="Tab_Devices" xml:space="preserve">
+    <value>Cihazlar</value>
+    <comment>mac: Cihazlar</comment>
+  </data>
+  <data name="Tab_ComingSoon" xml:space="preserve">
+    <value>Windows'a yakında geliyor.</value>
+  </data>
+  <data name="Header_Settings" xml:space="preserve">
+    <value>Ayarlar</value>
+    <comment>mac: Ayarlar</comment>
+  </data>
+  <data name="Header_Unpin" xml:space="preserve">
+    <value>Sabitlemeyi kaldır</value>
+    <comment>mac: Sabitlemeyi kaldır</comment>
+  </data>
+  <data name="Settings_Appearance" xml:space="preserve">
+    <value>Görünüm</value>
+    <comment>mac: Görünüm</comment>
+  </data>
+  <data name="Settings_Layout" xml:space="preserve">
+    <value>Düzen</value>
+    <comment>mac: Düzen</comment>
+  </data>
+  <data name="Settings_HomeStyle" xml:space="preserve">
+    <value>Home düzeni</value>
+    <comment>mac: Home düzeni</comment>
+  </data>
+  <data name="Settings_StyleWide" xml:space="preserve">
+    <value>Geniş</value>
+    <comment>mac: Geniş</comment>
+  </data>
+  <data name="Settings_StyleCompact" xml:space="preserve">
+    <value>Kompakt</value>
+    <comment>mac: Kompakt</comment>
+  </data>
+  <data name="Settings_StyleMinimal" xml:space="preserve">
+    <value>Minimal</value>
+    <comment>mac: Minimal</comment>
+  </data>
+  <data name="Settings_StyleWideNote" xml:space="preserve">
+    <value>Takvim ayı, büyük oynatıcı ve ayrıntılı hava; ~820 px genişlik.</value>
+  </data>
+  <data name="Settings_StyleCompactNote" xml:space="preserve">
+    <value>Aynı sütunlar, daha küçük: bugünün etkinlikleri, küçük oynatıcı, kısa hava; ~640 px.</value>
+  </data>
+  <data name="Settings_StyleMinimalNote" xml:space="preserve">
+    <value>Tek ince şerit: şarkı ve kontroller, hava, sıradaki etkinlik; ~600 px. Diğer sekmeler açılınca ada büyür.</value>
+  </data>
+  <data name="Settings_SizeAndMotion" xml:space="preserve">
+    <value>Boyut ve hareket</value>
+    <comment>mac: Boyut ve hareket</comment>
+  </data>
+  <data name="Settings_ExpandedWidth" xml:space="preserve">
+    <value>Açık ada genişliği</value>
+    <comment>mac: Açık ada genişliği</comment>
+  </data>
+  <data name="Settings_Pixels" xml:space="preserve">
+    <value>{0} px</value>
+  </data>
+  <data name="Settings_AnimationSpeed" xml:space="preserve">
+    <value>Animasyon hızı</value>
+    <comment>mac: Animasyon hızı</comment>
+  </data>
+  <data name="Settings_Times" xml:space="preserve">
+    <value>{0}×</value>
+    <comment>mac: %@×</comment>
+  </data>
+  <data name="Settings_HideFromCapture" xml:space="preserve">
+    <value>Ekran görüntüsü ve ekran paylaşımında gizle</value>
+    <comment>mac: Ekran görüntüsü ve ekran paylaşımında gizle</comment>
+  </data>
+  <data name="Settings_HideFromCaptureNote" xml:space="preserve">
+    <value>Ada, ekran görüntülerinde, kayıtlarda ve toplantılarda paylaşılan ekranda görünmez.</value>
+    <comment>mac: Ada, ekran görüntülerinde, kayıtlarda ve toplantılarda paylaşılan ekranda görünmez.</comment>
+  </data>
+  <data name="Settings_SwipeTabs" xml:space="preserve">
+    <value>İki parmakla yana kaydırarak sekme değiştir</value>
+    <comment>mac: İki parmakla yana kaydırarak sekme değiştir</comment>
+  </data>
+  <data name="Settings_Tabs" xml:space="preserve">
+    <value>Sekmeler</value>
+    <comment>mac: Sekmeler</comment>
+  </data>
+  <data name="Settings_TabsNote" xml:space="preserve">
+    <value>Açık adanın altındaki dock'ta, soldan sağa. En az biri açık kalır.</value>
+  </data>
+  <data name="Settings_MoveUp" xml:space="preserve">
+    <value>Yukarı taşı</value>
+    <comment>mac: Yukarı taşı</comment>
+  </data>
+  <data name="Settings_MoveDown" xml:space="preserve">
+    <value>Aşağı taşı</value>
+    <comment>mac: Aşağı taşı</comment>
+  </data>
 </root>

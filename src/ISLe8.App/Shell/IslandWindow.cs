@@ -119,13 +119,21 @@ internal sealed unsafe class IslandWindow : IDisposable
     /// Whether the mouse is inside <paramref name="region"/> (window pixels) right now. Asked of the
     /// system rather than taken from a pointer event, whose last position may still be inside.
     /// </summary>
-    public bool CursorIn(PixelRect region)
+    public bool CursorIn(PixelRect region) => CursorPoint(out var x, out var y) && region.Contains(x, y);
+
+    /// <summary>Where the mouse is right now, relative to the window, in pixels.</summary>
+    public bool CursorPoint(out int x, out int y)
     {
+        x = y = 0;
         if (Layout is not { } layout || !Win32.GetCursorPos(out var cursor)) return false;
-        var x = cursor.X - layout.Window.X;
-        var y = cursor.Y - layout.Window.Y;
-        return x >= region.X && x < region.Right && y >= region.Y && y < region.Bottom;
+        x = cursor.X - layout.Window.X;
+        y = cursor.Y - layout.Window.Y;
+        return true;
     }
+
+    /// <summary>Settings › Appearance: kept out of screenshots, recordings and shared screens.</summary>
+    public void SetExcludedFromCapture(bool excluded) =>
+        Win32.SetWindowDisplayAffinity(Hwnd, excluded ? Win32.WDA_EXCLUDEFROMCAPTURE : Win32.WDA_NONE);
 
     /// <summary>
     /// Brings the island forward for its menu, so a click anywhere else closes the menu as usual.

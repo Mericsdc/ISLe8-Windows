@@ -92,7 +92,7 @@ internal static class GeneralPage
             settings.Monitor = index switch { 0 => MonitorChoice.Primary, 1 => MonitorChoice.Active, _ => MonitorChoice.Named };
             settings.MonitorDevice = index >= 2 ? devices[index] : null;
             context.Save();
-            context.PlaceIsland();
+            context.Island.PlaceIsland();
             note.Text = ScreenNote(settings.Monitor);
         });
         return SettingsUi.Card(context.Palette, L.Get("Menu_Display"), choices, note);
@@ -127,30 +127,11 @@ internal static class GeneralPage
     // MARK: Behaviour
 
     /// <summary>A delay in seconds, in steps of 0.05 like the Mac's, written as "0,35 sn".</summary>
-    private static Border SecondsCard(SettingsPalette palette, string title, double value, double maximum, Action<double> changed)
-    {
-        var label = new TextBlock { MinWidth = 60, TextAlignment = TextAlignment.Right, VerticalAlignment = VerticalAlignment.Center };
-        var slider = new Slider
-        {
-            Minimum = 0,
-            Maximum = maximum,
-            StepFrequency = 0.05,
-            SmallChange = 0.05,
-            Width = 200,
-            Value = value,
-            IsThumbToolTipEnabled = false,
-        };
-        void Show(double seconds) => label.Text = L.Format("Settings_Seconds", seconds.ToString("0.00", L.Culture));
-        Show(value);
-        slider.ValueChanged += (_, e) =>
-        {
-            var seconds = Math.Round(e.NewValue, 2);
-            Show(seconds);
-            changed(seconds);
-        };
-        var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12, Children = { slider, label } };
-        return SettingsUi.Card(palette, title, row);
-    }
+    private static Border SecondsCard(SettingsPalette palette, string title, double value, double maximum, Action<double> changed) =>
+        SettingsUi.Card(palette, title, SettingsUi.SliderRow(
+            value, 0, maximum, 0.05,
+            seconds => L.Format("Settings_Seconds", seconds.ToString("0.00", L.Culture)),
+            changed));
 
     // MARK: Back up
 

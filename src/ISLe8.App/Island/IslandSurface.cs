@@ -33,6 +33,7 @@ internal sealed class IslandSurface
     private IslandLayout? _layout;
     private Vector2 _areaOffset;
     private int _morphs;
+    private int _crossfades;
 
     /// <param name="backgroundHost">Fills the window; the shape and its shadow are drawn into it.</param>
     /// <param name="area">The island column; its content is clipped to the shape.</param>
@@ -141,6 +142,29 @@ internal sealed class IslandSurface
         fade.Duration = duration;
         fade.DelayTime = delay;
         visual.StartAnimation("Opacity", fade);
+    }
+
+    /// <summary>
+    /// Changing tab: the old content fades out while the new one fades in (ease-in-out, as on the
+    /// Mac). <paramref name="done"/> runs once the old one is gone, unless another crossfade took over.
+    /// </summary>
+    public void Crossfade(UIElement from, UIElement to, Action done)
+    {
+        var crossfade = ++_crossfades;
+        var easing = _compositor.CreateCubicBezierEasingFunction(new Vector2(0.42f, 0), new Vector2(0.58f, 1));
+        var batch = _compositor.CreateScopedBatch(CompositionBatchTypes.Animation);
+        foreach (var (element, target) in new[] { (from, 0f), (to, 1f) })
+        {
+            var fade = _compositor.CreateScalarKeyFrameAnimation();
+            fade.InsertKeyFrame(1f, target, easing);
+            fade.Duration = MotionTimings.TabCrossfade;
+            ElementCompositionPreview.GetElementVisual(element).StartAnimation("Opacity", fade);
+        }
+        batch.End();
+        batch.Completed += (_, _) =>
+        {
+            if (crossfade == _crossfades) done();
+        };
     }
 
     public static void SetOpacity(UIElement element, float opacity)
@@ -270,7 +294,7 @@ internal sealed class IslandSurface
         var brush = _compositor.CreateLinearGradientBrush();
         brush.MappingMode = CompositionMappingMode.Absolute;
         var top = (float)((_layout?.Area.Y ?? 0) + IslandMetrics.TopMargin);
-        var bottom = (float)((_layout?.Area.Y ?? 0) + (_layout?.Expanded.Bottom ?? IslandMetrics.DefaultExpanded.Height));
+        var bottom = (float)((_layout?.Area.Y ?? 0) + (_layout?.Expanded.Bottom ?? IslandSizes.HeaderHeight));
         brush.StartPoint = new Vector2(0, top);
         brush.EndPoint = new Vector2(0, bottom);
         brush.ColorStops.Add(_compositor.CreateColorGradientStop(0f, _theme.Background.ToColor()));

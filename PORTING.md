@@ -461,6 +461,7 @@ Her modülde: Mac dosyaları → Windows karşılığı → önemli davranışla
 | Sistem ses göstergesinin yerine geçme | Windows'un kendi göstergesini gizlemenin desteklenen bir yolu yok; ISLe8 yanında gösterir |
 | Kestirmeler (Shortcuts) | Windows'ta karşılığı yok; palet yalnızca uygulamaları listeler |
 | Spotify Canvas videoları | Resmî API'de yok; Spotify'ın web oynatıcısındaki erişim korumasını aşmak gerekiyor. Kullanım koşullarına aykırı, iki sürümde de yapılmaz |
+| Görünüm › Harici ekranlarda boyut | Mac'te notch'lu ve notch'suz ekranları ayırır. Windows'ta ada DIP cinsinden çizilir, DPI ile her ekranda aynı fiziksel boyuttadır; ayrıca seçilecek bir ölçek yok |
 
 ---
 

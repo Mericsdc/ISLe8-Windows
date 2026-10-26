@@ -305,6 +305,13 @@ internal static unsafe partial class Win32
     [return: MarshalAs(UnmanagedType.Bool)]
     public static partial bool AllowSetForegroundWindow(uint processId);
 
+    public const uint WDA_NONE = 0x00;
+    public const uint WDA_EXCLUDEFROMCAPTURE = 0x11;
+
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool SetWindowDisplayAffinity(nint hwnd, uint affinity);
+
     [LibraryImport("CoreMessaging.dll")]
     public static partial int CreateDispatcherQueueController(DispatcherQueueOptions options, out nint controller);
 

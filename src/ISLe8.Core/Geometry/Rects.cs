@@ -9,6 +9,8 @@ public readonly record struct PixelRect(int X, int Y, int Width, int Height)
     public static PixelRect FromEdges(int left, int top, int right, int bottom) =>
         new(left, top, right - left, bottom - top);
 
+    public bool Contains(int x, int y) => x >= X && x < Right && y >= Y && y < Bottom;
+
     public PixelRect Union(PixelRect other) => FromEdges(
         Math.Min(X, other.X), Math.Min(Y, other.Y),
         Math.Max(Right, other.Right), Math.Max(Bottom, other.Bottom));

@@ -1,5 +1,6 @@
 using ISLe8.Core.Settings;
 using ISLe8.Interop;
+using ISLe8.Island;
 using ISLe8.Localization;
 using ISLe8.UI;
 using Microsoft.UI;
@@ -20,7 +21,7 @@ namespace ISLe8.Settings;
 /// the island's. Built when first opened and dropped when closed, so it costs nothing in between.
 /// Sections arrive with the steps of W1 that need them (PORTING.md §3.17).
 /// </summary>
-internal sealed class SettingsWindow(AppSettings settings, SettingsStore store, Action placeIsland)
+internal sealed class SettingsWindow(IslandController island, SettingsStore store)
 {
     private Window? _window;
     private UISettings? _systemColors;
@@ -41,7 +42,7 @@ internal sealed class SettingsWindow(AppSettings settings, SettingsStore store, 
         };
         window.AppWindow.SetIcon(Asset("AppIcon.ico"));
         var palette = new SettingsPalette();
-        var context = new SettingsContext(settings, store, placeIsland, window, palette);
+        var context = new SettingsContext(island, store, window, palette);
 
         var titleBar = new Grid
         {
@@ -70,9 +71,14 @@ internal sealed class SettingsWindow(AppSettings settings, SettingsStore store, 
             IsTitleBarAutoPaddingEnabled = false,
             OpenPaneLength = 240,
         };
-        var general = new NavigationViewItem { Content = L.Get("Settings_General"), Icon = new FontIcon { Glyph = Glyphs.Settings }, Tag = "general" };
+        var general = Section("Settings_General", Glyphs.Settings, GeneralPage.Build);
         navigation.MenuItems.Add(general);
-        navigation.SelectionChanged += (_, _) => navigation.Content = Page(context);
+        navigation.MenuItems.Add(Section("Settings_Appearance", Glyphs.Palette, AppearancePage.Build));
+        navigation.MenuItems.Add(Section("Settings_Layout", Glyphs.Layout, LayoutPage.Build));
+        navigation.SelectionChanged += (_, args) =>
+        {
+            if (args.SelectedItem is NavigationViewItem { Tag: Func<SettingsContext, FrameworkElement> build }) navigation.Content = Page(build(context));
+        };
 
         var root = new Grid { RowDefinitions = { new RowDefinition { Height = GridLength.Auto }, new RowDefinition() } };
         root.Children.Add(titleBar);
@@ -99,9 +105,13 @@ internal sealed class SettingsWindow(AppSettings settings, SettingsStore store, 
         return window;
     }
 
-    private static FrameworkElement Page(SettingsContext context) => new ScrollViewer
+    /// <summary>A menu entry that builds its page when chosen; pages are not kept.</summary>
+    private static NavigationViewItem Section(string title, string glyph, Func<SettingsContext, FrameworkElement> build) =>
+        new() { Content = L.Get(title), Icon = new FontIcon { Glyph = glyph }, Tag = build };
+
+    private static FrameworkElement Page(FrameworkElement content) => new ScrollViewer
     {
-        Content = new Border { Padding = new Thickness(36, 16, 36, 36), Child = GeneralPage.Build(context) },
+        Content = new Border { Padding = new Thickness(36, 16, 36, 36), Child = content },
     };
 
     /// <summary>Windows' own light or dark mode: the island is always dark, its settings are not.</summary>

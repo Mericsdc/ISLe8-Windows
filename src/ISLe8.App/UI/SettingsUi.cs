@@ -53,10 +53,14 @@ internal static class SettingsUi
         Card(palette, title, control, description is null ? null : Description(palette, description));
 
     /// <summary>The same, with a description the page can change later.</summary>
-    public static Border Card(SettingsPalette palette, string title, FrameworkElement control, TextBlock? description)
+    public static Border Card(SettingsPalette palette, string title, FrameworkElement control, TextBlock? description) =>
+        Card(palette, new TextBlock { Text = title, TextWrapping = TextWrapping.Wrap }, control, description);
+
+    /// <summary>The same, with something other than plain text as its name (an icon and a title).</summary>
+    public static Border Card(SettingsPalette palette, FrameworkElement heading, FrameworkElement control, TextBlock? description = null)
     {
         var text = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Spacing = 2 };
-        text.Children.Add(new TextBlock { Text = title, TextWrapping = TextWrapping.Wrap });
+        text.Children.Add(heading);
         if (description is not null) text.Children.Add(description);
 
         control.VerticalAlignment = VerticalAlignment.Center;
@@ -104,6 +108,35 @@ internal static class SettingsUi
             if (box.SelectedIndex >= 0) chose(box.SelectedIndex);
         };
         return box;
+    }
+
+    /// <summary>A slider in steps of <paramref name="step"/>, its value written beside it the way <paramref name="format"/> says.</summary>
+    public static StackPanel SliderRow(double value, double minimum, double maximum, double step, Func<double, string> format, Action<double> changed)
+    {
+        var label = new TextBlock
+        {
+            Text = format(value),
+            MinWidth = 60,
+            TextAlignment = TextAlignment.Right,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        var slider = new Slider
+        {
+            Minimum = minimum,
+            Maximum = maximum,
+            StepFrequency = step,
+            SmallChange = step,
+            Width = 200,
+            Value = value,
+            IsThumbToolTipEnabled = false,
+        };
+        slider.ValueChanged += (_, e) =>
+        {
+            var stepped = Math.Round(Math.Round(e.NewValue / step) * step, 2);
+            label.Text = format(stepped);
+            changed(stepped);
+        };
+        return new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12, Children = { slider, label } };
     }
 
     /// <summary>A switch without "On"/"Off" beside it: WinUI would write those in Windows' language, not the island's.</summary>

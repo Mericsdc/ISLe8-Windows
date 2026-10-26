@@ -116,6 +116,37 @@ iletip durumu çiziyor. Süreler testlerde elle ilerletilen bir saatle sınanıy
 sekmeleri var diye). PORTING.md §4 ile Mac'teki 0 + 50 ms'ye dönüldü; 50 ms'lik süzme, pill'in
 üstünden geçen imleci zaten eliyor (TESTING.md › W1 adım 1). Rahatsız ederse tek bir ayar.
 
+### Açık ada (W1)
+
+PORTING.md §2 › Boyutlar; değerler `IslandSizes`'ta, Core testleriyle.
+
+| Düzen | Genişlik | İçerik | Açık ada |
+|---|---|---|---|
+| Geniş | 820 (ayar 680–980) | 304 | 820 × 396 |
+| Kompakt | 640 | 196 | 640 × 288 |
+| Minimal | 600 | Home 64, diğerleri 196 | 600 × 156 / 288 |
+
+- **Yükseklik:** başlık satırı (pill kadar, 32) + 6 + içerik + dock alanı (8 + 36 + 10). İçerik yanlardan 14.
+- **Pencere:** o düzenin en büyük sekmesine göre bir kez boyutlanıyor; sekme değişince pencere değil
+  yalnızca şekil yaylanıyor. Düzen ya da genişlik ayarı değişince pencere yeniden yerleşiyor.
+- **Köşeler:** açık adada `min(tema köşesi + 12, 28)`; pill ve peek tam yuvarlak.
+- **Başlık satırı:** solda durum çipleri (pil 8. adımda), sağda sabitle ve ayarlar. Ayarlar düğmesi
+  pencereyi açıp adayı kapatıyor (Mac'teki gibi).
+- **Dock:** altta, tema yüzeyi renginde bir kapsül; seçili sekme vurgu renginin %20'siyle dolu. Düğmeler
+  `Button` değil, düz `Border`: ada odak almıyor ve seçime bağlı görünüm, `Button`'ın görsel
+  durumlarıyla çatışırdı.
+- **Sekmeler:** Home, Raf, Pano, AI, Cihazlar (Mac'in kimlikleri). W1'de yalnızca Home dolu; ötekiler
+  "Windows'a yakında geliyor" diyor. Geçiş 0,18 sn'lik çapraz solma; Geniş ve Kompakt'ta ada boyut
+  değiştirmiyor. 15 sn içinde yeniden açılınca son sekme, sonra ilk sekme.
+- **Küçülürken açık kalma:** Minimal'de Home'a dönünce ada kısalıyor ve dock'a tıklayan imleç birden
+  altında kalıyor. `HoverOutline` eski çerçeveyi, imleç yeni çerçeveye girene ya da ikisinden de
+  çıkana kadar "üstünde" sayıyor.
+- **İki parmakla kaydırma:** Hassas dokunmatik yüzey yatay tekerlek olayı yolluyor, hareketin başı sonu
+  yok; `SwipeTracker` bir tekerlek çentiğini (120) bir sekme sayıyor, 250 ms duraklama yeni bir
+  kaydırma başlatıyor. Raf ve Pano'da yalnızca başlık ve dock satırı.
+- **Home şimdilik:** W0'ın oynatıcısı (Geniş/Kompakt) ya da ince bir şerit (Minimal). Sütunlar
+  (takvim, medya, hava, zamanlayıcı) 4. adımda ve sonrasında geliyor.
+
 ### Tray, Ayarlar ve ikinci açılış (W1)
 
 - **Tray:** `Shell_NotifyIcon` ile bildirim alanında bir kapsül (Mac'teki `capsule.fill`); koyu görev

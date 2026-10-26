@@ -26,6 +26,9 @@ Gereken: Windows 10 2004+ ya da Windows 11.
   açmaz. İmleç çıkınca ya da başka bir yere tıklayınca kapanır.
 - Müzik çalarken (Spotify, tarayıcı, Medya Oynatıcı, Apple Music…) pill genişler; açık adada oynatıcı
   var.
+- Açık adanın altındaki dock'ta sekmeler var (Home, Raf, Pano, AI, Cihazlar; şimdilik yalnızca Home
+  dolu). Dokunmatik yüzeyde iki parmakla yana kaydırmak da sekme değiştirir. Sağ üstte sabitle ve
+  ayarlar düğmeleri.
 - Sağ tık: **Açık tut**, **Ayarlar…**, **Tema**, **Ekran**, **Dil**, **ISLe8'den çık**.
 - Bildirim alanındaki kapsül simgesi: tıklayınca Ayarlar açılır, sağ tıklayınca **Ayarlar…** ve
   **ISLe8'den çık**. Windows 11 yeni simgeleri görev çubuğundaki **^** okunun altına koyar; oradan

@@ -6,6 +6,8 @@ namespace ISLe8.Island;
 /// <summary><see cref="IslandModel"/>'s timers, run on the UI thread. Nothing ticks between them.</summary>
 internal sealed class DispatcherClock(DispatcherQueue queue) : IIslandClock
 {
+    public DateTimeOffset Now => DateTimeOffset.Now;
+
     public IDisposable After(TimeSpan delay, Action action)
     {
         var timer = queue.CreateTimer();

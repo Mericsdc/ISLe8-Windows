@@ -3,6 +3,49 @@
 Her maddeyi işaretle; olmayan varsa günlükle birlikte not et (README › Günlük ve ayarlar). W1'in
 adımları en üstte, W0'ın listesi altta.
 
+## W1 · Adım 3: açık ada iskeleti, dock ve düzenler (2026-10-27)
+
+Debug (JIT). Boyutlar, sekme sırası ve gizleme, sekme hafızası, kaydırma ve küçülürken açık kalma Core
+testlerinde (`OpenIslandTests`; 123'ten 149'a). Tıklamalar adanın kendi dock'una otomasyonla yapıldı.
+
+**Geniş** (varsayılan)
+- [x] Açık ada 820×396 DIP (%150'de 1230 px geniş); sağ üstte sabitle ve ayarlar, altta 5 sekmeli dock.
+- [x] Köşe yarıçapı temaya göre (LRX Mono'da 18).
+- [x] Dock'tan Raf'a tıklayınca içerik değişiyor, ada aynı boyutta kalıyor; seçili sekme vurgu renginde.
+- [x] Raf, Pano, AI, Cihazlar "Windows'a yakında geliyor" diyor; simgeler doğru.
+- [x] Beş sekme arasında art arda tıklarken ada açık kalıyor ve boyutu değişmiyor (canlı).
+- [x] Başlıktaki sabitle düğmesi adayı açık tutuyor, simgesi dolu iğneye dönüyor; yeniden basınca kalkıyor (canlı).
+- [x] Başlıktaki ayarlar düğmesi Ayarlar'ı açıp adayı kapatıyor (canlı).
+- [ ] Ada kapanıp 15 sn içinde yeniden açılınca son sekmede, daha sonra ilk sekmede açılıyor.
+
+**Minimal** (`"homeStyle": "minimal"` ile)
+- [x] Home ince bir şerit: 600×156; kapak, başlık, "Kanal · Uygulama", oynat ve sonraki, altında dock.
+- [x] Raf'a geçince ada 288'e büyüyor.
+- [x] Dock'tan Home'a dönünce ada kısalıyor; altında kalan imleçle 1,5 sn boyunca açık kalıyor.
+- [x] Yatay tekerlek (+120) bir sonraki sekmeye geçiriyor; imleç gidince ada kapanıyor.
+- [x] Dokunmatik yüzeyde iki parmakla sola/sağa kaydırma yönü doğru (sola kaydırınca sonraki sekme; canlı).
+
+**Ayarlar**
+- [x] Görünüm: tema, Home düzeni ve açıklaması, açık ada genişliği "820 px", animasyon hızı "1,0×", ekran
+      görüntüsünde gizle, iki parmakla kaydırma. Düzen: her sekme simgesiyle, açma/kapama, yukarı/aşağı.
+- [x] Menüde Görünüm ve Düzen'e **gerçek fareyle** tıklamak sayfayı değiştiriyor (canlı). (Otomasyonun sentetik
+      tıklaması menüye ulaşmadı; UI Automation ile seçince sayfalar açıldı.)
+- [x] Home düzeni Kompakt/Minimal'e geçince açık ada hemen yeni boyutta; Geniş'te genişlik kaydırıcısı
+      adayı genişletiyor (canlı).
+- [ ] Tema değişince ada yeni temada.
+- [ ] Ekran görüntüsünde gizle açıkken ada ekran kesme aracında görünmüyor.
+- [x] Düzen'de bir sekmeyi kapatınca dock'tan kalkıyor, sırası değişince dock'ta da değişiyor; son açık
+      sekme kapatılamıyor (canlı).
+
+**Ölçüm** (Release JIT, ada ve Ayarlar kapalı, 60 sn, `media-state.ps1` önce ve sonra)
+
+| Tarih | Yapı | Durum | CPU | Özel bellek | Çalışma kümesi |
+|---|---|---|---|---|---|
+| 2026-10-27 | W1 adım 3, Release JIT x64 | Chrome'da video **çalıyor** (önce ve sonra) | %0,275 (müzik hedefi < %1) | 39,2 MB | 142,5 MB |
+| 2026-10-27 | W1 adım 3, Release JIT x64 | **Boşta:** medya oturumu yok (önce ve sonra); Ayarlar bir kez açılıp kapatılmış | %0,004 (hedef < %0,1) | 44,3 MB (hedef < 80 MB) | 152,4 MB |
+
+- [x] Boşta (medya yok) CPU < %0,1.
+
 ## W1 · Adım 2: tray ve Ayarlar penceresi (2026-10-27)
 
 Debug ve Release (JIT). Ekran seçimi, girişte başlatma ve yedekleme mantığı Core testlerinde

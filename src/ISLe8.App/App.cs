@@ -42,7 +42,7 @@ public partial class App : Application, IXamlMetadataProvider
         var store = new SettingsStore(AppPaths.Settings);
         _island = new IslandController(store);
         _island.Start();
-        _settingsWindow = new SettingsWindow(_island.Settings, store, _island.PlaceIsland);
+        _settingsWindow = new SettingsWindow(_island, store);
 
         _tray = new TrayIcon(_island.WindowHandle, Monitors.PrimaryDpi);
         _island.AddWindowMessageHandler(_tray.HandleMessage);

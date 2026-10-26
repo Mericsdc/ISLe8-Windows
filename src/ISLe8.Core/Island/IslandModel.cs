@@ -35,11 +35,15 @@ public sealed class IslandModel
     /// <summary>Players report "paused" for a moment between tracks; the pill waits this long before narrowing.</summary>
     public static readonly TimeSpan PillShrinkDelay = TimeSpan.FromSeconds(1.5);
 
+    /// <summary>Reopening within this time returns to the tab you left; later it starts at the first tab.</summary>
+    public static readonly TimeSpan TabMemory = TimeSpan.FromSeconds(15);
+
     private readonly AppSettings _settings;
     private readonly IIslandClock _clock;
     private IDisposable? _hoverTimer;
     private IDisposable? _closeTimer;
     private IDisposable? _shrinkTimer;
+    private DateTimeOffset _closedAt = DateTimeOffset.MinValue;
 
     public IslandModel(AppSettings settings, IIslandClock clock)
     {
@@ -51,6 +55,12 @@ public sealed class IslandModel
 
     /// <summary>The pill the island shows, or will show, at rest.</summary>
     public PillKind Pill { get; private set; } = PillKind.Idle;
+
+    /// <summary>The open island's tab, or the one it will open on.</summary>
+    public IslandTab Tab { get; private set; } = IslandTab.Home;
+
+    /// <summary>The tabs in the dock, in the user's order.</summary>
+    public IReadOnlyList<IslandTab> VisibleTabs => IslandTabs.Visible(_settings);
 
     public bool IsPinned { get; private set; }
     public bool IsHovering { get; private set; }
@@ -70,6 +80,9 @@ public sealed class IslandModel
 
     /// <summary><see cref="Pill"/> changed.</summary>
     public event Action? PillChanged;
+
+    /// <summary><see cref="Tab"/> changed; the argument is the tab it left.</summary>
+    public event Action<IslandTab>? TabChanged;
 
     /// <summary>Anything changed: state, pill, pointer, pin or menu.</summary>
     public event Action? Changed;
@@ -177,7 +190,54 @@ public sealed class IslandModel
         }
     }
 
-    private void Open() => Transition(IslandState.Expanded);
+    /// <summary>A tab from the dock. The island stays open and, in the wide and compact layouts, the same size.</summary>
+    public void Select(IslandTab tab)
+    {
+        if (tab == Tab) return;
+        var old = Tab;
+        Tab = tab;
+        TabChanged?.Invoke(old);
+        Changed?.Invoke();
+    }
+
+    /// <summary>A two-finger swipe on the open island: the next (1) or previous (-1) tab, stopping at the ends.</summary>
+    public void SelectAdjacent(int step)
+    {
+        var tabs = VisibleTabs;
+        var index = IndexOf(tabs, Tab);
+        if (State != IslandState.Expanded || index < 0 || index + step < 0 || index + step >= tabs.Count) return;
+        Select(tabs[index + step]);
+    }
+
+    /// <summary>The dock's tabs were reordered or hidden in Settings; a hidden current tab gives way to the first.</summary>
+    public void TabsChanged()
+    {
+        var tabs = VisibleTabs;
+        if (IndexOf(tabs, Tab) < 0) Select(tabs[0]);
+        else Changed?.Invoke();
+    }
+
+    private void Open()
+    {
+        if (State != IslandState.Expanded) ChooseTabForOpening();
+        Transition(IslandState.Expanded);
+    }
+
+    /// <summary>The last tab if the island was open a moment ago, otherwise the first one.</summary>
+    private void ChooseTabForOpening()
+    {
+        var tabs = VisibleTabs;
+        if (_clock.Now - _closedAt > TabMemory || IndexOf(tabs, Tab) < 0) Select(tabs[0]);
+    }
+
+    private static int IndexOf(IReadOnlyList<IslandTab> tabs, IslandTab tab)
+    {
+        for (var i = 0; i < tabs.Count; i++)
+        {
+            if (tabs[i] == tab) return i;
+        }
+        return -1;
+    }
 
     private void SetPill(PillKind pill)
     {
@@ -192,6 +252,7 @@ public sealed class IslandModel
     {
         if (state == State) return;
         var old = State;
+        if (old == IslandState.Expanded) _closedAt = _clock.Now;
         // Pill < peek < open, whichever pill: the bigger state springs open, the smaller one closes.
         IsGrowing = state > old;
         State = state;

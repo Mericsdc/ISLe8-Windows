@@ -6,6 +6,8 @@ namespace ISLe8.Core.Island;
 /// </summary>
 public interface IIslandClock
 {
+    DateTimeOffset Now { get; }
+
     /// <summary>Runs <paramref name="action"/> once after <paramref name="delay"/>; disposing the result cancels it.</summary>
     IDisposable After(TimeSpan delay, Action action);
 }

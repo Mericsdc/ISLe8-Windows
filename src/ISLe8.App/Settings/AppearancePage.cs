@@ -1,0 +1,100 @@
+using ISLe8.Core.Settings;
+using ISLe8.Core.Theming;
+using ISLe8.Localization;
+using ISLe8.UI;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+
+namespace ISLe8.Settings;
+
+/// <summary>
+/// Settings › Appearance, after the Mac's (CustomizationSettings.swift, AppearanceSettings). Left out
+/// for now: the theme gallery and editor (W5) and the header chips' switches (they come with the
+/// chips). The Mac's "size on external screens" has no Windows counterpart: the island already has
+/// one size on every screen.
+/// </summary>
+internal static class AppearancePage
+{
+    private static readonly HomeStyle[] Styles = [HomeStyle.Dashboard, HomeStyle.Compact, HomeStyle.Minimal];
+
+    public static FrameworkElement Build(SettingsContext context)
+    {
+        var settings = context.Settings;
+        var palette = context.Palette;
+        var page = new StackPanel { MaxWidth = 860 };
+        page.Children.Add(SettingsUi.PageTitle(L.Get("Settings_Appearance")));
+
+        var themes = IslandTheme.Presets.Concat(settings.CustomThemes).ToList();
+        page.Children.Add(SettingsUi.Card(palette, L.Get("Menu_Theme"), SettingsUi.Choices(
+            themes.Select(ThemeName),
+            Math.Max(themes.FindIndex(theme => theme.Id == settings.Theme.Id), 0),
+            index =>
+            {
+                settings.ThemeId = themes[index].Id;
+                context.Save();
+                context.Island.ApplyTheme();
+            })));
+
+        var width = WidthCard(context);
+        width.Visibility = settings.HomeStyle == HomeStyle.Dashboard ? Visibility.Visible : Visibility.Collapsed;
+        var styleNote = SettingsUi.Description(palette, StyleNote(settings.HomeStyle));
+        page.Children.Add(SettingsUi.Card(palette, L.Get("Settings_HomeStyle"), SettingsUi.Choices(
+            [L.Get("Settings_StyleWide"), L.Get("Settings_StyleCompact"), L.Get("Settings_StyleMinimal")],
+            Array.IndexOf(Styles, settings.HomeStyle),
+            index =>
+            {
+                settings.HomeStyle = Styles[index];
+                context.Save();
+                context.Island.ApplyLayoutSettings();
+                styleNote.Text = StyleNote(Styles[index]);
+                width.Visibility = Styles[index] == HomeStyle.Dashboard ? Visibility.Visible : Visibility.Collapsed;
+            }), styleNote));
+
+        page.Children.Add(SettingsUi.SectionHeader(L.Get("Settings_SizeAndMotion")));
+        page.Children.Add(width);
+        page.Children.Add(SettingsUi.Card(palette, L.Get("Settings_AnimationSpeed"), SettingsUi.SliderRow(
+            settings.AnimationSpeed, 0.6, 1.6, 0.1,
+            value => L.Format("Settings_Times", value.ToString("0.0", L.Culture)),
+            value =>
+            {
+                settings.AnimationSpeed = value;
+                context.Save();
+            })));
+
+        page.Children.Add(SettingsUi.Gap());
+        page.Children.Add(SettingsUi.Card(palette, L.Get("Settings_HideFromCapture"), SettingsUi.Switch(settings.HideFromScreenCapture, on =>
+        {
+            settings.HideFromScreenCapture = on;
+            context.Save();
+            context.Island.ApplyCapture();
+        }), L.Get("Settings_HideFromCaptureNote")));
+        page.Children.Add(SettingsUi.Card(palette, L.Get("Settings_SwipeTabs"), SettingsUi.Switch(settings.SwipeToChangeTabs, on =>
+        {
+            settings.SwipeToChangeTabs = on;
+            context.Save();
+        })));
+        return page;
+    }
+
+    /// <summary>Only the wide layout has a width to choose.</summary>
+    private static Border WidthCard(SettingsContext context) => SettingsUi.Card(context.Palette, L.Get("Settings_ExpandedWidth"), SettingsUi.SliderRow(
+        context.Settings.ExpandedWidth, 680, 980, 10,
+        value => L.Format("Settings_Pixels", (int)value),
+        value =>
+        {
+            context.Settings.ExpandedWidth = value;
+            context.Save();
+            context.Island.ApplyLayoutSettings();
+        }));
+
+    private static string StyleNote(HomeStyle style) => L.Get(style switch
+    {
+        HomeStyle.Compact => "Settings_StyleCompactNote",
+        HomeStyle.Minimal => "Settings_StyleMinimalNote",
+        _ => "Settings_StyleWideNote",
+    });
+
+    /// <summary>Built-in themes are named in the current language; your own keep their names.</summary>
+    private static string ThemeName(IslandTheme theme) =>
+        theme.IsPreset ? L.Get("Theme_" + theme.Id.Replace('-', '_')) : theme.Name;
+}

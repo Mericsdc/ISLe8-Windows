@@ -38,6 +38,9 @@ public static class MotionTimings
     /// <summary>…and shrinks to this one, folding up with the shell, while it fades out.</summary>
     public const float ContentScaleOut = 0.9f;
 
+    /// <summary>Changing tab is a quick crossfade of the content alone; the island keeps its size.</summary>
+    public static readonly TimeSpan TabCrossfade = TimeSpan.FromMilliseconds(180);
+
     /// <summary>Used instead of springs when Windows' "Animation effects" is off: an ease-in-out.</summary>
     public static readonly TimeSpan ReducedMotion = TimeSpan.FromMilliseconds(160);
 }

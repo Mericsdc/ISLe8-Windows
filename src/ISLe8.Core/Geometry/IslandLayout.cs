@@ -19,7 +19,6 @@ public static class IslandMetrics
     public const double PillHeight = 32;
     public const double IdlePillWidth = 200;
     public const double CompactPillWidth = 260;
-    public const double ExpandedCornerRadius = 24;
     /// <summary>Room around the open island for its shadow (blur 24 + offset 8).</summary>
     public const double ShadowMargin = 36;
 
@@ -30,9 +29,6 @@ public static class IslandMetrics
     public static readonly DipSize PeekGrowth = new(18, 6);
     /// <summary>The open island keeps at least this far from the monitor's sides and the work area's bottom.</summary>
     public const double SideInset = 16;
-
-    /// <summary>The open island while it only holds the player (W0). Home grows it to 820 × 396 in W1.</summary>
-    public static readonly DipSize DefaultExpanded = new(560, 160);
 }
 
 /// <summary>
@@ -64,6 +60,21 @@ public sealed record IslandLayout
     public required DipRect Expanded { get; init; }
 
     public DipRect Pill(PillKind kind) => kind == PillKind.Compact ? CompactPill : IdlePill;
+
+    /// <summary>
+    /// The open island at <paramref name="size"/> (one tab's, <see cref="IslandSizes.Open"/>): centred,
+    /// hanging from the pill's top, never bigger than <see cref="Expanded"/>, the largest the window was
+    /// sized for. Relative to <see cref="Area"/>.
+    /// </summary>
+    public DipRect Open(DipSize size)
+    {
+        var width = Math.Min(size.Width, Expanded.Width);
+        var height = Math.Min(size.Height, Expanded.Height);
+        return new DipRect((Area.Width - width) / 2, IslandMetrics.TopMargin, width, height);
+    }
+
+    /// <summary>An open island in window pixels: the part of the window that counts as "on the island".</summary>
+    public PixelRect OpenRegion(DipRect open) => Clip(open.Offset(Area.X, Area.Y).ToPixels(Scale));
 
     /// <summary>The pill swollen a little under a resting pointer, still centred and hanging from the same top. Relative to <see cref="Area"/>.</summary>
     public DipRect Peek(PillKind kind)
