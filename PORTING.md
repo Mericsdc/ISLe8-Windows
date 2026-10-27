@@ -2,7 +2,7 @@
 
 Bu dosya, macOS sürümündeki sistemlerin Windows'a nasıl taşınacağını modül modül anlatır. Her aşamada (W1–W6) bu dosya ile [DESIGN.md](DESIGN.md) §4–5 birlikte izlenir.
 
-**Referans:** [Mericsdc/ISLe8-macOS](https://github.com/Mericsdc/ISLe8-macOS) (public, Apache-2.0). Davranışın tek doğru kaynağı oradaki koddur; bu rehber `b3dc5de` anlık görüntüsünden yazıldı. Mac'te bir davranış değişirse burası da güncellenir. Aşağıdaki dosya bağlantıları `main` dalını gösterir.
+**Referans:** [Mericsdc/ISLe8-macOS](https://github.com/Mericsdc/ISLe8-macOS) (public, Apache-2.0). Davranışın tek doğru kaynağı oradaki koddur. Bu rehber `b3dc5de` üzerine yazıldı, `dab77e8` ile güncellendi (Kompakt/Minimal şeritleri, Notlar, Sistem sekmesi, LAN, klavye temizliği, özel günler, iPhone/iPad pilleri, durum kulakları). Mac'te bir davranış değişirse burası da güncellenir. Aşağıdaki dosya bağlantıları `main` dalını gösterir.
 
 **Nasıl çalışılır:**
 1. Her aşama ayrı bir oturum. Oturum bu dosyanın ilgili bölümlerini ve Mac'teki kaynak dosyaları okuyarak başlar.
@@ -44,7 +44,7 @@ Bu dosya, macOS sürümündeki sistemlerin Windows'a nasıl taşınacağını mo
 - `cornerRadius` 0–26 aralığına sıkıştırılır.
 - Eksik alanlar Notch Black'in değerlerini alır; `backgroundBottom` yoksa `background` kullanılır.
 - **Yazarken her alan yazılır**, `backgroundBottom` dahil; Windows'ta şu an null olduğunda atlanıyor. Mac bunu zaten opsiyonel okuyor, ama iki taraf aynı dosyayı üretsin.
-- Mac: [Theme.swift][mac-theme]. Hazır temaların değerleri oradaki `presets` listesindedir. Kullanıcının hazır bir temayı değiştirmesi bir kopya oluşturur; kopyanın adı "`<ad>` · özel" olur.
+- Mac: [Theme.swift][mac-theme]. Hazır temaların değerleri oradaki `presets` listesindedir. Bir temayı değiştirmek **kopya oluşturmaz**: değişiklik aynı kimlikle kullanıcının temalarına yazılır; değiştirilmiş hazır tema "Varsayılana döndür" ile ilk haline döner.
 
 ### `isle8` komutu ve yerel kanal
 
@@ -85,16 +85,18 @@ Mac'te deneme yanılmayla bulundu; Windows'ta baştan böyle yapılmalı.
 | Yay | Açılış response 0,34, damping 0,78. Kapanış 0,28 / 0,95. Animasyon hızı çarpanı 0,6–1,6 | [IslandModel.swift][mac-model] `animation` |
 | İçerik geçişi | Açılış: opaklık + ölçek 0,94, üst kenara bağlı, 0,22 sn, 0,06 sn gecikmeli. Kapanış: opaklık + ölçek 0,9, 0,16 sn. Kabuk ve içerik birlikte notch'a / pill'e katlanır; boş bir kutu kalmaz | [IslandView.swift][mac-islandview] |
 | Hareketi azalt | Yay yerine 0,16 sn ease-in-out (Windows: `UISettings.AnimationsEnabled`) | [IslandModel.swift][mac-model] |
-| Sabit pencere | Pencere en büyük ada kadar sabit; ada içinde büyür. Animasyon sırasında pencere yeniden boyutlanmaz. Windows'ta zaten `SetWindowRgn` var | [IslandController.swift][mac-controller] |
+| Sabit pencere | Pencere en büyük ada kadar sabit; animasyon sırasında yeniden boyutlanmaz. **Görünümler de pencere boyutunda sabit bir çerçevede, notch'un altında ortalı durur; yalnızca zemin ve kırpma şekli büyür.** Her durumun (kulaklar, banner, açık panel) kendi çerçevesi vardır. Büyüyen bir çerçevenin içinde yeni beliren görünüm o çerçevenin sol kenarına göre yerleşir ve açılırken sağdan sola kayar; ada sağa doğru büyüyormuş gibi görünür. Mac'te bu hata iki kez yaşandı | [IslandView.swift][mac-islandview], [IslandShape.swift][mac-shape] `CenteredIslandShape` |
+| Tema geçişi | Tema rengi siyahın **üstüne** açılır, siyahı değiştirmez; yoksa geçişin ortasında ada yarı saydam görünür. Yalnızca cam teması siyahı söndürür | [IslandView.swift][mac-islandview] `IslandBackground` |
 | Hover alanı | Yalnızca adanın kendisi. Her giriş/çıkış olayı imlecin **gerçek konumuyla** doğrulanır; işletim sistemi sahte olay yollayabiliyor | [IslandPanel.swift][mac-panel] |
-| Sekmeler aynı yükseklikte | Sekme değişimi adayı yeniden boyutlamaz, yalnızca içerik 0,18 sn'de çapraz geçer. İmleç dock'tayken ada kapanmaz | [IslandModel.swift][mac-model] `contentHeight` |
-| Küçülürken açık kalma (slack) | Açık ada kısalırsa (Minimal Home'a dönüş) imleç eski çerçevenin içindeyken açık kalır. İmleç yeni çerçeveye girince ya da ikisinden de çıkınca normale döner | [IslandPanel.swift][mac-panel] `setIslandSize` |
+| Sekme yükseklikleri | Geniş'te bütün sekmeler aynı yükseklikte. Kompakt (Home 100) ve Minimal (Home 64) şeritlerinde diğer sekmeler 196; aradaki geçişi bir alttaki "slack" kuralı taşır. İçerik 0,18 sn'de çapraz geçer | [IslandModel.swift][mac-model] `contentHeight` |
+| Küçülürken açık kalma (slack) | Açık ada kısalırsa (Kompakt/Minimal Home'a dönüş) imleç eski çerçevenin içindeyken açık kalır. İmleç yeni çerçeveye girince ya da ikisinden de çıkınca normale döner | [IslandPanel.swift][mac-panel] `setIslandSize` |
 | Dışarı tıklama | Ada açıkken ve imleç üstünde değilken başka yere tıklamak adayı kapatır (sabitlenmişse kapatmaz) | [IslandModel.swift][mac-model] `clickedOutside` |
 | Sekme hafızası | 15 sn içinde yeniden açılırsa son sekme, yoksa ilk sekme. Onay bekleyen ajan varsa AI sekmesi | aynı, `chooseTabForOpening` |
 | İki parmakla kaydırma | Yatay kaydırma (60 pt) sonraki/önceki sekme. Raf, Pano ve Palet'te yalnızca başlık ve dock satırında | [IslandController.swift][mac-controller] `trackSwipe` |
-| Başlık çipleri | Pill'in iki yanındaki alana sığar, asla taşmaz. Sığmazsa sırayla düşer: cihaz çipi → W → uyanık tut. Pil ve kamera/mikrofon kalır | [HeaderBar.swift][mac-header] |
+| Başlık çipleri | Pill'in iki yanındaki alana sığar, asla taşmaz. Sığmazsa sırayla düşer: cihaz çipi → W → uyanık tut. Pil, LAN ve kamera/mikrofon kalır | [HeaderBar.swift][mac-header] |
 | Kulak önceliği | Onay bekleyen ajan 100 (her zaman önce), ajan 55, medya 50, zamanlayıcı 40, kamera/mikrofon 30; ayarlardan sıralanabilir | [IslandModule.swift][mac-module] |
-| Uyarı süreleri | Şarkı değişimi 2,5 sn, AirDrop 3, pil 3, toplantı 10, zamanlayıcı 4, onay 15, ajan bitti 4, limit 6, cihaz bağlandı 4, cihaz pili 5, bildirim 4 (ayar). Banner üzerine gelinince bekler | [AppDelegate.swift][mac-appdelegate] |
+| Uyarı süreleri | Şarkı değişimi 2,5 sn, AirDrop 3, pil 3, toplantı 10, zamanlayıcı 4, onay 15, ajan bitti 4, limit 6, cihaz bağlandı 4, cihaz pili 5, şarj/LAN kulakları 3, bildirim 4 (ayar). Banner üzerine gelinince bekler | [AppDelegate.swift][mac-appdelegate] |
+| Durum kulakları | Şarj aleti takıldı/çıkarıldı, Ethernet kablosu takıldı/çıkarıldı: ada banner açmaz, notch'un iki yanına doğru açılır (kulak 104). Yay response 0,42, damping 0,6 (görünür bir sekme); simge ve yazı notch'un içinden küçük başlayıp dışarı kayar, simge bir kez zıplar. Kapanırken önce ikisi içeri kayar (0,22 sn), sonra ada aynı yayla küçülür. Takınca yeşil, çıkarınca beyaz ("%61" ya da "Wi-Fi"/"Çevrimdışı"). "Tam şarj oldu" bildirimi yok | [IslandModel.swift][mac-model] `isStatusAlert`, [SystemViews.swift][mac-systemviews] `StatusEarsView` |
 | Bildirim kuyruğu | En fazla 5 bekleyen, banner'da "+N". Ada açıkken gelenler kaybolmaz, kapanınca sırayla gösterilir | [IslandModel.swift][mac-model] `showNotification` |
 
 ### Boyutlar (Windows'ta etkin piksel / DIP)
@@ -102,16 +104,14 @@ Mac'te deneme yanılmayla bulundu; Windows'ta baştan böyle yapılmalı.
 | Düzen | Genişlik | İçerik yüksekliği | Not |
 |---|---|---|---|
 | Geniş (Home panosu) | 820 (ayar 680–980) | 304 | Bütün sekmeler 304 |
-| Kompakt | 640 | 196 | Bütün sekmeler 196 |
-| Minimal | 600 | Home 64, diğer sekmeler 196 | Küçülürken açık kalma kuralı burada gerekli |
+| Kompakt | ~870 (sütunların ihtiyacından) | Home 100, diğer sekmeler 196 | Kartsız şerit; oynatıcı notch'un tam altında |
+| Minimal | ~720 | Home 64, diğer sekmeler 196 | Tek ince satır; oynatıcı ortada |
 
 - **Ada yüksekliği:** başlık satırı + 6 + içerik + dock alanı (8 + 36 + 10). ⌘K paletinde dock yok, alt boşluk 14.
-- **Kulaklar:** genişliği 40; ses/parlaklık göstergesinde 70.
+- **Kulaklar:** 40; ses/parlaklık göstergesinde 92 (çubuk + yüzde); şarj/LAN kulaklarında 104.
 - **Alt köşe yarıçapı:** açık adada `min(tema köşesi + 12, 28)`.
-- **Home sütun ağırlıkları:**
-  - Geniş: takvim 1 · medya 1,1 · hava 1 · zamanlayıcı 0,62
-  - Kompakt: 1 · 1,15 · 1 · 0,7
-  - Minimal: 1,1 · 1,7 · 0,7 · 0,9
+- **Geniş'te Home sütun ağırlıkları:** takvim 1 · medya 1,1 · hava 1 · zamanlayıcı 0,62; sütunlar kart.
+- **Kompakt ve Minimal şeritleri** (`HomeStrip`): kart yok, sütunlar 1 pt'lik ince çizgilerle ayrılır (çizginin iki yanında 10 boşluk). Her sütunun ihtiyaç duyduğu genişlik var. Kompakt: takvim 270, medya 240, hava 270, zamanlayıcı 120. Minimal: 170, 250, 190, 130. Oynatıcı ortada, notch'un altında durur; iki yanındaki sütunlar eşit yarıları paylaşır. İki yan 80'den fazla dengesizse (zamanlayıcı bir yanda) sütunlar yan yana dizilir. Ada genişliği = şerit + 48 (omuzlar ve kenar boşlukları).
 - Mac: [HomeView.swift][mac-home].
 
 ---
@@ -139,6 +139,10 @@ Her modülde: Mac dosyaları → Windows karşılığı → önemli davranışla
   - Kaydırıcı sistem sesiyle eşleşiyor, iki yönde de güncelleniyor.
   - Kapalı ada müzik çalarken de boşta sayılır: ses çubukları dışında hiçbir şey çalışmaz.
 
+- **Varsayılan müzik uygulaması (W1):** Ayarlar > Medya: Son kullanılan / Spotify / Müzik. Hiçbir şey çalmıyorken oynat'a basınca seçilen uygulama (yoksa son kullanılan) arka planda açılır ve 1,5 ile 4 sn sonra iki kez "play" gönderilir; açılan uygulama ilk anda komut almıyor. Son kullanılan, çalan uygulamanın kimliğinden hatırlanır. Windows: uygulamayı başlat, SMTC oturumu belirince `TryPlayAsync`.
+- **Spotify'ın kendi sesi (W1):** Kompakt'ta, Spotify çalarken kontrollerin altında ince bir çubuk; Mac'in genel sesine dokunmaz, Spotify dışındaki çalarlarda gizlenir. Mac'te AppleScript `sound volume`. Windows: Spotify'ın Core Audio oturumu (`IAudioSessionManager2` ile oturumu bul, `ISimpleAudioVolume`). Sürüklerken saniyede en fazla on kez ayarlanır.
+- **Spotify Canvas videoları taşınmayacak:** Resmî API'de yok; tek yol Spotify'ın erişim korumasını aşmak (bkz. §3.18).
+
 ### 3.2 Ses ve parlaklık göstergesi (plana eklenmeli: W3)
 
 - **Mac:** [HUDModule.swift][mac-hud], [VolumeMonitor.swift][mac-volume], [BrightnessMonitor.swift][mac-brightness], [SystemViews.swift][mac-systemviews] `HUDAlertView`
@@ -147,8 +151,8 @@ Her modülde: Mac dosyaları → Windows karşılığı → önemli davranışla
   - **Dahili ekran parlaklığı:** WMI `WmiMonitorBrightnessEvent` (`root\WMI`), COM `IWbemServices::ExecNotificationQueryAsync` ile. `System.Management` Native AOT ile uyumsuz, kullanılmaz.
   - **Harici monitör:** DDC/CI (`dxva2`), yalnızca kısayol tuşuyla; sorgu yok.
 - **Davranış:**
-  - Gösterge kulaklarda: solda simge, sağda seviye çubuğu; genişlik 70.
-  - Parlaklıkta gösterge yalnızca 1 sn içinde en az %4'lük değişiklikte açılır; otomatik parlaklığın yavaş ayarları gösterilmez.
+  - Gösterge kulaklarda: solda simge, sağda seviye çubuğu ve yüzde ("%62", İngilizcede "62%"); kulak genişliği 92.
+  - **Parlaklık göstergesi yalnızca parlaklık tuşuyla açılır.** Mac son 1,2 sn içinde bir NX_SYSDEFINED (medya/parlaklık tuşu) olayı olup olmadığına bakıyor (`CGEventSource.secondsSinceLastEventType`, izin gerektirmez). Otomatik parlaklık, ekranın kararması ve uyanması göstermez. Windows: Raw Input ile HID tüketici sayfasındaki parlaklık artır/azalt kullanımları (0x6F/0x70) dinlenir; değişiklik o tuşu izlemiyorsa gösterge açılmaz.
   - Ada açıkken gösterge çıkmaz.
 - **Not:** Windows'un kendi ses göstergesini gizlemenin desteklenen bir yolu yok; ISLe8'inki yanında çıkar. Pencere bulup gizleme gibi kırılgan yöntemler kullanılmaz.
 - **Kabul:** Ses tuşları ve kaydırıcıyla gösterge çıkıyor; otomatik parlaklık gösterge açmıyor; ayardan ikisi de kapatılabiliyor.
@@ -160,7 +164,7 @@ Her modülde: Mac dosyaları → Windows karşılığı → önemli davranışla
   - `Microsoft.Windows.System.Power.PowerManager` olayları (yüzde, şarj durumu, güç kaynağı).
   - Watt: `Windows.Devices.Power.Battery.AggregateBattery.GetReport().ChargeRateInMilliwatts`, **yalnızca ada açıkken** okunur.
 - **Davranış:**
-  - Şarja takınca, tam dolunca, %20'de ve %10'da (kritik) banner.
+  - Şarja takınca ve çıkarınca §2'deki **durum kulakları** (banner değil). %20'de ve %10'da (kritik) uyarı banner'ı. "Tam şarj oldu" bildirimi yok.
   - Başlık çipi: %10 altı kırmızı, %20 altı turuncu, şarjda yeşil.
   - Şarjda başlıkta "⚡ 61 W".
 - **Kabul:** Takma/çıkarma ve eşiklerde banner çıkıyor; W yalnızca açıkken okunuyor (ölçümle).
@@ -183,13 +187,15 @@ Her modülde: Mac dosyaları → Windows karşılığı → önemli davranışla
 - **İstek:**
   - `current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,wind_direction_10m,uv_index,weather_code,is_day`
   - `hourly=temperature_2m,weather_code,is_day&forecast_hours=6`
-  - `daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&forecast_days=6`
+  - `daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&forecast_days=10` (bugün + 9 gün; bugünün yağış ihtimali de tutulur)
   - `timezone=auto`, Fahrenheit'ta `wind_speed_unit=mph`.
   - Koordinatlar 2 ondalığa yuvarlanır.
 - **Davranış:**
   - Konum izni yok. Şehir ayarlanmamışsa saat diliminden bulunur: `TimeZoneInfo.TryConvertWindowsIdToIanaId` ile "Turkey Standard Time" → `Europe/Istanbul` → "İstanbul" (Open-Meteo geocoding).
   - Arka planda zamanlayıcı yok: Home görünür olduğunda veri 30 dk'dan eskiyse yenilenir.
-  - Saatlik listenin ilk öğesi geçerli saattir; ada "Şimdi" + sonraki 5 saati gösterir. Günlük listenin ilki bugündür; "Yarın" + sonraki 4 gün gösterilir.
+  - Saatlik listenin ilk öğesi geçerli saattir; Geniş'te ada "Şimdi" + sonraki 5 saati gösterir. Günlük listenin ilki bugündür; Geniş'te "Yarın" + sonraki 4 gün.
+  - **Kompakt:** solda simge + sıcaklık, şehir, gökyüzü; yanında beşer gün (Bugün, Yarın, gün adları) ve ›/‹ düğmesiyle sonraki beş gün. Bir güne dokununca altında tek satır: "Cmt 31 Eki · Sağanak · Y 18° D 12° · Yağış %70". Varsayılan seçili gün bugün.
+  - **Minimal:** üstte şehir, altta simge + sıcaklık, yanında gökyüzü ve "Y 21° D 15°".
   - Rüzgar yönü 8 nokta: K, KD, D, GD, G, GB, B, KB (İngilizcede N, NE, E, SE, S, SW, W, NW).
   - "Kapalı" (overcast) yerine "Çok bulutlu" kullanılır; "Kapalı" ayarlarda "off" anlamında geçiyor.
 - **Kabul:** Geniş, Kompakt ve Minimal'de doğru alanlar görünüyor; ağ yokken "Tekrar dene" çıkıyor.
@@ -204,7 +210,7 @@ Her modülde: Mac dosyaları → Windows karşılığı → önemli davranışla
 - **Davranış:**
   - **Geniş:** Ay görünümü, ilk gün kullanıcının yerel ayarından. Bugün vurgu renginde dolu daire, seçili gün halka. Etkinlikli günlerde takvim renginde nokta; çok günlük etkinlik her günü işaretler. Ay başlığına tıklamak bugüne döner.
   - Gün listesi: saat (ya da "Tüm gün"), başlık, ayrıntı satırı (toplantı hizmeti adı, yoksa konum, yoksa takvim adı). Toplantı linki varsa katıl düğmesi.
-  - **Kompakt:** yalnızca seçili günün listesi + "+". **Minimal:** sıradaki tek etkinlik, yoksa "Etkinlik yok".
+  - **Kompakt:** bu hafta, Geniş'teki ay görünümüyle aynı biçimde (başlık, oklar haftayı değiştirir, gün adları, gün dairesi 28). Bir güne dokununca altında küçük satır: "Per 29 · 14:00 Toplantı +1". Üzerine gelince günün etkinlikleri ipucunda. Etkinlik noktası günün 5 pt altında (seçim halkasına değmez; ay görünümünde satır aralığı 4). **Minimal:** sıradaki etkinlik; yoksa bugünün tarihi ve "Etkinlik yok".
   - Toplantı linki tanıma: zoom.us, meet.google.com, teams.microsoft.com, teams.live.com, webex.com, facetime.apple.com (URL, konum ve notlarda).
   - Toplantıdan 5 dk önce banner (10 sn, "Katıl" düğmesiyle).
   - Reddedilen etkinlikler gösterilmez.
@@ -230,7 +236,7 @@ Her modülde: Mac dosyaları → Windows karşılığı → önemli davranışla
   - Sekmelerin sırası ve görünürlüğü ayarlanabilir; en az biri açık kalır.
   - Home sütunları: takvim, medya, hava, zamanlayıcı (isteğe bağlı). Sıralanabilir ve gizlenebilir.
   - Düzen seçimi: Geniş / Kompakt / Minimal. Adı "Pano" değil, çünkü "Pano" Türkçede Pano sekmesi.
-- **Kabul:** Beş sekme arasında dock'tan art arda tıklarken ada açık kalıyor ve boyutu değişmiyor. Minimal'de AI'dan Home'a dönerken ada açık kalıyor.
+- **Kabul:** Sekmeler arasında dock'tan art arda tıklarken ada açık kalıyor. Kompakt ve Minimal'de AI'dan Home'a dönerken ada açık kalıyor. Oynatıcı Kompakt ve Minimal'de notch'un tam altında.
 
 ### 3.9 Pano geçmişi (W2)
 
@@ -329,7 +335,7 @@ Her modülde: Mac dosyaları → Windows karşılığı → önemli davranışla
   - Hata geri çekilmesi 1, 2, 4, 8, 16, 30 dk. Kurulu değil ya da giriş yok durumunda 5 dk'da bir kontrol.
   - Uyku sırasında hiçbir şey çalışmaz.
 - **Görünüm:**
-  - AI sekmesinin altında servis başına halka: %70'te turuncu, %90'da kırmızı. Pencere etiketleri: "5 saat", "Haftalık".
+  - Geniş'te AI sekmesinin altında servis başına halka; Kompakt ve Minimal'de (196 pt) çalışma kartının **sağında**, eşit satırlardan oluşan 270 pt'lik bir sütunda (pencereler tek satırda, sıfırlanma zamanı ipucunda). %70'te turuncu, %90'da kırmızı. Pencere etiketleri: "5 saat", "Haftalık".
   - %90'ı geçince 6 sn'lik banner; aynı pencere tekrar geçmedikçe bir kez.
 - **Kabul:** Üç CLI kuruluyken ve girişliyken değerler Mac'tekiyle aynı; kapalı adada CLI temposu ölçümle doğrulanıyor.
 
@@ -351,6 +357,9 @@ Her modülde: Mac dosyaları → Windows karşılığı → önemli davranışla
   - Başlıkta yalnızca pili en az olan cihazın çipi.
 - **Kabul:** Bir BLE fare, klasik bir kulaklık ve AirPods'la değerler Windows Ayarları'ndakiyle aynı; çift kayıt yok.
 
+- **Dock simgesi:** AirPods değil, Mac + iPhone (`macbook.and.iphone`).
+- **iPhone ve iPad pilleri (W5, varsayılan kapalı):** Bu bilgisayara güvenen cihazlar, Finder'ın (Windows'ta Apple Aygıtları / iTunes) onlara ulaştığı yolla salt okunur okunur. Mac: Apple'ın `MobileDevice` çerçevesi çalışma anında yüklenir, bağlanma/kopma bildirimleri, lockdown oturumu, `com.apple.mobile.battery` (`BatteryCurrentCapacity`, `BatteryIsCharging`). Windows: "Apple Mobile Device Service" (usbmuxd) `127.0.0.1:27015`'te dinler; `ReadPairRecord` + lockdown TLS oturumu (bkz. [araştırma][mac-batteries-doc]). Kart: cihaz simgeli halka, şarjdayken ⚡ ve "Şarj oluyor". %15 uyarısı var, "bağlandı" banner'ı yok (Wi-Fi'de cihaz uyudukça gelip gider). Mac: [AppleDeviceSource.swift][mac-appledevices].
+
 ### 3.15 Temalar ve düzenleyici (W5)
 
 - **Mac:** [Theme.swift][mac-theme], [ThemeSettings.swift][mac-themesettings], [IslandView.swift][mac-islandview] (`IslandBackground`)
@@ -360,7 +369,8 @@ Her modülde: Mac dosyaları → Windows karşılığı → önemli davranışla
   - Kartlar tema yüzeyi, kenarlığı ve köşe yarıçapıyla çizilir.
   - Vurgu rengi her yerde (seçili sekme, bugün, halkalar, düğmeler).
   - Yazı tipi ailesi temadan gelir.
-  - **Galeri:** her tema için küçük önizleme. **Düzenleyici:** malzeme, renkler, köşe, yazı tipi. JSON olarak dışa/içe aktarma; içe aktarılan tema bir hazır temanın ya da var olan bir temanın kimliğiyle çakışırsa yeni kimlik alır.
+  - **Galeri:** her tema için küçük önizleme. **Düzenleyici:** malzeme, renkler, köşe, yazı tipi; değişiklik seçili temaya yazılır (kopya yok). JSON olarak dışa/içe aktarma; içe aktarılan tema bir temanın kimliğiyle çakışırsa yeni kimlik alır.
+  - **Cam:** Mac'te Apple'ın şeffaf (`.clear`) camı + hafif karartma; ortası (yazıların olduğu yer) okunurluk için daha koyu, alt kenarda ince bir ışık çizgisi, notch satırı siyah. Kartlar camda koyu yarı saydam. **Kapak rengi** siyah zeminin üstüne çizilir, arkası görünmez.
   - Windows: Liquid Glass → Mica/Acrylic. Kapak rengi (artwork) teması, SMTC küçük resminin baskın rengiyle çizilir.
 - **Kabul:** Mac'te dışa aktarılan bir tema Windows'ta aynı görünüyor; tersi de.
 
@@ -381,7 +391,7 @@ Her modülde: Mac dosyaları → Windows karşılığı → önemli davranışla
 - **Mac:** [SettingsView.swift][mac-settingsview], [CustomizationSettings.swift][mac-custom], [StatusItemController.swift][mac-statusitem]
 - **Windows:**
   - Ayrı bir WinUI penceresi: sol menü + bölümler, Mica arka plan.
-  - Tray: `Shell_NotifyIcon` ile Ayarlar ve Çıkış.
+  - Tray: `Shell_NotifyIcon` ile Ayarlar ve Çıkış. **Tray simgesi Ayarlar > Genel'den gizlenebilir**; o zaman ayarlar adadaki ⚙ düğmesiyle ya da uygulama yeniden açılınca açılır.
   - Başlangıçta açılma: MSIX `StartupTask`, paketsizse `HKCU\…\Run`.
   - Uygulama yeniden açılınca (ikinci örnek) Ayarlar açılır.
 - **Ayarlar (Mac ile aynı bölümler):** Genel, Görünüm, Düzen, Kısayollar, Medya, Raf, Pano, Bildirimler, Sistem, Widget'lar, Ajanlar. "Kilit Ekranı" yok.
@@ -392,6 +402,53 @@ Her modülde: Mac dosyaları → Windows karşılığı → önemli davranışla
   - Ayarları JSON olarak dışa/içe aktarma.
 - **Kabul:** Şu an JSON'dan değişen her ayar pencereden değişebiliyor.
 
+### 3.19 Notlar (plana eklenmeli: W2)
+
+- **Mac:** [NotesModule.swift][mac-notes], [NotesViews.swift][mac-notesviews]
+- **Davranış:**
+  - Dock'ta Notlar sekmesi. Üstte yazma satırı (Enter ekler, Esc vazgeçer, en fazla 3 satır görünür); altında notlar kart olarak (genişliğe göre 2–4 sütun).
+  - Karta tıklamak kopyalar ("Kopyalandı" 1,2 sn); üzerine gelince düzenle ve sil; sağ tık menüsünde de aynıları. Boşaltılan not silinir.
+  - Kayıt: tek JSON dosyası, yalnızca kullanıcı okuyabilir (Mac'te 0600). Arka planda iş yok.
+  - Yazma satırına tıklamak adaya klavye verir; ada kapanınca klavye önceki uygulamaya döner. Windows: ada penceresi `WS_EX_NOACTIVATE`; satıra tıklayınca etkinleştir, kapanınca önceki pencereye geri ver.
+- **Kabul:** Not ekleme, kopyalama, düzenleme, silme; uygulama yeniden açılınca notlar duruyor.
+
+### 3.20 Sistem sekmesi ve LAN (plana eklenmeli: W3)
+
+- **Mac:** [SystemStats.swift][mac-stats], [SystemStatsViews.swift][mac-statsviews], [SystemModule.swift][mac-system] `NetworkLink`
+- **Sistem sekmesi (Etkinlik Monitörü kısaca):** dört gösterge kartı (işlemci, bellek, disk, ağ) ve en çok işlemci kullanan 5 süreç (yüzde + bellek). ↗ düğmesi Etkinlik Monitörü'nü (Windows'ta Görev Yöneticisi) açar.
+  - Mac kaynakları ve Windows karşılıkları: işlemci `host_statistics` → `GetSystemTimes`; bellek "kullanılan" (uygulama + kablolu + sıkıştırılmış) → `GlobalMemoryStatusEx`; disk → `GetDiskFreeSpaceEx`; ağ trafiği (Ethernet + Wi-Fi bayt sayaçları) → `GetIfTable2`; süreçler (yalnızca kullanıcının kendi süreçleri) → `NtQuerySystemInformation` ya da süreç başına `GetProcessTimes` + `PROCESS_MEMORY_COUNTERS`.
+  - **Yalnızca sekme ekrandayken, iki saniyede bir** ölçülür; örnekleme sekmenin yaşam süresine bağlı. Mac'te `onAppear`/`onDisappear` sayacı bir kez çift sayıp örneklemeyi açık bıraktı; `.task` ile çözüldü. Windows'ta da görünür olmaya bağlanmalı, sayaçla değil.
+  - Değerler animasyonsuz değişir: her güncellemedeki halka/sayı animasyonları sekmeyi saniyede onlarca kez çizdirip CPU'yu %7'ye çıkarıyordu (animasyonsuz %1,2).
+  - Göstergeler kullanım arttıkça yeşil → turuncu (%60) → kırmızı (%85).
+- **LAN:** Bağlantı türü olay tabanlı izlenir (Mac `NWPathMonitor`; Windows `NetworkInformation.NetworkStatusChanged` + `GetInternetConnectionProfile().NetworkAdapter.IanaInterfaceType == 6`). Ethernet'teyken başlıkta yeşil **LAN** çipi; dar ekranda düşmez. Kablo takılınca/çıkarılınca §2'deki durum kulakları. Uygulama açılırken zaten kabloluysa bildirim yok. Ayar: Görünüm > Başlık çubuğu > "Kablolu bağlantı (LAN)".
+- **Kabul:** Kabloyu takıp çıkarınca kulaklar ve çip doğru; sekme kapalıyken örnekleme yok (ölçümle).
+
+### 3.21 Klavye temizliği (plana eklenmeli: W3)
+
+- **Mac:** [KeyboardLock.swift][mac-keyboardlock], [KeyboardLockWindow.swift][mac-keyboardwindow]
+- **Davranış:** Ayarlar > Sistem'de "Klavyeyi kilitle" ve palette "Klavyeyi temizle". Bütün tuşlar, değiştiriciler ve medya tuşları iki dakikalığına yutulur; fare çalışır. Ekranın ortasında "Klavye kilitli" kartı, geri sayım ve "Kilidi aç" düğmesi. İki dakika sonra kendiliğinden açılır; süreç ölürse kilit de kalkar.
+- **Windows:** `SetWindowsHookEx(WH_KEYBOARD_LL)` ile her olaya 1 döndür (Ctrl+Alt+Del yine çalışır, bu iyi). Mac'te Erişilebilirlik izni gerekiyor; Windows'ta özel izin yok.
+- **Kabul:** Kilitliyken hiçbir tuş yazmıyor; düğme ve süre kilidi açıyor.
+
+### 3.22 Özel günler (plana eklenmeli: W5)
+
+- **Mac:** [Seasonal.swift][mac-seasonal] (tarihler, renkler), [SeasonalDecor.swift][mac-seasonaldecor] (sahneler)
+- **Günler (yalnızca dünyada kutlananlar):**
+
+  | Gün | Tarih | Renk (üst → alt, vurgu) | Sahne |
+  |---|---|---|---|
+  | Sevgililer Günü | 13–14 Şubat | #2B0710 → #4D0A1F, #FF2D55 | Kenarlarda atan kalpler, yükselen kalpler, ışıltı |
+  | Aziz Patrick Günü | 16–17 Mart | #04170B → #0B3D1C, #22C55E | Sallanan yoncalar, yeşil şapkalar, paralar, dönerek düşen yoncalar |
+  | Paskalya | Paskalya cuması – pazarı (hesapla) | #15150A → #3B3410, #F59E0B | Zıplayan tavşan, yumurtalar, civciv, çiçek sırası, çayır ışığı, kelebekler |
+  | Cadılar Bayramı | 24–31 Ekim | #1A0A03 → #3F1505, #F97316 | Ay ve şato silueti, titreyen kabaklar, yarasalar, kıvılcımlar, örümcek ağı |
+  | Ay Yeni Yılı | Çin takvimiyle bulunur; bir gün öncesi – iki gün sonrası | #2A0303 → #5C0A07, #EF4444 | Sallanan fenerler, ejderhalar, kırmızı zarflar, altın kıvılcımlar |
+  | Kış tatili | 20–30 Aralık, 2–6 Ocak | #06142B → #0E2C55, #3B82F6 | Kar, çamlar, kardan adam, ışıklı köy, ışık zinciri |
+  | Yılbaşı | 31 Aralık – 1 Ocak | #0E0820 → #2E1065, #FBBF24 | Konfeti, havai fişek halkaları, şampanya, balonlar, parlayan yıl yazısı |
+
+- **Davranış:** Gün sürerken açık ada günün temasına bürünür (degrade, vurgu, kenarda nefes alan parlak çizgi); köşe yuvarlaklığı ve yazı tipi kullanıcınınki. Sahne içeriğin arkasında; sabit parçalar kenarlarda ve dock'un yanındaki köşelerde, hareketliler soluk. Ayarlar > Görünüm > Özel günler: aç/kapat ve herhangi bir günü önizle. Hareketi azalt açıkken sahne durur.
+- **Performans dersi:** Mac'te sahne önce bir Canvas'ta 20–24 fps çiziliyordu ve ada açıkken %6–7 CPU harcıyordu. Şimdi her parça bir Core Animation katmanı; hareket bir kez kurulup render sunucusunca oynatılıyor, kare başına 0 CPU. **Windows: aynısı Composition katmanında** (`Visual` + `KeyFrameAnimation`/`ExpressionAnimation`, DWM'de oynar); emoji görselleri (Segoe UI Emoji) bir kez `CompositionSurface`'a çizilir. XAML `Storyboard` ya da kare başına yeniden çizim kullanılmamalı.
+- **Kabul:** Yedi gün önizlemede doğru; ada açıkken CPU kare başına artmıyor.
+
 ### 3.18 Taşınmayacaklar
 
 | Mac | Neden |
@@ -400,12 +457,13 @@ Her modülde: Mac dosyaları → Windows karşılığı → önemli davranışla
 | AirDrop alma | Karşılığı yok (Nearby Share, İndirilenler; §3.10) |
 | Sistem ses göstergesinin yerine geçme | Windows'un kendi göstergesini gizlemenin desteklenen bir yolu yok; ISLe8 yanında gösterir |
 | Kestirmeler (Shortcuts) | Windows'ta karşılığı yok; palet yalnızca uygulamaları listeler |
+| Spotify Canvas videoları | Resmî API'de yok; Spotify'ın web oynatıcısındaki erişim korumasını aşmak gerekiyor. Kullanım koşullarına aykırı, iki sürümde de yapılmaz |
 
 ---
 
 ## 4. DESIGN.md §4 ile farklar
 
-- **Plana eklenmesi gerekenler:** ses/parlaklık göstergesi (§3.2), kamera/mikrofon göstergesi ve uyanık tut (§3.4), komut paleti (§3.16), ayarlar penceresi (§3.17), takvim hızlı ekleme (§3.6), `isle8.exe` konsol yardımcısı (§1).
+- **Plana eklenmesi gerekenler:** ses/parlaklık göstergesi (§3.2), kamera/mikrofon göstergesi ve uyanık tut (§3.4), komut paleti (§3.16), ayarlar penceresi (§3.17), takvim hızlı ekleme (§3.6), `isle8.exe` konsol yardımcısı (§1), Notlar (§3.19), Sistem sekmesi ve LAN (§3.20), klavye temizliği (§3.21), özel günler (§3.22), iPhone/iPad pilleri (§3.14), durum kulakları (§2).
 - **Öne alınması gereken:** MSIX paket kimliği. Bildirim aynası, takvim, App Execution Alias ve `StartupTask` hepsi paket kimliği istiyor. Kimlik kararı W1'de verilmeli (tam MSIX ya da harici konumlu "sparse" paket). Sürüm zip'leri bu kararla değişir.
 - **Varsayılan değişiklikleri:** Tasarruf modu varsayılan açık. Açılma gecikmesi 0. Bütün sekmeler aynı yükseklikte.
 
@@ -413,11 +471,11 @@ Her modülde: Mac dosyaları → Windows karşılığı → önemli davranışla
 
 | Aşama | İçerik |
 |---|---|
-| W1 · Temel + Home | Paket kimliği kararı, ayarlar penceresi, tray, §2'deki ada kuralları, dock, Geniş/Kompakt/Minimal, Home sütunları (takvim, medya + ses kaydırıcısı, hava, zamanlayıcı), pil + W, medya düzeltmeleri |
-| W2 · Pano + Raf + Palet | Pano geçmişi, raf ve paylaşım, Ctrl+Alt+K paleti |
-| W3 · Bildirim + Sistem | Bildirim aynası, ses/parlaklık göstergesi, kamera/mikrofon, uyanık tut |
+| W1 · Temel + Home | Paket kimliği kararı, ayarlar penceresi, tray, §2'deki ada kuralları (sabit çerçeve, durum kulakları), dock, Geniş/Kompakt/Minimal şeritleri, Home sütunları (takvim, medya + ses kaydırıcısı + varsayılan çalar + Spotify sesi, hava, zamanlayıcı), pil + W, medya düzeltmeleri |
+| W2 · Pano + Raf + Palet + Notlar | Pano geçmişi, raf ve paylaşım, Ctrl+Alt+K paleti, Notlar sekmesi |
+| W3 · Bildirim + Sistem | Bildirim aynası, ses/parlaklık göstergesi (yüzde, yalnızca tuşla parlaklık), kamera/mikrofon, uyanık tut, Sistem sekmesi, LAN çipi ve kulakları, klavye temizliği |
 | W4 · AI | `isle8.exe` + named pipe, hook kurucu, çalışma kartı, onaylar, kullanım limitleri |
-| W5 · Cihazlar + Tema | Bluetooth pilleri ve Cihazlar sekmesi, Mica/Acrylic, tema düzenleyici ve JSON |
+| W5 · Cihazlar + Tema | Bluetooth pilleri ve Cihazlar sekmesi, iPhone/iPad pilleri (varsayılan kapalı), Mica/Acrylic, tema düzenleyici ve JSON, özel günler |
 | W6 · Dağıtım | İmzalama, başlangıçta açılma, tam ölçüm turu, TESTING.md'nin kalanları |
 
 [mac-strings]: https://github.com/Mericsdc/ISLe8-macOS/blob/main/ISLe8/Resources/Localizable.xcstrings
@@ -473,3 +531,14 @@ Her modülde: Mac dosyaları → Windows karşılığı → önemli davranışla
 [mac-paletteview]: https://github.com/Mericsdc/ISLe8-macOS/blob/main/ISLe8/Modules/Palette/PaletteView.swift
 [mac-settingsview]: https://github.com/Mericsdc/ISLe8-macOS/blob/main/ISLe8/Views/SettingsView.swift
 [mac-statusitem]: https://github.com/Mericsdc/ISLe8-macOS/blob/main/ISLe8/App/StatusItemController.swift
+[mac-shape]: https://github.com/Mericsdc/ISLe8-macOS/blob/main/ISLe8/Views/IslandShape.swift
+[mac-notes]: https://github.com/Mericsdc/ISLe8-macOS/blob/main/ISLe8/Modules/Notes/NotesModule.swift
+[mac-notesviews]: https://github.com/Mericsdc/ISLe8-macOS/blob/main/ISLe8/Modules/Notes/NotesViews.swift
+[mac-stats]: https://github.com/Mericsdc/ISLe8-macOS/blob/main/ISLe8/Modules/System/SystemStats.swift
+[mac-statsviews]: https://github.com/Mericsdc/ISLe8-macOS/blob/main/ISLe8/Modules/System/SystemStatsViews.swift
+[mac-keyboardlock]: https://github.com/Mericsdc/ISLe8-macOS/blob/main/ISLe8/Modules/System/KeyboardLock.swift
+[mac-keyboardwindow]: https://github.com/Mericsdc/ISLe8-macOS/blob/main/ISLe8/Window/KeyboardLockWindow.swift
+[mac-seasonal]: https://github.com/Mericsdc/ISLe8-macOS/blob/main/ISLe8/Core/Seasonal.swift
+[mac-seasonaldecor]: https://github.com/Mericsdc/ISLe8-macOS/blob/main/ISLe8/Views/SeasonalDecor.swift
+[mac-appledevices]: https://github.com/Mericsdc/ISLe8-macOS/blob/main/ISLe8/Modules/Devices/AppleDeviceSource.swift
+[mac-batteries-doc]: https://github.com/Mericsdc/ISLe8-macOS/blob/main/docs/apple-device-batteries.md
