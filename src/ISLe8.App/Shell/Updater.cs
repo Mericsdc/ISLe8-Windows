@@ -24,11 +24,11 @@ public enum UpdateState
 /// Updates from the project's GitHub releases (Settings › General › Updates; Windows only). It asks
 /// GitHub once a day, and when the user presses Update it downloads the file for this kind of ISLe8
 /// (the installed app's package, or the zip), checks its SHA-256, and hands over to a small script
-/// that waits for ISLe8 to quit, puts the new files where the old ones were (keeping the old ones
+/// (started by Task Scheduler for the installed app, outside its package) that waits for ISLe8 to quit, puts the new files where the old ones were (keeping the old ones
 /// until the new ones are in), registers the package again for the installed app, and starts ISLe8.
 /// Nothing is downloaded or run without the button.
 /// </summary>
-internal sealed partial class Updater
+internal sealed class Updater
 {
     private static readonly HttpClient Http = CreateClient();
 
@@ -155,10 +155,11 @@ internal sealed partial class Updater
             var script = Path.Combine(folder, "apply.ps1");
             await File.WriteAllTextAsync(script, Script, System.Text.Encoding.UTF8);
             var family = packaged ? Windows.ApplicationModel.Package.Current.Id.FamilyName : "";
-            var arguments = $"-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File \"{script}\" -Wait {Environment.ProcessId} "
-                + $"-Source \"{source}\" -Target \"{target}\" -Family \"{family}\" -Log \"{Path.Combine(AppPaths.DataFolder, "update.log")}\"";
+            // One line per value, read back as they are: no quoting to get wrong.
+            await File.WriteAllLinesAsync(Path.Combine(folder, "apply.txt"),
+                [Environment.ProcessId.ToString(System.Globalization.CultureInfo.InvariantCulture), source, target, family, Path.Combine(AppPaths.DataFolder, "update.log")]);
             Log.Info($"update: {release.Tag} downloaded, handing over to apply.ps1 for {target}");
-            Spawn(Path.Combine(Environment.SystemDirectory, @"WindowsPowerShell\v1.0\powershell.exe"), arguments, outsidePackage: packaged);
+            HandOver(script, packaged);
             _quit();
         }
         catch (Exception e) when (e is HttpRequestException or TaskCanceledException or IOException or UnauthorizedAccessException or InvalidDataException or System.ComponentModel.Win32Exception)
@@ -238,9 +239,17 @@ internal sealed partial class Updater
     /// stay), and starts ISLe8. On any failure the old folder goes back, and the reason goes to the log.
     /// </summary>
     private const string Script = """
-        param([int]$Wait, [string]$Source, [string]$Target, [string]$Family, [string]$Log)
         $ErrorActionPreference = 'Stop'
-        try { Wait-Process -Id $Wait -Timeout 30 -ErrorAction SilentlyContinue } catch { }
+        $Wait, $Source, $Target, $Family, $Log = Get-Content (Join-Path $PSScriptRoot 'apply.txt') -Encoding UTF8
+        $trace = Join-Path $PSScriptRoot 'apply.log'
+        # Started by Task Scheduler for the installed app: the task has done its job.
+        if ($Family) { schtasks.exe /Delete /TN 'ISLe8 update' /F *> $null }
+        function Trace([string]$step) { Add-Content $trace "$(Get-Date -Format 'HH:mm:ss.fff') $step" }
+        Add-Type -Namespace Isle8 -Name Identity -MemberDefinition '[DllImport("kernel32.dll", CharSet = CharSet.Unicode)] public static extern int GetCurrentPackageFullName(ref int length, System.Text.StringBuilder name);'
+        $length = 0
+        Trace "started; package identity: $([Isle8.Identity]::GetCurrentPackageFullName([ref]$length, $null) -ne 15700)"
+        try { Wait-Process -Id ([int]$Wait) -Timeout 30 -ErrorAction SilentlyContinue } catch { }
+        Trace "ISLe8 gone"
         Start-Sleep -Milliseconds 500
         $old = "$Target-old"
         $moved = $false
@@ -252,9 +261,12 @@ internal sealed partial class Updater
             }
             $moved = $true
             Move-Item $Source $Target
+            Trace "files in place"
             if ($Family) { Add-AppxPackage -Register (Join-Path $Target 'AppxManifest.xml') -ForceApplicationShutdown }
+            Trace "registered"
             Remove-Item $old -Recurse -Force -ErrorAction SilentlyContinue
         } catch {
+            Trace "failed: $($_.Exception.Message)"
             Add-Content $Log $_.Exception.Message
             if ($moved) {
                 if (Test-Path $Target) { Remove-Item $Target -Recurse -Force -ErrorAction SilentlyContinue }
@@ -268,91 +280,31 @@ internal sealed partial class Updater
     // MARK: Starting the script outside the package
 
     /// <summary>
-    /// The installed app's children run inside its package, and re-registering the package would stop
-    /// them with it; the script is started outside it (PROC_THREAD_ATTRIBUTE_DESKTOP_APP_POLICY).
+    /// The installed app's children run with its package identity, and registering the package again
+    /// stops every process that has it, the script too, halfway (seen: the files in place, nothing
+    /// registered). So for the installed app the script is started by Task Scheduler, as the user,
+    /// outside the package; the zip's ISLe8 starts it directly.
     /// </summary>
-    private static unsafe void Spawn(string exe, string arguments, bool outsidePackage)
+    private static void HandOver(string script, bool packaged)
     {
-        if (!outsidePackage)
+        var powershell = Path.Combine(Environment.SystemDirectory, @"WindowsPowerShell\v1.0\powershell.exe");
+        var command = $"\"{powershell}\" -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File \"{script}\"";
+        if (!packaged)
         {
-            using var _ = Process.Start(new ProcessStartInfo(exe, arguments) { UseShellExecute = false, CreateNoWindow = true });
+            using var _ = Process.Start(new ProcessStartInfo(powershell, $"-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File \"{script}\"") { UseShellExecute = false, CreateNoWindow = true });
             return;
         }
-        nuint size = 0;
-        InitializeProcThreadAttributeList(null, 1, 0, &size);
-        var list = (void*)Marshal.AllocHGlobal((nint)size);
-        try
-        {
-            if (!InitializeProcThreadAttributeList(list, 1, 0, &size)) throw new System.ComponentModel.Win32Exception();
-            uint policy = 0x04; // PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_OVERRIDE
-            if (!UpdateProcThreadAttribute(list, 0, 0x00020012 /* PROC_THREAD_ATTRIBUTE_DESKTOP_APP_POLICY */, &policy, sizeof(uint), null, null))
-            {
-                throw new System.ComponentModel.Win32Exception();
-            }
-            var startup = new StartupInfoEx { AttributeList = list };
-            startup.Info.Size = (uint)sizeof(StartupInfoEx);
-            var command = $"\"{exe}\" {arguments}\0".ToCharArray();
-            fixed (char* line = command)
-            {
-                ProcessInformation process;
-                const uint flags = 0x00080000 /* EXTENDED_STARTUPINFO_PRESENT */ | 0x08000000 /* CREATE_NO_WINDOW */;
-                if (!CreateProcessW(null, line, null, null, false, flags, null, null, &startup, &process)) throw new System.ComponentModel.Win32Exception();
-                CloseHandle(process.Process);
-                CloseHandle(process.Thread);
-            }
-            DeleteProcThreadAttributeList(list);
-        }
-        finally
-        {
-            Marshal.FreeHGlobal((nint)list);
-        }
+        Schtasks($"/Create /TN \"ISLe8 update\" /TR \"{command.Replace("\"", "\\\"")}\" /SC ONCE /ST 00:00 /F /RL LIMITED");
+        Schtasks("/Run /TN \"ISLe8 update\"");
     }
 
-    [StructLayout(LayoutKind.Sequential)]
-    private struct StartupInfo
+    private static void Schtasks(string arguments)
     {
-        public uint Size;
-        public nint Reserved;
-        public nint Desktop;
-        public nint Title;
-        public uint X, Y, XSize, YSize, XCountChars, YCountChars, FillAttribute, Flags;
-        public ushort ShowWindow, Reserved2;
-        public nint Reserved3, StdInput, StdOutput, StdError;
+        var exe = Path.Combine(Environment.SystemDirectory, "schtasks.exe");
+        using var process = Process.Start(new ProcessStartInfo(exe, arguments) { UseShellExecute = false, CreateNoWindow = true, RedirectStandardError = true, RedirectStandardOutput = true })
+            ?? throw new IOException("schtasks");
+        var error = process.StandardError.ReadToEnd();
+        process.WaitForExit(15000);
+        if (process.ExitCode != 0) throw new IOException($"schtasks {process.ExitCode}: {error.Trim()}");
     }
-
-    [StructLayout(LayoutKind.Sequential)]
-    private unsafe struct StartupInfoEx
-    {
-        public StartupInfo Info;
-        public void* AttributeList;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    private struct ProcessInformation
-    {
-        public nint Process;
-        public nint Thread;
-        public uint ProcessId;
-        public uint ThreadId;
-    }
-
-    [LibraryImport("kernel32.dll", SetLastError = true)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static unsafe partial bool InitializeProcThreadAttributeList(void* list, int count, uint flags, nuint* size);
-
-    [LibraryImport("kernel32.dll", SetLastError = true)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static unsafe partial bool UpdateProcThreadAttribute(void* list, uint flags, nuint attribute, void* value, nuint size, void* previous, nuint* returned);
-
-    [LibraryImport("kernel32.dll")]
-    private static unsafe partial void DeleteProcThreadAttributeList(void* list);
-
-    [LibraryImport("kernel32.dll", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static unsafe partial bool CreateProcessW(string? application, char* commandLine, void* processAttributes, void* threadAttributes,
-        [MarshalAs(UnmanagedType.Bool)] bool inheritHandles, uint flags, void* environment, string? directory, StartupInfoEx* startup, ProcessInformation* information);
-
-    [LibraryImport("kernel32.dll")]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static partial bool CloseHandle(nint handle);
 }

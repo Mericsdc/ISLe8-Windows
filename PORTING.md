@@ -621,8 +621,10 @@ sorulur; taslak ve ön sürümler sayılmaz. İndirme yalnızca düğmeyle, yaln
 verdiği SHA-256 denetlenir. Sonra küçük bir PowerShell betiği ISLe8'in kapanmasını bekler, eski klasörü `-old` adıyla
 kenara alır, yenisini koyar, kurulu ISLe8'de paketi aynı klasörden yeniden kaydeder (yerinde güncelleme: ayarlar, bildirim izni
 ve başlangıç görevi kalır) ve ISLe8'i açar. Bir şey ters giderse eski klasör geri konur, neden `update.log`'a yazılır ve ISLe8
-açılınca ayarlarda gösterilir. Kurulu ISLe8'in alt süreçleri paketin içinde çalıştığı için betik paketin dışında başlatılır
-(`PROC_THREAD_ATTRIBUTE_DESKTOP_APP_POLICY`); yoksa paket yeniden kaydedilirken betik de kapanırdı. Kurulu ISLe8 için
+açılınca ayarlarda gösterilir. Kurulu ISLe8'in alt süreçleri paket kimliğini taşır ve paket yeniden kaydedilirken Windows onları da kapatır; 0.2.1'de betik
+dosyaları yerine koyduktan sonra böyle yarıda öldü (`PROC_THREAD_ATTRIBUTE_DESKTOP_APP_POLICY` ile "paket dışı" başlatma kimliği
+kaldırmadı). 0.2.2'den beri kurulu ISLe8'de betiği Görev Zamanlayıcı başlatır (tek seferlik "ISLe8 update" görevi, kullanıcı
+olarak, sınırlı yetkiyle; betik görevi siler). Betik her adımı `updates\apply.log`'a yazar. Kurulu ISLe8 için
 Release'te `ISLe8-<sürüm>-<rid>-package.zip` (scripts/package.ps1). İmzalı .msix ve App Installer W6'da.
 
 ## 4. DESIGN.md §4 ile farklar

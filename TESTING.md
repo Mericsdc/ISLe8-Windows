@@ -41,7 +41,10 @@ Sürüm 0.2.1 (0.2.0 etiketinin yayını CI'da isle8-cli geri yüklenmediği iç
 (`UpdateTests`; 338'den 344'e).
 
 - [ ] Ayarlar › Genel › Güncellemeler: "Güncellemeleri denetle" → "ISLe8 güncel" ya da "0.2.0 sürümüne güncelle".
-- [ ] Kurulu ISLe8 (0.1.x) → 0.2.1: indirme yüzdesi, ISLe8 kapanıp açılıyor, sürüm 0.2.1; bildirim izni ve ayarlar duruyor.
+- [x] Denetle: "ISLe8 0.2.1 çıktı", düğme "0.2.1 sürümüne güncelle"; indirme ve SHA-256 tamam.
+- [x] **Hata (bulundu, 0.2.2'de düzeltildi):** kurulu ISLe8 0.1.9 → 0.2.1'de betik paket kimliğiyle çalıştı (apply.log: "package identity: True")
+      ve paket kaydedilirken Windows onu da kapattı; dosyalar yerindeydi, kayıt yoktu. Elle kaydedilip düzeltildi.
+- [ ] Kurulu ISLe8 (0.2.1) → 0.2.2 Görev Zamanlayıcı ile: ISLe8 kapanıp açılıyor, sürüm 0.2.2.
 - [ ] Zip'ten açılan ISLe8 → 0.2.1: klasör yerinde güncelleniyor.
 - [ ] Bildirim alanı menüsünde "Güncelle" öğesi yalnızca yeni sürüm varken.
 
