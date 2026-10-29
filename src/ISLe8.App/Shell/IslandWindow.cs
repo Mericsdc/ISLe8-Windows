@@ -32,6 +32,7 @@ internal sealed unsafe class IslandWindow : IDisposable
     private bool _subclassed;
     private nint _blurRegion;
     private bool _appBarRegistered;
+    private int _demotions;
     private bool _placePending;
     private PixelRect? _hitRegion;
     private nint _foregroundHook;
@@ -297,6 +298,9 @@ internal sealed unsafe class IslandWindow : IDisposable
             case Win32.WM_SETTINGCHANGE when wParam == Win32.SPI_SETWORKAREA:
                 RequestPlace();
                 break;
+            case Win32.WM_WINDOWPOSCHANGING when lParam != 0:
+                KeepOnTop((WINDOWPOS*)lParam);
+                break;
             // Windows can tear the window down without Dispose (logoff, taskkill); the subclass
             // must go before the window does.
             case Win32.WM_NCDESTROY:
@@ -305,6 +309,28 @@ internal sealed unsafe class IslandWindow : IDisposable
         }
         return null;
     }
+
+    /// <summary>
+    /// The island stays above every ordinary window. It was once found under a maximised browser,
+    /// its "topmost" gone though ISLe8 never asks for that, so a move that would take it out of the
+    /// topmost band (to the bottom, or after an ordinary window) is turned into one that keeps it.
+    /// </summary>
+    private void KeepOnTop(WINDOWPOS* position)
+    {
+        if ((position->flags & Win32.SWP_NOZORDER) != 0) return;
+        var after = position->hwndInsertAfter;
+        if (after == Win32.HWND_TOPMOST || after == Win32.HWND_TOP) return;
+        var demotes = after == Win32.HWND_NOTOPMOST || after == Win32.HWND_BOTTOM
+            || ((long)Win32.GetWindowLongPtr(after, Win32.GWL_EXSTYLE) & Win32.WS_EX_TOPMOST) == 0;
+        if (!demotes) return;
+        position->hwndInsertAfter = Win32.HWND_TOPMOST;
+        // Who did it is worth knowing, but not a line per move.
+        if (_demotions++ < 3) Log.Info($"kept on top (asked to go after {after}, {Win32.ClassName(after)})");
+    }
+
+    /// <summary>Puts the island back at the top of the topmost windows, without moving or activating it.</summary>
+    public void BringToTop() =>
+        Win32.SetWindowPos(Hwnd, Win32.HWND_TOPMOST, 0, 0, 0, 0, Win32.SWP_NOMOVE | Win32.SWP_NOSIZE | Win32.SWP_NOACTIVATE);
 
     private void OnFullscreenApp(bool opened)
     {

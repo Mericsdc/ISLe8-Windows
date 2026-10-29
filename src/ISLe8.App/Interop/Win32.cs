@@ -43,6 +43,18 @@ internal struct APPBARDATA
 }
 
 [StructLayout(LayoutKind.Sequential)]
+internal struct WINDOWPOS
+{
+    public nint hwnd;
+    public nint hwndInsertAfter;
+    public int x;
+    public int y;
+    public int cx;
+    public int cy;
+    public uint flags;
+}
+
+[StructLayout(LayoutKind.Sequential)]
 internal struct DWM_BLURBEHIND
 {
     public uint dwFlags;
@@ -103,7 +115,13 @@ internal static unsafe partial class Win32
     public const uint SWP_NOMOVE = 0x0002;
     public const uint SWP_NOACTIVATE = 0x0010;
     public const uint SWP_FRAMECHANGED = 0x0020;
+    public const uint SWP_NOZORDER = 0x0004;
+    public const nint HWND_TOP = 0;
+    public const nint HWND_BOTTOM = 1;
     public static readonly nint HWND_TOPMOST = -1;
+    public const nint HWND_NOTOPMOST = -2;
+    public const long WS_EX_TOPMOST = 0x00000008;
+    public const uint WM_WINDOWPOSCHANGING = 0x0046;
 
     public const int SW_HIDE = 0;
     public const int SW_SHOWNOACTIVATE = 4;

@@ -431,6 +431,8 @@ internal sealed class IslandController : IDisposable
         _settled = false;
 
         if (state != IslandState.Expanded) ReturnKeyboard();
+        // Whatever happened to the window's place meanwhile, what opens is drawn above every window.
+        if (state != IslandState.Pill) _window.BringToTop();
         if (state == IslandState.Expanded)
         {
             _window.SetHitRegion(layout.ExpandedRegion);

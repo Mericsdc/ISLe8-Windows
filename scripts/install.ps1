@@ -29,12 +29,16 @@ if (-not $manifest) { throw 'Derleme AppxManifest.xml üretmedi.' }
 
 $installed = Get-AppxPackage $name
 if ($installed) {
-    Get-Process ISLe8 -ErrorAction SilentlyContinue | Stop-Process
+    # Kapanan ISLe8 dosyalarını bir an daha tutar; klasör ancak süreç bitince silinebilir.
+    Get-Process ISLe8 -ErrorAction SilentlyContinue | Stop-Process -PassThru | Wait-Process -Timeout 10 -ErrorAction SilentlyContinue
     # Başka bir klasörden kayıtlıysa önce o kaldırılır; Windows aynı paketi iki yerden kaydetmez.
     if ($installed.InstallLocation -ne $layout) { $installed | Remove-AppxPackage }
 }
 
-if (Test-Path $layout) { Remove-Item $layout -Recurse -Force }
+for ($try = 1; Test-Path $layout; $try++) {
+    try { Remove-Item $layout -Recurse -Force -ErrorAction Stop }
+    catch { if ($try -ge 5) { throw } else { Start-Sleep -Seconds 1 } }
+}
 $aot = if ($NoAot) { @('-p:PublishAot=false', '-p:SelfContained=true') } else { @() }
 dotnet publish "$root\src\ISLe8.App" -c Release -r $rid -p:Platform=$Platform @aot -o $layout
 if ($LASTEXITCODE -ne 0) { throw "dotnet publish başarısız oldu (çıkış kodu $LASTEXITCODE)." }
