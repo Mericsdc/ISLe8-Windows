@@ -33,6 +33,10 @@ internal sealed class IslandSurface
     private readonly SpriteVisual _shadowVisual;
     private readonly DropShadow _shadow;
     private readonly bool _animationsEnabled = new Windows.UI.ViewManagement.UISettings().AnimationsEnabled;
+    /// <summary>"Shoulder": how far the notch shape flares into the top edge, sprung with the shape.</summary>
+    private readonly CompositionPropertySet _flare;
+    private readonly List<Visual> _shoulders = [];
+    private readonly List<CompositionColorBrush> _themeShoulders = [];
     private IslandTheme _theme = IslandTheme.NotchBlack;
     private IslandLayout? _layout;
     private Vector2 _areaOffset;
@@ -55,6 +59,16 @@ internal sealed class IslandSurface
         _themeVisual = _compositor.CreateShapeVisual();
         _themeVisual.Shapes.Add(_themeShape);
         _themeVisual.Opacity = 0;
+
+        _flare = _compositor.CreatePropertySet();
+        _flare.InsertScalar("Shoulder", 0);
+        foreach (var right in new[] { false, true })
+        {
+            _shapeVisual.Children.InsertAtTop(Shoulder(right, _compositor.CreateColorBrush(Windows.UI.Color.FromArgb(255, 0, 0, 0))));
+            var themed = _compositor.CreateColorBrush(_theme.Background.ToColor());
+            _themeShoulders.Add(themed);
+            _themeVisual.Children.InsertAtTop(Shoulder(right, themed));
+        }
 
         // The shadow is cast by an empty sprite through a mask: a live copy of the same shape. A
         // LayerVisual would be simpler, but in a per-pixel-alpha window it draws as an opaque,
@@ -98,6 +112,7 @@ internal sealed class IslandSurface
         _maskSurface.SourceSize = canvas;
         _shadowVisual.Size = canvas;
         _areaOffset = new Vector2((float)layout.Area.X, (float)layout.Area.Y);
+        foreach (var shoulder in _shoulders) shoulder.IsVisible = layout.Flush;
         ApplyBrush();
     }
 
@@ -108,10 +123,12 @@ internal sealed class IslandSurface
     }
 
     /// <summary>Puts the shape at <paramref name="rect"/> (relative to the island column) at once.</summary>
-    public void JumpTo(DipRect rect, double cornerRadius, bool shadow)
+    public void JumpTo(DipRect rect, double cornerRadius, bool shadow, double shoulder = 0)
     {
         _morphs++;
         rect = Flushed(rect, cornerRadius);
+        _flare.StopAnimation("Shoulder");
+        _flare.InsertScalar("Shoulder", (float)shoulder);
         Set(_shapeGeometry, rect, cornerRadius, _areaOffset);
         Set(_clipGeometry, rect, cornerRadius, Vector2.Zero);
         _shadow.StopAnimation("Opacity");
@@ -122,10 +139,11 @@ internal sealed class IslandSurface
     /// Springs the shape to <paramref name="rect"/>. <paramref name="settled"/> runs once it comes to
     /// rest, unless a newer morph took over in the meantime.
     /// </summary>
-    public void MorphTo(DipRect rect, double cornerRadius, SpringSpec spring, bool shadow, Action settled)
+    public void MorphTo(DipRect rect, double cornerRadius, SpringSpec spring, bool shadow, Action settled, double shoulder = 0)
     {
         var morph = ++_morphs;
         rect = Flushed(rect, cornerRadius);
+        AnimateShoulder((float)shoulder, spring);
         var batch = _compositor.CreateScopedBatch(CompositionBatchTypes.Animation);
         Animate(_shapeGeometry, rect, cornerRadius, _areaOffset, spring);
         Animate(_clipGeometry, rect, cornerRadius, Vector2.Zero, spring);
@@ -140,6 +158,63 @@ internal sealed class IslandSurface
         {
             if (morph == _morphs) settled();
         };
+    }
+
+    /// <summary>
+    /// One of the notch shape's concave shoulders (IslandShape.swift): a square as wide as the flare
+    /// beside the shape's top corner, filled with the island's colour except for a disc centred on its
+    /// outer bottom corner, so the shape curves out into the screen's top edge. Drawn as a thick ring
+    /// round that corner, clipped to the square: its inner edge is the curve, its outer edge passes the
+    /// square's far corner. (A mask brush would be simpler but draws nothing in this per-pixel-alpha
+    /// window.) Its place and size follow the shape's own springs.
+    /// </summary>
+    private ShapeVisual Shoulder(bool right, CompositionColorBrush fill)
+    {
+        var ring = _compositor.CreateEllipseGeometry();
+        var centre = _compositor.CreateExpressionAnimation(right ? "Vector2(p.Shoulder, p.Shoulder)" : "Vector2(0, p.Shoulder)");
+        centre.SetReferenceParameter("p", _flare);
+        ring.StartAnimation("Center", centre);
+        // From the curve (radius s) out to the far corner (s√2): the ring's middle and its width.
+        var radius = _compositor.CreateExpressionAnimation("Vector2(p.Shoulder * 1.2071, p.Shoulder * 1.2071)");
+        radius.SetReferenceParameter("p", _flare);
+        ring.StartAnimation("Radius", radius);
+        var shape = _compositor.CreateSpriteShape(ring);
+        shape.StrokeBrush = fill;
+        var thickness = _compositor.CreateExpressionAnimation("p.Shoulder * 0.4142 + 0.5");
+        thickness.SetReferenceParameter("p", _flare);
+        shape.StartAnimation("StrokeThickness", thickness);
+
+        var visual = _compositor.CreateShapeVisual();
+        visual.Shapes.Add(shape);
+        visual.Clip = _compositor.CreateInsetClip();
+        visual.IsVisible = false;
+        var size = _compositor.CreateExpressionAnimation("Vector2(p.Shoulder, p.Shoulder)");
+        size.SetReferenceParameter("p", _flare);
+        visual.StartAnimation("Size", size);
+        // Flush means the window's top is the screen's: the shoulders start there.
+        var offset = _compositor.CreateExpressionAnimation(right ? "Vector3(g.Offset.X + g.Size.X, 0, 0)" : "Vector3(g.Offset.X - p.Shoulder, 0, 0)");
+        offset.SetReferenceParameter("g", _shapeGeometry);
+        offset.SetReferenceParameter("p", _flare);
+        visual.StartAnimation("Offset", offset);
+        _shoulders.Add(visual);
+        return visual;
+    }
+
+    private void AnimateShoulder(float to, SpringSpec spring)
+    {
+        if (!_animationsEnabled)
+        {
+            var eased = _compositor.CreateScalarKeyFrameAnimation();
+            eased.InsertKeyFrame(1f, to, _compositor.CreateCubicBezierEasingFunction(new Vector2(0.42f, 0), new Vector2(0.58f, 1)));
+            eased.Duration = MotionTimings.ReducedMotion;
+            _flare.StartAnimation("Shoulder", eased);
+            return;
+        }
+        var animation = _compositor.CreateSpringScalarAnimation();
+        animation.FinalValue = to;
+        animation.DampingRatio = (float)spring.DampingFraction;
+        animation.Period = spring.CompositionPeriod;
+        _flare.StartAnimation("Shoulder", animation);
     }
 
     /// <summary>
@@ -331,6 +406,8 @@ internal sealed class IslandSurface
             IslandMaterial.Glass => _compositor.CreateColorBrush(_theme.Background.WithAlpha(0xD9).ToColor()),
             _ => _compositor.CreateColorBrush(_theme.Background.ToColor()),
         };
+        // The shoulders take the theme's top colour: they sit where its gradient starts.
+        foreach (var shoulder in _themeShoulders) shoulder.Color = (_theme.Material == IslandMaterial.Glass ? _theme.Background.WithAlpha(0xD9) : _theme.Background).ToColor();
         _themeShape.StrokeBrush = _theme.Border.IsClear ? null : _compositor.CreateColorBrush(_theme.Border.ToColor());
         _themeShape.StrokeThickness = 1;
         SetOpen(_open, animate: false);

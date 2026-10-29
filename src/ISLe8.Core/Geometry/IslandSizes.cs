@@ -101,4 +101,25 @@ public static class IslandSizes
 
     /// <summary>The open island follows the theme's corners: sharp themes get a crisper outline.</summary>
     public static double CornerRadius(IslandTheme theme) => Math.Min(theme.CornerRadius + 12, 28);
+
+    /// <summary>
+    /// Flush with the top of the screen, the island is the Mac's notch shape (IslandShape.swift): it
+    /// flares into the top edge with two concave shoulders this wide (IslandModel.swift, shoulder(for:)).
+    /// </summary>
+    public static double FlushShoulder(IslandState state, PillKind pill) => state switch
+    {
+        IslandState.Pill => pill == PillKind.Compact ? 6 : 0,
+        IslandState.Peek => 6,
+        IslandState.Alert => 8,
+        _ => 10,
+    };
+
+    /// <summary>…and rounds off at the bottom with these (IslandModel.swift, bottomRadius(for:)).</summary>
+    public static double FlushRadius(IslandState state, PillKind pill, IslandTheme theme) => state switch
+    {
+        IslandState.Pill => pill == PillKind.Compact ? 12 : 9,
+        IslandState.Peek => 14,
+        IslandState.Alert => AlertCornerRadius,
+        _ => CornerRadius(theme),
+    };
 }

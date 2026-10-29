@@ -48,7 +48,9 @@ Paketli Release JIT. Konumlar, üste bitişik yerleşim, ses adımları ve rafa 
       satırlar okunuyor.
 - [x] Pano okuması: pano meşgulse 150 ve 300 ms sonra iki kez daha deneniyor (önce COMException ile düşüyordu).
 - [x] Görev çubuğu ortada: pencere çalışma alanının altında (Bottom = 2088), ada yukarı açılıyor, dock altta; saat ortada.
-- [x] Üste bitişik: üst köşeler düz, alt köşeler yuvarlak, saat ortada.
+- [x] Üste bitişik: üst köşeler düz, alt köşeler Mac'teki gibi (boşta 9, göstergede 20), saat ortada.
+- [ ] Üste bitişik: içbükey omuzlar (gösterge 8, açık ada 10 DIP) ekranın üst kenarına akıyor; halka çizimiyle, canlı görülmedi.
+- [x] Sabit sesli kulaklıkta ses tuşları devralınınca Windows'a bırakılmıyor; gösterge seviyeyi gösteriyor (kod; tuşla canlı denenmedi).
 - [x] Ses tuşlarını devralma: kanca kuruluyor ("taken over from Windows"); sessiz tuşunda adada "%0" göstergesi, ikinci basışta ses
       geri açılıyor. Kulaklık sabit sesli olduğu için yukarı/aşağı tuşları Windows'a bırakılıyor (doğru).
 - [ ] Müzik çalarken şarkı adı ortada; uzun adlar kayıyor, ada açılınca duruyor.

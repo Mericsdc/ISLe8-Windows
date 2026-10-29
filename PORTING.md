@@ -113,7 +113,10 @@ Windows'ta ikisi de serbest, bu yüzden kullanıcı isteğiyle eklendi. Hepsinin
 - **Konum:** ekranın üstü (varsayılan) ya da görev çubuğunun üstünde solda, ortada, sağda. Görev çubuğundayken pill çalışma
   alanının altından 6 DIP yukarıda durur, ada yukarı doğru açılır (yaylar ve boyutlar aynı); köşede ekran kenarından 16 DIP içeride,
   o kenara yaslanarak büyür. Banner'larda boş pill satırı altta kalır. Görev çubuğundaki simgeleri kapatmaz.
-- **Üst kenara bitişik:** pill'in üstünde boşluk yok, şekil ekranın üstünden taşar; üst köşeler düz, alt köşeler yuvarlak (notch gibi).
+- **Üst kenara bitişik:** pill'in üstünde boşluk yok; ada Mac'in notch şekli olur (IslandShape.swift): üst kenara iki içbükey
+  omuzla akar (boşta 0, geniş pill ve peek 6, banner 8, açık ada 10 DIP) ve alt köşeleri Mac'teki gibi yuvarlanır (boşta 9, geniş pill
+  12, peek 14, banner 20, açık ada temanınki). Omuzlar, köşesine çember ortalanmış kalın bir halka olarak çizilip kareye kırpılır (bu
+  pencerede maske fırçası çizilmiyor); yerleri ve boyutları şeklin yaylarına bağlı. Pencere bölgesi omuz kadar geniştir.
 - **Boştayken saat:** boştaki pill'in ortasında kullanıcının bölge ayarındaki kısa saat; dakikada bir, dakika başında güncellenir.
 - **Şarkı adı:** müzik çalarken geniş pill'de kapak ile çubukların arasında; sığmazsa her turun başında 1,6 sn bekleyip 28 DIP/sn
   kayar (kompozisyon animasyonu, ISLe8 tarafında zamanlayıcı yok). Yalnızca geniş pill görünürken kayar.
@@ -201,7 +204,9 @@ Her modülde: Mac dosyaları → Windows karşılığı → önemli davranışla
   - **"Sistem göstergesinin yerine ISLe8'inkini kullan" (2026-10-30, varsayılan kapalı, Mac'teki gibi):** ses tuşları
     (VK_VOLUME_MUTE/DOWN/UP) kendi iş parçacığındaki alt düzey klavye kancasıyla (`WH_KEYBOARD_LL`) önce ISLe8'e gelir; ISLe8
     sesi kendisi ayarlar, Windows'un göstergesi çıkmaz. Başka tuşa bakılmaz. Adım Windows'unki gibi %2, tam adımlara oturur (Mac
-    16 adımına oturuyor); yukarı tuşu sessizi açar. Sesi sabit aygıtta ya da aygıt yokken tuş Windows'a bırakılır. Mac izin
+    16 adımına oturuyor); yukarı tuşu sessizi açar. Sesi sabit aygıtta (sesini kendi ayarlayan kulaklık) Windows da sesi
+    değiştiremiyor; tuş yine ISLe8'de kalır ve gösterge seviyeyi gösterir (2026-10-30 düzeltme: önce Windows'a bırakılıyordu, Windows'un
+    göstergesi çıkıyordu). Hiç çıkış aygıtı yokken tuş Windows'a bırakılır. Mac izin
     istiyor; Windows'ta izin gerekmez. **Parlaklık tuşları** klavye kancasına hiç gelmez (ACPI ya da HID tüketici kullanımı,
     sanal tuş kodu yok), bu yüzden Windows'un parlaklık göstergesi kapatılamaz; ISLe8'inki onun yanında çıkar.
   - **Yapılmayan:** Mac'teki ince adım (Shift+Option ile 1/64): Windows'ta yok. Harici monitör (DDC/CI): Mac de yalnızca dahili

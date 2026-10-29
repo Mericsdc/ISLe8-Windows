@@ -130,8 +130,12 @@ internal sealed class SystemStatus : IDisposable
         if (_settings.ShowVolumeHud) Hud?.Invoke(new HudValue(HudKind.Volume, level, muted));
     }
 
-    /// <summary>On the hook's thread: mute needs a device, up and down one whose volume can change.</summary>
-    private bool CanHandleKey(int key) => key == VolumeKeys.Mute ? Volume.HasDevice : Volume.IsAdjustable;
+    /// <summary>
+    /// On the hook's thread: any output device. One whose volume is fixed (a headset that sets its own)
+    /// can't be changed by Windows either, so the key is kept from Windows all the same and the HUD
+    /// shows where the volume stands, instead of Windows' HUD showing the same.
+    /// </summary>
+    private bool CanHandleKey(int key) => Volume.HasDevice;
 
     /// <summary>A volume key ISLe8 took (HUDModule.swift, handleKey): up from mute also unmutes. The HUD follows from the change.</summary>
     private void PressKey(int key)
@@ -141,8 +145,18 @@ internal sealed class SystemStatus : IDisposable
             Volume.SetMuted(!Volume.IsMuted);
             return;
         }
-        if (Volume.Volume is not { } current || !Volume.SetVolume((float)VolumeSteps.Next(current, key == VolumeKeys.Up))) return;
-        if (key == VolumeKeys.Up && Volume.IsMuted) Volume.SetMuted(false);
+        if (Volume.Volume is not { } current) return;
+        var up = key == VolumeKeys.Up;
+        if (up && Volume.IsMuted)
+        {
+            // The change brings up the HUD.
+            Volume.SetMuted(false);
+            if (Volume.IsAdjustable) Volume.SetVolume((float)VolumeSteps.Next(current, up));
+            return;
+        }
+        if (Volume.SetVolume((float)VolumeSteps.Next(current, up))) return;
+        // Fixed: nothing changes, so nothing calls back; the HUD says so itself.
+        if (_settings.ShowVolumeHud) Hud?.Invoke(new HudValue(HudKind.Volume, current, Volume.IsMuted));
     }
 
     private void OnBrightnessChanged(double level)

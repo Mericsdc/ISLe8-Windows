@@ -410,7 +410,7 @@ internal sealed class IslandController : IDisposable
         _view.SetAlert(_alertShape);
         _view.SetDropTarget(layout.Open(IslandSizes.DropTarget));
         _surface.SetLayout(layout);
-        _surface.JumpTo(shape, Corner(shape, state), shadow: expanded);
+        _surface.JumpTo(shape, Corner(shape, state), shadow: expanded, Shoulder(state));
         _surface.SetOpen(expanded || alert || dropTarget, animate: false);
         _window.SetHitRegion(Region(layout, state));
         _outline.Reset(layout.OpenRegion(open));
@@ -474,8 +474,13 @@ internal sealed class IslandController : IDisposable
         _ => layout.Pill(_model.Pill),
     };
 
-    /// <summary>Pills and the peek are fully round at the ends; the open island follows the theme's corners.</summary>
-    private double Corner(DipRect shape, IslandState state) => state switch
+    /// <summary>
+    /// Pills and the peek are fully round at the ends; the open island follows the theme's corners.
+    /// Flush with the top, the island is the Mac's notch shape and takes its bottom corners.
+    /// </summary>
+    private double Corner(DipRect shape, IslandState state) => _window.Layout is { Flush: true }
+        ? IslandSizes.FlushRadius(state, _model.Pill, _settings.Theme)
+        : state switch
     {
         IslandState.Expanded => IslandSizes.CornerRadius(_settings.Theme),
         // The HUD and the status ears are the pill's height: round at the ends, like the pill.
@@ -484,15 +489,25 @@ internal sealed class IslandController : IDisposable
         _ => shape.Height / 2,
     };
 
+    /// <summary>The notch shape's shoulders when flush with the top; none otherwise.</summary>
+    private double Shoulder(IslandState state) => _window.Layout is { Flush: true } ? IslandSizes.FlushShoulder(state, _model.Pill) : 0;
+
     /// <summary>The part of the window that takes the mouse in <paramref name="state"/>, in window pixels.</summary>
-    private PixelRect Region(IslandLayout layout, IslandState state) => state switch
+    private PixelRect Region(IslandLayout layout, IslandState state)
     {
-        IslandState.Expanded => layout.ExpandedRegion,
-        IslandState.Alert => layout.OpenRegion(AlertRect(layout)),
-        IslandState.DropTarget => layout.OpenRegion(layout.Open(IslandSizes.DropTarget)),
-        IslandState.Peek => layout.PeekRegion(_model.Pill),
-        _ => layout.PillRegion(_model.Pill),
-    };
+        var region = state switch
+        {
+            IslandState.Expanded => layout.ExpandedRegion,
+            IslandState.Alert => layout.OpenRegion(AlertRect(layout)),
+            IslandState.DropTarget => layout.OpenRegion(layout.Open(IslandSizes.DropTarget)),
+            IslandState.Peek => layout.PeekRegion(_model.Pill),
+            _ => layout.PillRegion(_model.Pill),
+        };
+        // The window region also clips what is drawn: the notch shape's shoulders reach past the shape.
+        var shoulder = (int)Math.Ceiling(Shoulder(state) * layout.Scale);
+        if (shoulder == 0 || state == IslandState.Expanded) return region;
+        return PixelRect.FromEdges(Math.Max(region.X - shoulder, 0), region.Y, Math.Min(region.Right + shoulder, layout.Window.Width), region.Bottom);
+    }
 
     /// <summary>The part of the window that counts as "on the island" right now: only the island itself.</summary>
     private PixelRect? HoverRegion => _window.Layout is not { } layout
@@ -570,7 +585,7 @@ internal sealed class IslandController : IDisposable
         // Growing takes the bigger mouse region now; shrinking keeps it until the shape has settled.
         if (state is IslandState.Peek or IslandState.Alert or IslandState.DropTarget) _window.SetHitRegion(Region(layout, state));
         _surface.SetOpen(state is IslandState.Expanded or IslandState.Alert or IslandState.DropTarget, animate: true);
-        _surface.MorphTo(shape, Corner(shape, state), Spring(), shadow: state == IslandState.Expanded, Settle);
+        _surface.MorphTo(shape, Corner(shape, state), Spring(), shadow: state == IslandState.Expanded, Settle, Shoulder(state));
         UpdateClock(animate: true);
         UpdatePlayer();
         UpdateBars();
@@ -611,7 +626,7 @@ internal sealed class IslandController : IDisposable
             if (_window.CursorPoint(out var x, out var y)) _outline.Resize(layout.OpenRegion(open), x, y);
             else _outline.Reset(layout.OpenRegion(open));
             var spring = (open.Height > before.Height ? SpringSpec.Open : SpringSpec.Close).WithSpeed(_settings.AnimationSpeed);
-            _surface.MorphTo(open, Corner(open, IslandState.Expanded), spring, shadow: true, Settle);
+            _surface.MorphTo(open, Corner(open, IslandState.Expanded), spring, shadow: true, Settle, Shoulder(IslandState.Expanded));
         }
         UpdatePlayer();
     }
@@ -629,7 +644,7 @@ internal sealed class IslandController : IDisposable
             _view.PillLayer, compact ? 1 : 0,
             compact ? MotionTimings.ContentDelay : TimeSpan.Zero,
             compact ? MotionTimings.ContentFadeIn : MotionTimings.ContentFadeOut);
-        _surface.MorphTo(shape, Corner(shape, _model.State), Spring(), shadow: false, Settle);
+        _surface.MorphTo(shape, Corner(shape, _model.State), Spring(), shadow: false, Settle, Shoulder(_model.State));
         UpdateClock(animate: true);
         UpdateBars();
     }
@@ -791,7 +806,7 @@ internal sealed class IslandController : IDisposable
         _view.SetAlert(shape);
         // Growing takes the bigger mouse region now; shrinking keeps it until the shape has settled.
         if (_model.IsGrowing) _window.SetHitRegion(Region(layout, IslandState.Alert));
-        _surface.MorphTo(shape, Corner(shape, IslandState.Alert), Spring(), shadow: false, Settle);
+        _surface.MorphTo(shape, Corner(shape, IslandState.Alert), Spring(), shadow: false, Settle, Shoulder(IslandState.Alert));
     }
 
     // MARK: Battery, cable, volume

@@ -8,8 +8,7 @@ namespace ISLe8.Status;
 /// "Use ISLe8's HUD instead of the system's" (HUDModule.swift, MediaKeyTap; PORTING.md §3.2): the
 /// volume keys reach ISLe8 first, through a low-level keyboard hook on a thread of its own, and ISLe8
 /// sets the volume itself, so Windows never shows its own HUD. Only the three volume keys are
-/// looked at; every other key goes straight on, unread. A key ISLe8 can't act on (no output device,
-/// or one whose volume is fixed) is left to Windows. Brightness keys never come through a keyboard
+/// looked at; every other key goes straight on, unread. With no output device the keys are left to Windows. Brightness keys never come through a keyboard
 /// hook, so Windows keeps its brightness HUD.
 /// </summary>
 internal sealed unsafe partial class VolumeKeys : IDisposable

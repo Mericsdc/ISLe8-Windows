@@ -129,6 +129,22 @@ public sealed class PlacementTests : IDisposable
     }
 
     [Fact]
+    public void FlushTheIslandIsTheMacsNotchShape()
+    {
+        var theme = Theming.IslandTheme.NotchBlack;
+        Assert.Equal(0, IslandSizes.FlushShoulder(Island.IslandState.Pill, Geometry.PillKind.Idle));
+        Assert.Equal(6, IslandSizes.FlushShoulder(Island.IslandState.Pill, Geometry.PillKind.Compact));
+        Assert.Equal(6, IslandSizes.FlushShoulder(Island.IslandState.Peek, Geometry.PillKind.Idle));
+        Assert.Equal(8, IslandSizes.FlushShoulder(Island.IslandState.Alert, Geometry.PillKind.Idle));
+        Assert.Equal(10, IslandSizes.FlushShoulder(Island.IslandState.Expanded, Geometry.PillKind.Idle));
+        Assert.Equal(9, IslandSizes.FlushRadius(Island.IslandState.Pill, Geometry.PillKind.Idle, theme));
+        Assert.Equal(12, IslandSizes.FlushRadius(Island.IslandState.Pill, Geometry.PillKind.Compact, theme));
+        Assert.Equal(14, IslandSizes.FlushRadius(Island.IslandState.Peek, Geometry.PillKind.Idle, theme));
+        Assert.Equal(20, IslandSizes.FlushRadius(Island.IslandState.Alert, Geometry.PillKind.Idle, theme));
+        Assert.Equal(IslandSizes.CornerRadius(theme), IslandSizes.FlushRadius(Island.IslandState.Expanded, Geometry.PillKind.Idle, theme));
+    }
+
+    [Fact]
     public void TheIdleClockAndTheTitleAreOffByDefault()
     {
         Assert.False(new AppSettings().ShowIdleClock);
