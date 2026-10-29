@@ -35,6 +35,37 @@ aktivitesi, kulak önceliği, açılış sekmesi ve hook kurulumu Core testlerin
 
 - [ ] İkinci satır: kullanımdan sonra bellek yine 80 MB'ın üstünde (Raf ölçümündeki açık madde). W6'nın ölçüm turunda bakılacak.
 
+## Pil, LAN ve ses/parlaklık göstergesi (2026-10-29)
+
+Paketli Release JIT. Pil olayları, kablo, gösterge değerleri, boyutlar ve kapanma sırası Core testlerinde (`StatusTests`;
+303'ten 328'e). Test bilgisayarı kapağı kapalı, harici monitöre bağlı bir dizüstü; çıkış aygıtı sesi kendi ayarlayan bir
+kulaklık (Arctis Nova Pro Omni, Windows'ta 0–0 dB).
+
+- [x] Başlıkta pil çipi "%80" (prizde, yeşil), "LAN" çipi (Ethernet), cihaz çipi; ada Kompakt'ta açıkken.
+- [x] Gösterge (geçici bir yapıda tetiklenerek): "%62" sonra "%30", aynı göstergede çubuk yerinde güncelleniyor; 1,5 sn sonra pill.
+      Simge solda, çubuk ve yüzde sağda; ölçüler Mac'teki gibi (396 × 32).
+- [x] Şarj kulakları: yeşil şimşekli pil ve "%61" ortadan yaylanarak açılıyor, süre bitince içeri kayıp ada küçülüyor (420 × 32).
+- [x] Kablo çıktı kulakları: beyaz "Wi-Fi". Düşük pil banner'ı: turuncu, "Pil azalıyor · %19 kaldı · şarja tak".
+- [x] Parlaklık: günlükte "waiting for the built-in display (lid closed)"; WMI olay sorgusu kabul ediliyor, bekleme olay gelene
+      kadar uyuyor (deneme programıyla doğrulandı).
+- [x] Sesi sabit aygıt: seviye hep %100; programla değiştirilemiyor, gösterge çıkmıyor (Mac'teki "ayarlanamaz" gibi).
+- [ ] Laptop hoparlöründe ses tuşları: gösterge çıkıyor, açık adada çıkmıyor; sessize alınca üstü çizili hoparlör ve boş çubuk.
+- [ ] Şarj aletini çıkarıp takma: beyaz "Pilde %NN" ve yeşil "Şarj oluyor %NN" kulakları (gerçek olay).
+- [ ] Ethernet kablosunu çıkarıp takma: kulaklar ve LAN çipi.
+- [ ] Kapak açıkken parlaklık tuşları: gösterge; otomatik parlaklık ve ekranın kararması göstermiyor.
+- [ ] Geniş (Dashboard) düzende medya kartının altında ses kaydırıcısı; sürükleyince ses değişiyor.
+- [ ] Ayarlar › Sistem › Göstergeler ve Pil; Görünüm › Başlık çubuğu › Pil ve LAN anahtarları.
+
+**Ölçüm**
+
+| Tarih | Yapı | Durum | CPU | Özel bellek | Çalışma kümesi |
+|---|---|---|---|---|---|
+| 2026-10-29 | Pil ve ses, paketli Release JIT x64 | Taze açılış, ada kapalı, müzik çalıyor (ses çubukları), 60 sn | %0,369 (müzik hedefi < %1) | 59,9 MB (hedef < 80 MB) | 194,8 MB |
+| 2026-10-29 | Aynı | Ada iki kez açılıp kapanmış, müzik çalıyor, 60 sn | %0,330 | 94,6 MB | 338,3 MB |
+
+CPU'nun neredeyse tamamı müzik çalarken ses çubuklarını süren kompozisyon iş parçacığında (önceki ölçümlerle aynı, %0,30–0,43).
+Yeni parçalarda zamanlayıcı yok; müziksiz boşta ölçüm bir sonraki turda.
+
 ## Kullanım limitleri (2026-10-29)
 
 Paketli Release JIT. Claude /usage satırları, maliyet özeti (`NoLimits`), hesap, Antigravity grupları, Codex sunucusu ve oturum

@@ -13,6 +13,12 @@ public readonly record struct SpringSpec(double Response, double DampingFraction
     /// <summary>Shrinking: quick and settled.</summary>
     public static readonly SpringSpec Close = new(0.28, 0.95);
 
+    /// <summary>Plugging in or out: the island springs out sideways with a visible bounce (IslandModel.swift, animation).</summary>
+    public static readonly SpringSpec Status = new(0.42, 0.6);
+
+    /// <summary>…and back in the same way once the ears have slid under the pill.</summary>
+    public static readonly SpringSpec SoftClose = new(0.45, 0.72);
+
     /// <summary>Faster for speed &gt; 1, slower for speed &lt; 1; held to 0.5–2 like the Mac's.</summary>
     public SpringSpec WithSpeed(double speed) => this with { Response = Response / Math.Clamp(speed, 0.5, 2) };
 

@@ -23,6 +23,7 @@ using ISLe8.Core.Devices;
 using ISLe8.Media;
 using ISLe8.Notifications;
 using ISLe8.Shell;
+using ISLe8.Status;
 using ISLe8.UI;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Input;
@@ -54,6 +55,8 @@ internal sealed class IslandController : IDisposable
     private IslandSurface _surface = null!;
     /// <summary>False while the shape is still moving after it shrank.</summary>
     private bool _settled = true;
+    /// <summary>The banner's shape last sprung to, so a HUD moving its bar doesn't spring again.</summary>
+    private DipRect _alertShape;
     private readonly TrackChangeDetector _trackChanges = new();
     private readonly IslandTimer _timer;
     private readonly WeatherService _weather;
@@ -67,6 +70,7 @@ internal sealed class IslandController : IDisposable
     private readonly AgentHub _agents;
     private readonly AgentServer _agentServer;
     private readonly Usage.UsageService _usage;
+    private readonly SystemStatus _status;
     private HotKey? _clipboardKey;
     private nint _foregroundBeforeKeyboard;
 
@@ -96,6 +100,7 @@ internal sealed class IslandController : IDisposable
         _shelf = new ShelfStore(AppPaths.DataFolder, new NtfsFileLocator(), () => DateTimeOffset.Now);
         _notifications = new NotificationService(_settings, _queue, () => _store.Save(_settings));
         _devices = new DeviceService(_queue, clock);
+        _status = new SystemStatus(_settings, _devices, _queue);
         _agents = new AgentHub(_settings, clock);
         _agentServer = new AgentServer(_agents, _queue);
         _usage = new Usage.UsageService(_settings, _queue, clock, AppPaths.DataFolder);
@@ -116,6 +121,13 @@ internal sealed class IslandController : IDisposable
 
     /// <summary>Settings › System › Wireless devices: the header's chip shows at once.</summary>
     public void ApplyDeviceSettings() => _view.DevicesChip.Refresh();
+
+    /// <summary>Settings › System › HUDs and Battery, Appearance › Header: the chips show at once.</summary>
+    public void ApplyStatusSettings()
+    {
+        _status.ApplySettings();
+        _view.ShowStatusChips(_settings, _status);
+    }
 
     /// <summary>The clipboard history, for Settings › Clipboard.</summary>
     public ClipboardService Clipboard => _clipboard;
@@ -188,6 +200,7 @@ internal sealed class IslandController : IDisposable
             _model.ShowAlert(new DeviceAlert(device, isLow), isLow ? DeviceAlertDurations.Low : DeviceAlertDurations.Connected);
         };
         _devices.Start();
+        StartStatus();
         _agents.Changed += OnAgentsChanged;
         _agents.ApprovalRequested += approval =>
         {
@@ -263,6 +276,7 @@ internal sealed class IslandController : IDisposable
         _agents.Stop();
         _agentServer.Dispose();
         _usage.Dispose();
+        _status.Dispose();
         Win32.WTSUnRegisterSessionNotification(_window.Hwnd);
         StopView();
         _media.Dispose();
@@ -282,7 +296,7 @@ internal sealed class IslandController : IDisposable
 
         _view = new IslandView(
             theme, _settings, _media, _timer, _weather, _calendar, _notes, _system, _clipboard, _shelf, _notifications, _devices,
-            _agents, DecideApproval, GoToSession, _usage, _window.Hwnd, _queue,
+            _agents, DecideApproval, GoToSession, _usage, _status, _window.Hwnd, _queue,
             takeKeyboard: TakeKeyboard,
             dismissAlert: _model.DismissAlert,
             close: _model.Close,
@@ -341,6 +355,7 @@ internal sealed class IslandController : IDisposable
         _window.Window.Content = _view.Root;
 
         _view.Banner.Refresh();
+        _view.ShowStatusChips(_settings, _status);
         if (_window.Layout is { } layout) ApplyLayout(layout);
         _artworkKey = null;
         LoadArtwork();
@@ -374,7 +389,8 @@ internal sealed class IslandController : IDisposable
         _settled = true;
         _view.ApplyLayout(layout, open, _settings.HomeStyle, _model.Tab);
         _view.SetHomeColumns(_settings.HomeStyle, _settings.HomeTiles, open.Width);
-        _view.SetAlert(AlertRect(layout));
+        _alertShape = AlertRect(layout);
+        _view.SetAlert(_alertShape);
         _view.SetDropTarget(layout.Open(IslandSizes.DropTarget));
         _surface.SetLayout(layout);
         _surface.JumpTo(shape, Corner(shape, state), shadow: expanded);
@@ -414,6 +430,7 @@ internal sealed class IslandController : IDisposable
         _view.Agents.SetActive(expanded && _model.Tab == IslandTab.Agents);
         _devices.SetVisible(expanded);
         _usage.SetVisible(expanded);
+        _status.SetVisible(expanded);
         _devices.SetTabShown(devices);
     }
 
@@ -443,7 +460,8 @@ internal sealed class IslandController : IDisposable
     private double Corner(DipRect shape, IslandState state) => state switch
     {
         IslandState.Expanded => IslandSizes.CornerRadius(_settings.Theme),
-        IslandState.Alert => IslandSizes.AlertCornerRadius,
+        // The HUD and the status ears are the pill's height: round at the ends, like the pill.
+        IslandState.Alert => _model.Alert.IsEars() ? shape.Height / 2 : IslandSizes.AlertCornerRadius,
         IslandState.DropTarget => IslandSizes.CornerRadius(_settings.Theme),
         _ => shape.Height / 2,
     };
@@ -504,7 +522,8 @@ internal sealed class IslandController : IDisposable
         }
         else if (state == IslandState.Alert)
         {
-            _view.ShowAlert(_model.Alert, _model.PendingNotificationCount);
+            _view.ShowAlert(_model.Alert, _model.PendingNotificationCount, swapped: false, _status.Network.Link);
+            _alertShape = shape;
             _view.SetAlert(shape);
             _view.AlertLayer.Visibility = Visibility.Visible;
             _surface.Fade(_view.AlertLayer, 1, MotionTimings.ContentDelay, MotionTimings.ContentFadeIn);
@@ -613,8 +632,8 @@ internal sealed class IslandController : IDisposable
         UpdateBars();
     }
 
-    private SpringSpec Spring() =>
-        (_model.IsGrowing ? SpringSpec.Open : SpringSpec.Close).WithSpeed(_settings.AnimationSpeed);
+    /// <summary>The model picks the spring (a status banner bounces); the setting sets its speed.</summary>
+    private SpringSpec Spring() => _model.Spring.WithSpeed(_settings.AnimationSpeed);
 
     // MARK: Pointer
 
@@ -716,7 +735,57 @@ internal sealed class IslandController : IDisposable
         if (AppWindows.Activate(processId)) _model.Close();
     }
 
-    private void OnAlertChanged() => _view.ShowAlert(_model.Alert, _model.PendingNotificationCount);
+    /// <summary>
+    /// One banner took another's place, or a HUD moved: the content changes, and the island springs
+    /// to the new banner's size if it has another (IslandModel.swift, onLayoutChange).
+    /// </summary>
+    private void OnAlertChanged()
+    {
+        _view.ShowAlert(_model.Alert, _model.PendingNotificationCount, swapped: true, _status.Network.Link);
+        if (_model.State != IslandState.Alert || _window.Layout is not { } layout) return;
+        var shape = AlertRect(layout);
+        if (shape == _alertShape) return;
+        _alertShape = shape;
+        _settled = false;
+        _view.SetAlert(shape);
+        // Growing takes the bigger mouse region now; shrinking keeps it until the shape has settled.
+        if (_model.IsGrowing) _window.SetHitRegion(Region(layout, IslandState.Alert));
+        _surface.MorphTo(shape, Corner(shape, IslandState.Alert), Spring(), shadow: false, Settle);
+    }
+
+    // MARK: Battery, cable, volume
+
+    /// <summary>
+    /// Plugged in or out and a cable in or out open the status ears; low and critical are banners;
+    /// volume and brightness the HUD (AppDelegate.swift). None of them while a full-screen app hides the island.
+    /// </summary>
+    private void StartStatus()
+    {
+        _status.BatteryEvent += battery =>
+        {
+            if (!_window.IsHiddenForFullscreen) _model.ShowAlert(new BatteryAlert(battery), AlertDurations.Battery);
+        };
+        _status.WiredChanged += (connected, link) =>
+        {
+            if (!_window.IsHiddenForFullscreen && _settings.ShowNetworkChip) _model.ShowAlert(new WiredAlert(connected, link), AlertDurations.Wired);
+        };
+        _status.Hud += value =>
+        {
+            if (!_window.IsHiddenForFullscreen) _model.ShowHud(value);
+        };
+        _status.Changed += () =>
+        {
+            _view.ShowStatusChips(_settings, _status);
+            if (_model.State == IslandState.Alert && _model.Alert is WiredAlert { Connected: false }) _view.UpdateWiredOut(_status.Network.Link);
+        };
+        _model.RetractingChanged += () =>
+        {
+            if (_model.IsRetractingStatus) _view.StatusEars.Retract();
+        };
+        _status.Brightness.AttachWindow(_window.Hwnd);
+        _window.AddMessageHandler(_status.Brightness.OnMessage);
+        _status.Start();
+    }
 
     // MARK: Keyboard
 

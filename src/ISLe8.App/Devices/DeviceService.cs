@@ -72,6 +72,9 @@ internal sealed class DeviceService : IDisposable
     /// <summary><see cref="Devices"/> or <see cref="Battery"/> changed, on the UI thread.</summary>
     public event Action? Changed;
 
+    /// <summary><see cref="Battery"/> changed, on the UI thread (also raises <see cref="Changed"/>).</summary>
+    public event Action? BatteryChanged;
+
     /// <summary>A device connected (false) or ran low (true): worth a banner.</summary>
     public event Action<WirelessDevice, bool>? Alert;
 
@@ -158,7 +161,9 @@ internal sealed class DeviceService : IDisposable
     {
         var before = Battery;
         ReadBattery();
-        if (Battery != before) Changed?.Invoke();
+        if (Battery == before) return;
+        BatteryChanged?.Invoke();
+        Changed?.Invoke();
     });
 
     private void ReadBattery()

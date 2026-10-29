@@ -136,7 +136,7 @@ PORTING.md §2 › Boyutlar; değerler `IslandSizes`'ta, Core testleriyle.
   açıkken siyahı söndürür (Mac: `IslandBackground`). Kapalı pill her temada siyah.
 - **Sabit çerçeve:** her durumun görünümü (pill'in kapak ve çubukları, banner, açık ada) kendi son
   çerçevesinde, pencerede ortalı durur; animasyonda yalnızca zemin ve kırpma şekli büyür.
-- **Başlık satırı:** solda durum çipleri (pil 8. adımda), sağda sabitle ve ayarlar. Ayarlar düğmesi
+- **Başlık satırı:** solda durum çipleri (pil, LAN, W, cihazlar; sığmazsa cihazlar sonra W düşer), sağda sabitle ve ayarlar. Ayarlar düğmesi
   pencereyi açıp adayı kapatıyor (Mac'teki gibi).
 - **Dock:** altta, tema yüzeyi renginde bir kapsül; seçili sekme vurgu renginin %20'siyle dolu. Düğmeler
   `Button` değil, düz `Border`: ada odak almıyor ve seçime bağlı görünüm, `Button`'ın görsel
@@ -361,8 +361,9 @@ PORTING.md §2 › Boyutlar; değerler `IslandSizes`'ta, Core testleriyle.
 | Özellik | macOS | Windows | Faz |
 |---|---|---|---|
 | Medya | MediaRemote köprüsü | `GlobalSystemMediaTransportControlsSessionManager` (SMTC): kapak, ilerleme, oynat/duraklat/sonraki/önceki, karışık çal, tekrarla, sarma | **W0** ✅ |
-| Ses kaydırıcısı | Core Audio | `IMMDeviceEnumerator` + `IAudioEndpointVolume` + `IAudioEndpointVolumeCallback` (kaynak üretimli COM, AOT uyumlu) | W1 |
-| Bu bilgisayarın pili | IOKit | `Microsoft.Windows.System.Power.PowerManager` olayları | W1 |
+| Ses kaydırıcısı ve göstergesi | Core Audio | `IMMDeviceEnumerator` + `IAudioEndpointVolume` + `IAudioEndpointVolumeCallback` + `IMMNotificationClient` (elle COM, AOT uyumlu) | **W3** ✅ |
+| Parlaklık göstergesi | DisplayServices | WMI `WmiMonitorBrightnessEvent` (yarı eşzamanlı, tek iş parçacığı) + Raw Input parlaklık tuşları (0x6F/0x70) | **W3** ✅ |
+| Bu bilgisayarın pili, W, LAN | IOKit, NWPathMonitor | `PowerManager` olayları, `AggregateBattery` (yalnızca açıkken), `NetworkStatusChanged`; durum kulakları | **W1/W3** ✅ |
 | Hava | Open-Meteo, saat diliminden şehir | Aynısı; `TimeZoneInfo.TryConvertWindowsIdToIanaId` ile "Turkey Standard Time" → `Europe/Istanbul` | W1 |
 | Zamanlayıcı / Pomodoro | | `DispatcherQueueTimer` (yalnızca görünürken), bitince `AppNotificationManager` | W1 |
 | Home (3 sütun) + dock | SwiftUI | Takvim ayı + günün etkinlikleri · büyük oynatıcı · hava (hissedilen, nem, rüzgar, UV, 5 saat, 5 gün); Geniş / Kompakt / Minimal düzen ("Pano" değil: Pano bir sekme) | W1 |

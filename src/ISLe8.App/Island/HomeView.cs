@@ -24,7 +24,7 @@ namespace ISLe8.Island;
 /// when the columns, the layout or the width change.
 /// </summary>
 internal sealed class HomeView(
-    MediaService media, IslandTimer timer, WeatherService weather, CalendarService calendar, AppSettings settings,
+    MediaService media, Status.SystemStatus status, IslandTimer timer, WeatherService weather, CalendarService calendar, AppSettings settings,
     IslandTheme theme, DispatcherQueue queue, Action takeKeyboard)
 {
     private CalendarColumn? _calendar;
@@ -84,7 +84,7 @@ internal sealed class HomeView(
             FrameworkElement view;
             if (columns[i] == "media")
             {
-                Media = new MediaColumn(media, theme, style, queue);
+                Media = new MediaColumn(media, status, theme, style, queue);
                 Media.SetArtwork(_artwork);
                 view = Media.Root;
             }

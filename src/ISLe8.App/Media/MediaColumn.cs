@@ -16,7 +16,7 @@ namespace ISLe8.Media;
 /// scrubber, and shuffle / previous / play / next / repeat over the full height. Compact: no card;
 /// the artwork beside the title, the artist and the same controls. Minimal: one line with the
 /// artwork, the title, previous, play and next. Its clock only ticks while it can be seen and
-/// something plays.
+/// something plays. Wide, the output volume's slider closes the card.
 /// </summary>
 internal sealed class MediaColumn
 {
@@ -39,9 +39,10 @@ internal sealed class MediaColumn
     private readonly FontIcon? _shuffleIcon;
     private readonly Button? _repeat;
     private readonly FontIcon? _repeatIcon;
+    private readonly VolumeRow? _volume;
     private bool _active;
 
-    public MediaColumn(MediaService media, IslandTheme theme, HomeStyle style, DispatcherQueue queue)
+    public MediaColumn(MediaService media, Status.SystemStatus status, IslandTheme theme, HomeStyle style, DispatcherQueue queue)
     {
         _media = media;
         _theme = theme;
@@ -136,10 +137,12 @@ internal sealed class MediaColumn
         _playPause = Play(52, accentRing: false, media.TogglePlayPause, out _playPauseIcon);
 
         // The rows spread over the column's full height, at least 8 apart.
-        var rows = new Grid { RowDefinitions = { AutoRow(), Spacer(), AutoRow(), Spacer(), AutoRow(), Spacer() } };
+        var rows = new Grid { RowDefinitions = { AutoRow(), Spacer(), AutoRow(), Spacer(), AutoRow(), Spacer(), AutoRow() } };
         rows.Children.Add(top);
         rows.Children.Add(Row(_scrubber.Root, 2));
         rows.Children.Add(Row(Controls(), 4));
+        _volume = new VolumeRow(status, theme);
+        rows.Children.Add(Row(_volume.Root, 6));
         Root = Tiles.Tile(theme, rows, new Thickness(14));
 
         _clock = queue.CreateTimer();
@@ -169,6 +172,7 @@ internal sealed class MediaColumn
     {
         if (active == _active) return;
         _active = active;
+        _volume?.SetActive(active);
         if (active) Refresh();
         else UpdateClock();
     }

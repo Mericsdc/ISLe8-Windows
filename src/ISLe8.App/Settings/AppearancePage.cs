@@ -73,6 +73,21 @@ internal static class AppearancePage
             settings.SwipeToChangeTabs = on;
             context.Save();
         })));
+
+        // The Mac's keep-awake and camera/microphone switches arrive with what they show (PORTING.md §3.4).
+        page.Children.Add(SettingsUi.SectionHeader(L.Get("Settings_HeaderBar")));
+        page.Children.Add(SettingsUi.Card(palette, L.Get("Settings_BatteryChip"), SettingsUi.Switch(settings.ShowBatteryChip, on =>
+        {
+            settings.ShowBatteryChip = on;
+            context.Save();
+            context.Island.ApplyStatusSettings();
+        })));
+        page.Children.Add(SettingsUi.Card(palette, L.Get("Settings_NetworkChip"), SettingsUi.Switch(settings.ShowNetworkChip, on =>
+        {
+            settings.ShowNetworkChip = on;
+            context.Save();
+            context.Island.ApplyStatusSettings();
+        })));
         return page;
     }
 

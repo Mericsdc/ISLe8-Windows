@@ -171,7 +171,22 @@ Her modülde: Mac dosyaları → Windows karşılığı → önemli davranışla
   - **Parlaklık göstergesi yalnızca parlaklık tuşuyla açılır.** Mac son 1,2 sn içinde bir NX_SYSDEFINED (medya/parlaklık tuşu) olayı olup olmadığına bakıyor (`CGEventSource.secondsSinceLastEventType`, izin gerektirmez). Otomatik parlaklık, ekranın kararması ve uyanması göstermez. Windows: Raw Input ile HID tüketici sayfasındaki parlaklık artır/azalt kullanımları (0x6F/0x70) dinlenir; değişiklik o tuşu izlemiyorsa gösterge açılmaz.
   - Ada açıkken gösterge çıkmaz.
 - **Not:** Windows'un kendi ses göstergesini gizlemenin desteklenen bir yolu yok; ISLe8'inki yanında çıkar. Pencere bulup gizleme gibi kırılgan yöntemler kullanılmaz.
-- **Kabul:** Ses tuşları ve kaydırıcıyla gösterge çıkıyor; otomatik parlaklık gösterge açmıyor; ayardan ikisi de kapatılabiliyor.
+- **Kabul:** Ses tuşlarıyla gösterge çıkıyor (kaydırıcı açık adada; Mac'te de açık adanın üstüne gösterge gelmez); otomatik parlaklık gösterge açmıyor; ayardan ikisi de kapatılabiliyor.
+- **Windows'ta yapılan (2026-10-29):**
+  - **Ses:** `IMMDeviceEnumerator` + `IAudioEndpointVolume`, geri çağrılar (`IAudioEndpointVolumeCallback`, varsayılan aygıt
+    değişince `IMMNotificationClient`) elle yazılmış COM nesneleri; Native AOT için üretilmiş interop yok. Aynı değeri tekrar
+    bildiren uç nokta süzülüyor (0,001). Gösterge kulakta ve imleç adanın üstündeyken de çıkıyor; açık adanın ve bildirimin üstüne gelmiyor.
+  - **Sesi sabit aygıtlar:** sesini kendi ayarlayan kulaklıklar (ör. Arctis Nova Pro) ve dijital çıkışlar Windows'a tek seviyelik
+    bir aralık bildiriyor (0–0 dB); seviye hep %100. Mac'teki "ayarlanamaz" gibi: kaydırıcı yerinde kalır, gösterge yalnızca
+    sessize alınınca çıkar.
+  - **Parlaklık:** WMI `WmiMonitorBrightnessEvent` (`ROOT\WMI`), yarı eşzamanlı `ExecNotificationQuery` ile tek bir iş
+    parçacığında; olay gelene kadar uyur. Dahili ekranı olmayan masaüstünde hiçbir şey başlamaz. Kapağı kapalı dizüstünde dahili
+    ekran WMI'da görünmez; kapağı olan bilgisayar (`GetPwrCapabilities`, LidPresent) olayları yine de bekler, kapak açılınca çalışır.
+  - **Parlaklık tuşları:** Raw Input, HID tüketici sayfası (0x0C/0x01, `RIDEV_INPUTSINK`), `HidP_GetUsages` ile 0x6F/0x70; yalnızca
+    dahili ekranı olan ya da kapaklı bilgisayarda kaydedilir. Fn tuşunu kendi sürücüsüyle (ACPI) karşılayan dizüstülerde tuş
+    Windows'a HID olarak gelmez; orada parlaklık göstergesi çıkmaz (otomatik parlaklık gibi sayılır).
+  - **Yapılmayan:** "Sistem göstergesinin yerine ISLe8'inkini kullan" (yukarıdaki not). Harici monitör (DDC/CI): Mac de yalnızca
+    dahili ekranı izliyor.
 
 ### 3.3 Pil, şarj gücü (W1)
 
@@ -185,6 +200,11 @@ Her modülde: Mac dosyaları → Windows karşılığı → önemli davranışla
   - Başlık çipi: %10 altı kırmızı, %20 altı turuncu, şarjda yeşil.
   - Şarj olurken başlıkta "⚡ 61 W" (yukarıdaki fark).
 - **Kabul:** Takma/çıkarma ve eşiklerde banner çıkıyor; W yalnızca açıkken okunuyor (ölçümle).
+- **Windows'ta yapılan (2026-10-29):** Pil Cihazlar'daki `PowerManager` okumasından; olay kuralları Mac'teki gibi Core'da
+  (`BatteryAnnouncer`: ilk okuma sessiz, takınca uyarılar unutulur, %10 ve %20 deşarj başına bir kez, ikisini birden geçen düşüş
+  kritik der). Takma/çıkarma durum kulakları, %20/%10 banner, hepsi 3 sn. Başlıkta pil çipi (yeşil/turuncu/kırmızı), W çipi
+  `AggregateBattery` ile yalnızca ada açıkken ve pil gerçekten şarj olurken, sarı şimşekle "61 W", ipucu "Pile giren güç". Çipler
+  sığmazsa Mac'teki sırayla düşer (cihaz çipi, sonra W). Ayarlar: Sistem › Pil, Görünüm › Başlık çubuğu › Pil.
 
 ### 3.4 Kamera/mikrofon göstergesi ve uyanık tut (plana eklenmeli: W3)
 
@@ -521,7 +541,10 @@ Her modülde: Mac dosyaları → Windows karşılığı → önemli davranışla
 - **LAN:** Bağlantı türü olay tabanlı izlenir (Mac `NWPathMonitor`; Windows `NetworkInformation.NetworkStatusChanged` + `GetInternetConnectionProfile().NetworkAdapter.IanaInterfaceType == 6`). Ethernet'teyken başlıkta yeşil **LAN** çipi; dar ekranda düşmez. Kablo takılınca/çıkarılınca §2'deki durum kulakları. Uygulama açılırken zaten kabloluysa bildirim yok. Ayar: Görünüm > Başlık çubuğu > "Kablolu bağlantı (LAN)".
 - **Kabul:** Kabloyu takıp çıkarınca kulaklar ve çip doğru; sekme kapalıyken örnekleme yok (ölçümle).
 - **Windows'ta yapılan:** Sistem sekmesi. Süreç belleği çalışma kümesi (Mac'te phys_footprint); "Etkinlik
-  Monitörü'nü aç" yerine "Görev Yöneticisi'ni aç". LAN çipi ve kablo kulakları durum kulaklarıyla birlikte (pil adımı).
+  Monitörü'nü aç" yerine "Görev Yöneticisi'ni aç".
+- **Windows'ta yapılan (LAN, 2026-10-29):** `NetworkInformation.NetworkStatusChanged`, art arda gelen olaylar bir okumada.
+  İnternet bağlantısının bağdaştırıcısı 6 (Ethernet) ise yeşil "LAN" çipi; kablo takılınca yeşil "LAN", çıkınca beyaz
+  "Wi-Fi" ya da "Çevrimdışı" kulakları (bağlantı otururken kulak güncellenir). Açılışta zaten kabloluysa bir şey çıkmaz.
 
 ### 3.21 Klavye temizliği (plana eklenmeli: W3)
 
@@ -564,7 +587,7 @@ Her modülde: Mac dosyaları → Windows karşılığı → önemli davranışla
 
 ## 4. DESIGN.md §4 ile farklar
 
-- **Plana eklenmesi gerekenler:** ses/parlaklık göstergesi (§3.2), kamera/mikrofon göstergesi ve uyanık tut (§3.4), komut paleti (§3.16), ayarlar penceresi (§3.17), takvim hızlı ekleme (§3.6), `isle8.exe` konsol yardımcısı (§1), Notlar (§3.19), Sistem sekmesi ve LAN (§3.20), klavye temizliği (§3.21), özel günler (§3.22), iPhone/iPad pilleri (§3.14), durum kulakları (§2).
+- **Plana eklenmesi gerekenler:** ses/parlaklık göstergesi (§3.2, yapıldı), kamera/mikrofon göstergesi ve uyanık tut (§3.4), komut paleti (§3.16), ayarlar penceresi (§3.17), takvim hızlı ekleme (§3.6), `isle8.exe` konsol yardımcısı (§1), Notlar (§3.19), Sistem sekmesi ve LAN (§3.20, yapıldı), klavye temizliği (§3.21), özel günler (§3.22), iPhone/iPad pilleri (§3.14), durum kulakları (§2, yapıldı).
 - **Öne alınan:** MSIX paket kimliği. Bildirim aynası, App Execution Alias ve `StartupTask` paket kimliği istiyor; takvim yalnızca ek kaynağı (AppointmentStore) için istiyor, asıl yolu ICS (§3.6). **Karar (2026-10-29): tam MSIX**, dosya ve kayıt defteri sanallaştırması kapalı (ayarlar zip sürümüyle aynı klasörde). Yerel kurulum `scripts/install.ps1` (Geliştirici Modu, imzasız, klasöründen kayıt); imzalı .msix ve Releases'e konması W6'da. Zip sürümü bildirim aynası olmadan sürüyor.
 - **Varsayılan değişiklikleri:** Tasarruf modu varsayılan açık. Açılma gecikmesi 0. Bütün sekmeler aynı yükseklikte.
 

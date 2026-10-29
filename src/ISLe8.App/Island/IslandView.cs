@@ -13,11 +13,13 @@ using ISLe8.Core.Shelf;
 using ISLe8.ShelfTab;
 using ISLe8.SystemTab;
 using ISLe8.Core.Weather;
+using ISLe8.Core.Status;
 using ISLe8.Agents;
 using ISLe8.Core.Agents;
 using ISLe8.Devices;
 using ISLe8.Media;
 using ISLe8.Notifications;
+using ISLe8.Status;
 using ISLe8.Timer;
 using ISLe8.UI;
 using Microsoft.UI.Dispatching;
@@ -37,7 +39,7 @@ namespace ISLe8.Island;
 /// ├─ BackgroundHost   shape + shadow
 /// └─ Area             the island column: takes the hover, clipped to the shape
 ///    ├─ PillLayer     artwork + bars, shown in the wide pill
-///    ├─ AlertLayer    a banner under an empty top row (IslandView.swift, AlertView)
+///    ├─ AlertLayer    a banner under an empty top row, or the HUD and status ears in it (IslandView.swift, AlertView)
 ///    └─ ExpandedLayer the open island (IslandView.swift, ExpandedView)
 ///       ├─ Header     chips · pin, settings
 ///       ├─ content    one view per tab; the shown one only
@@ -54,7 +56,7 @@ internal sealed class IslandView
     public IslandView(
         IslandTheme theme, AppSettings settings, MediaService media, IslandTimer timer, WeatherService weather, CalendarService calendar,
         NotesStore notes, SystemSampler system, ClipboardService clipboard, ShelfStore shelf, NotificationService notifications, DeviceService devices,
-        AgentHub agents, Action<AgentApproval, bool?> decide, Action<int> goToSession, Usage.UsageService usage,
+        AgentHub agents, Action<AgentApproval, bool?> decide, Action<int> goToSession, Usage.UsageService usage, SystemStatus status,
         nint window, DispatcherQueue queue,
         Action takeKeyboard, Action dismissAlert, Action close,
         Action<IReadOnlyList<string>> dropToShelf, Action<IReadOnlyList<string>> dropToShare)
@@ -101,7 +103,7 @@ internal sealed class IslandView
         PillLayer.Children.Add(AgentEar.Leading);
         PillLayer.Children.Add(AgentEar.Trailing);
 
-        Home = new HomeView(media, timer, weather, calendar, settings, theme, queue, takeKeyboard);
+        Home = new HomeView(media, status, timer, weather, calendar, settings, theme, queue, takeKeyboard);
         _tabs[IslandTab.Home] = Home.Root;
         Notes = new NotesTab(notes, theme, queue, takeKeyboard);
         _tabs[IslandTab.Notes] = Notes.Root;
@@ -125,8 +127,15 @@ internal sealed class IslandView
         }
 
         Header = new HeaderBar();
+        // Battery, LAN, the watts, the devices: the devices chip goes first when they don't fit, then the watts.
+        StatusChips = new StatusChips();
+        Header.AddChip(StatusChips.Battery, drop: 0);
+        Header.AddChip(StatusChips.Lan, drop: 0);
+        Header.AddChip(StatusChips.Watts, drop: 2);
         DevicesChip = new DevicesChip(devices, () => settings.ShowDevicesChip);
-        Header.Chips.Children.Add(DevicesChip.Root);
+        Header.AddChip(DevicesChip.Root, drop: 1);
+        DevicesChip.Refreshed += () => Header.Want(DevicesChip.Root, DevicesChip.Wanted);
+        Header.Want(DevicesChip.Root, DevicesChip.Wanted);
         Dock = new TabDock(theme);
         Dock.Root.Margin = new Thickness(0, IslandSizes.DockTop, 0, IslandSizes.DockBottom);
         Dock.Root.VerticalAlignment = VerticalAlignment.Top;
@@ -177,6 +186,12 @@ internal sealed class IslandView
         UsageBanner = new Usage.UsageBanner(theme);
         UsageBanner.Root.Margin = new Thickness(14, 0, 14, 4);
         Grid.SetRow(UsageBanner.Root, 1);
+        BatteryBanner = new BatteryBanner();
+        BatteryBanner.Root.Margin = new Thickness(14, 0, 14, 4);
+        Grid.SetRow(BatteryBanner.Root, 1);
+        // The ears fill the pill's row; the row below stays empty.
+        HudEars = new HudEars();
+        StatusEars = new StatusEars();
         AlertLayer = new Grid
         {
             HorizontalAlignment = HorizontalAlignment.Left,
@@ -184,7 +199,7 @@ internal sealed class IslandView
             Visibility = Visibility.Collapsed,
             IsHitTestVisible = false,
             RowDefinitions = { new RowDefinition { Height = new GridLength(IslandSizes.HeaderHeight) }, new RowDefinition() },
-            Children = { Banner.Root, TimerBanner.Root, MeetingBanner.Root, NotificationBanner.Root, DeviceBanner.Root, ApprovalBanner.Root, AgentDoneBanner.Root, UsageBanner.Root },
+            Children = { Banner.Root, TimerBanner.Root, MeetingBanner.Root, NotificationBanner.Root, DeviceBanner.Root, ApprovalBanner.Root, AgentDoneBanner.Root, UsageBanner.Root, BatteryBanner.Root, HudEars.Root, StatusEars.Root },
         };
         Grid.SetRow(Banner.Root, 1);
 
@@ -223,6 +238,10 @@ internal sealed class IslandView
     public ApprovalBanner ApprovalBanner { get; }
     public AgentDoneBanner AgentDoneBanner { get; }
     public Usage.UsageBanner UsageBanner { get; }
+    public BatteryBanner BatteryBanner { get; }
+    public HudEars HudEars { get; }
+    public StatusEars StatusEars { get; }
+    public StatusChips StatusChips { get; }
     public AgentsTabView Agents { get; }
     public AgentEarView AgentEar { get; }
     public DevicesTabView Devices { get; }
@@ -245,10 +264,21 @@ internal sealed class IslandView
         AgentEar.SetShown(activity == PillActivity.Agent, seen);
     }
 
-    /// <summary>The banner for <paramref name="alert"/>: one content at a time.</summary>
-    public void ShowAlert(IslandAlert? alert, int pendingNotifications)
+    /// <summary>
+    /// The banner for <paramref name="alert"/>: one content at a time. <paramref name="swapped"/>: it
+    /// took another's place on screen, so a HUD eases its bar from where it was.
+    /// </summary>
+    public void ShowAlert(IslandAlert? alert, int pendingNotifications, bool swapped, NetworkLink link)
     {
+        var wasHud = HudEars.Root.Visibility == Visibility.Visible;
+        HudEars.Root.Visibility = alert is HudAlert ? Visibility.Visible : Visibility.Collapsed;
+        StatusEars.Root.Visibility = alert.IsStatus() ? Visibility.Visible : Visibility.Collapsed;
+        BatteryBanner.Root.Visibility = alert is BatteryAlert && !alert.IsStatus() ? Visibility.Visible : Visibility.Collapsed;
         Banner.Root.Visibility = alert is null or NowPlayingAlert ? Visibility.Visible : Visibility.Collapsed;
+        if (alert is HudAlert hud) HudEars.Show(hud.Value, animate: swapped && wasHud);
+        else if (alert is BatteryAlert { Event.IsStatus: true } battery) ShowStatus(battery.Event);
+        else if (alert is BatteryAlert low) BatteryBanner.Show(low.Event);
+        else if (alert is WiredAlert wired) ShowWired(wired.Connected, link);
         TimerBanner.Root.Visibility = alert is TimerAlert ? Visibility.Visible : Visibility.Collapsed;
         MeetingBanner.Root.Visibility = alert is MeetingAlert ? Visibility.Visible : Visibility.Collapsed;
         NotificationBanner.Root.Visibility = alert is NotificationAlert ? Visibility.Visible : Visibility.Collapsed;
@@ -263,9 +293,53 @@ internal sealed class IslandView
         else if (alert is ApprovalAlert approval) ApprovalBanner.Show(approval.Approval);
         else if (alert is AgentDoneAlert done) AgentDoneBanner.Show(done.Session);
         else if (alert is UsageAlert usage) UsageBanner.Show(usage.Snapshot, usage.Window);
-        else Banner.Refresh();
+        else if (alert is null or NowPlayingAlert) Banner.Refresh();
         // Only a banner with a button takes the pointer itself; otherwise a click opens the island.
         AlertLayer.IsHitTestVisible = alert is MeetingAlert && MeetingBanner.HasJoin || alert is ApprovalAlert;
+    }
+
+    /// <summary>Plugged in (green, charging) or out (white): the percentage on the right (IslandView.swift, AlertView).</summary>
+    private void ShowStatus(BatteryEvent battery)
+    {
+        var plugged = battery.Kind == BatteryEventKind.PluggedIn;
+        StatusEars.Show(
+            plugged ? StatusGlyphs.BatteryCharging : StatusGlyphs.Battery(75),
+            14 * StatusGlyphs.BatteryScale,
+            L.Format("Devices_Percent", battery.Percent),
+            L.Get(plugged ? "Devices_Charging" : "Devices_OnBattery"),
+            BatteryLook.Event(battery.Kind));
+    }
+
+    /// <summary>A cable in says LAN in green; out, in white, what took over: Wi-Fi, or offline.</summary>
+    private void ShowWired(bool connected, NetworkLink link)
+    {
+        if (connected)
+        {
+            StatusEars.Show(StatusGlyphs.Cable, 14, "LAN", L.Get("Status_CableIn"), StatusTint.Green);
+            return;
+        }
+        var (glyph, text) = WiredOut(link);
+        StatusEars.Show(glyph, 14, text, L.Get("Status_CableOut"), StatusTint.White);
+    }
+
+    /// <summary>The cable-out ears follow the link as it settles, Wi-Fi a moment after offline.</summary>
+    public void UpdateWiredOut(NetworkLink link)
+    {
+        var (glyph, text) = WiredOut(link);
+        StatusEars.SetText(glyph, text);
+    }
+
+    private static (string Glyph, string Text) WiredOut(NetworkLink link) =>
+        link == NetworkLink.Offline ? (Glyphs.WifiOff, L.Get("Status_Offline")) : (Glyphs.Wifi, "Wi-Fi");
+
+    /// <summary>The header's battery, LAN and watts chips, as the settings and the readings say.</summary>
+    public void ShowStatusChips(AppSettings settings, SystemStatus status)
+    {
+        if (status.Battery is { } battery) StatusChips.ShowBattery(battery);
+        Header.Want(StatusChips.Battery, settings.ShowBatteryChip && status.Battery is not null);
+        Header.Want(StatusChips.Lan, settings.ShowNetworkChip && status.Network.Link == NetworkLink.Wired);
+        if (status.Watts.Watts is { } watts) StatusChips.ShowWatts(watts);
+        Header.Want(StatusChips.Watts, settings.ShowBatteryChip && status.Watts.Watts is not null);
     }
 
     /// <summary>Where the drop target's zones sit while files are dragged onto the island.</summary>
@@ -288,6 +362,7 @@ internal sealed class IslandView
     {
         Place(ExpandedLayer, open);
         _contentRow.Height = new GridLength(IslandSizes.ContentTop + IslandSizes.ContentHeight(style, tab));
+        Header.SetIslandWidth(open.Width);
     }
 
     public FrameworkElement TabView(IslandTab tab) => _tabs[tab];

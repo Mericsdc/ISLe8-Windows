@@ -72,12 +72,26 @@ public static class IslandSizes
     /// </summary>
     public static DipSize Alert(IslandAlert alert) => alert switch
     {
+        HudAlert => new(Notch + 2 * HudEarWidth + 2 * EarShoulder, HeaderHeight),
+        _ when alert.IsStatus() => new(Notch + 2 * StatusEarWidth + 2 * EarShoulder, HeaderHeight),
         NotificationAlert or MeetingAlert => new(Math.Max(400, Notch + 200), HeaderHeight + 74),
         DeviceAlert => new(Math.Max(420, Notch + 220), HeaderHeight + 56),
         ApprovalAlert => new(Math.Max(440, Notch + 240), HeaderHeight + 100),
         AgentDoneAlert => new(Math.Max(400, Notch + 200), HeaderHeight + 50),
         _ => new(Math.Max(IslandMetrics.CompactPillWidth + 60, 340), HeaderHeight + 46),
     };
+
+    /// <summary>Wider ears for volume and brightness, so the level bar and its percentage have room (IslandModel.swift, hudEarWidth).</summary>
+    public const double HudEarWidth = 92;
+
+    /// <summary>Ears for "charging" and "LAN": the island widens sideways to say it, as on iPhone (statusEarWidth).</summary>
+    public const double StatusEarWidth = 104;
+
+    /// <summary>The shoulder beside each ear, the wide pill's (shoulder(for: .compact)).</summary>
+    public const double EarShoulder = 6;
+
+    /// <summary>The middle the ears sit either side of: the idle pill, as the notch on the Mac.</summary>
+    public const double EarGap = Notch;
 
     /// <summary>The drop target's two zones under the pill's row (IslandModel.swift, size(for: .dropTarget)).</summary>
     public static DipSize DropTarget => new(Math.Max(460, Notch + 240), HeaderHeight + 112);

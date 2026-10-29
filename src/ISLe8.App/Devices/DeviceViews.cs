@@ -396,13 +396,24 @@ internal sealed class DevicesChip
 
     public Border Root { get; }
 
+    /// <summary>A device has a battery to show and the setting is on; the header decides if there is room.</summary>
+    public bool Wanted { get; private set; }
+
+    /// <summary>Refreshed: <see cref="Wanted"/> or the chip's width may have changed.</summary>
+    public event Action? Refreshed;
+
     public void Detach() => _devices.Changed -= Refresh;
 
     public void Refresh()
     {
         var device = DeviceRules.ChipDevice(_devices.Devices);
-        Root.Visibility = device is not null && _shown() ? Visibility.Visible : Visibility.Collapsed;
-        if (device is null) return;
+        Wanted = device is not null && _shown();
+        if (device is not null) Fill(device);
+        Refreshed?.Invoke();
+    }
+
+    private void Fill(WirelessDevice device)
+    {
         _content.Children.Clear();
         _content.Children.Add(DeviceIcon.Create(device.Kind, BatteryPart.Main, 12, Ui.White(0xFF)));
         if ((device.Lowest ?? device.Case) is { } level)

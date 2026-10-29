@@ -1503,4 +1503,79 @@
   <data name="Usage_SectionNote" xml:space="preserve">
     <value>LimitBar LRX'ten taşındı. Bir servisin limiti %90'ı geçince adada kısa bir uyarı çıkar. Giriş, servisin kendi aracıyla yapılır: codex login, claude auth login, agy. Windows'ta her araç kendi iş nesnesinde (Job Object), boş bir çalışma klasöründe, izin listeli ortam değişkenleriyle ve süre sınırıyla çalışır; başkalarının yazabildiği bir klasördeki araç çalıştırılmaz.</value>
   </data>
+  <data name="Media_Volume" xml:space="preserve">
+    <value>Ses</value>
+    <comment>mac: Ses</comment>
+  </data>
+  <data name="Battery_Low" xml:space="preserve">
+    <value>Pil azalıyor</value>
+    <comment>mac: Pil azalıyor</comment>
+  </data>
+  <data name="Battery_Critical" xml:space="preserve">
+    <value>Pil çok az</value>
+    <comment>mac: Pil çok az</comment>
+  </data>
+  <data name="Battery_Left" xml:space="preserve">
+    <value>%{0} kaldı · şarja tak</value>
+    <comment>mac: %%%lld kaldı · şarja tak</comment>
+  </data>
+  <data name="Status_LanHelp" xml:space="preserve">
+    <value>İnternete kabloyla (Ethernet) bağlı</value>
+    <comment>mac: İnternete kabloyla (Ethernet) bağlı</comment>
+  </data>
+  <data name="Status_WattsHelp" xml:space="preserve">
+    <value>Pile giren güç</value>
+  </data>
+  <data name="Status_CableIn" xml:space="preserve">
+    <value>Kabloyla bağlandı</value>
+    <comment>mac: Kabloyla bağlandı</comment>
+  </data>
+  <data name="Status_CableOut" xml:space="preserve">
+    <value>Kablo çıkarıldı</value>
+    <comment>mac: Kablo çıkarıldı</comment>
+  </data>
+  <data name="Status_Offline" xml:space="preserve">
+    <value>Çevrimdışı</value>
+    <comment>mac: Çevrimdışı</comment>
+  </data>
+  <data name="Settings_Huds" xml:space="preserve">
+    <value>Göstergeler</value>
+    <comment>mac: Göstergeler</comment>
+  </data>
+  <data name="Settings_VolumeHud" xml:space="preserve">
+    <value>Ses değişince göster</value>
+    <comment>mac: Ses değişince göster</comment>
+  </data>
+  <data name="Settings_BrightnessHud" xml:space="preserve">
+    <value>Parlaklık değişince göster</value>
+    <comment>mac: Parlaklık değişince göster</comment>
+  </data>
+  <data name="Settings_BrightnessHudNote" xml:space="preserve">
+    <value>Yalnızca parlaklık tuşlarıyla yapılan değişiklikler; otomatik parlaklık ve ekranın kararması gösterilmez.</value>
+    <comment>mac: Yalnızca parlaklık tuşlarıyla yapılan değişiklikler; otomatik parlaklık ve ekranın kararması gösterilmez.</comment>
+  </data>
+  <data name="Settings_Battery" xml:space="preserve">
+    <value>Pil</value>
+    <comment>mac: Pil</comment>
+  </data>
+  <data name="Settings_BatteryAlerts" xml:space="preserve">
+    <value>Şarj ve pil uyarılarını göster</value>
+    <comment>mac: Şarj ve pil uyarılarını göster</comment>
+  </data>
+  <data name="Settings_BatteryAlertsNote" xml:space="preserve">
+    <value>Şarja takınca, çıkarınca ve pil %20 ile %10'a inince.</value>
+    <comment>mac: Şarja takınca, çıkarınca ve pil %20 ile %10'a inince.</comment>
+  </data>
+  <data name="Settings_HeaderBar" xml:space="preserve">
+    <value>Başlık çubuğu</value>
+    <comment>mac: Başlık çubuğu</comment>
+  </data>
+  <data name="Settings_BatteryChip" xml:space="preserve">
+    <value>Pil</value>
+    <comment>mac: Pil</comment>
+  </data>
+  <data name="Settings_NetworkChip" xml:space="preserve">
+    <value>Kablolu bağlantı (LAN)</value>
+    <comment>mac: Kablolu bağlantı (LAN)</comment>
+  </data>
 </root>

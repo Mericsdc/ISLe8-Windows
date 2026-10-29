@@ -1,6 +1,8 @@
 using ISLe8.Core.Geometry;
+using ISLe8.Core.Motion;
 using ISLe8.Core.Notifications;
 using ISLe8.Core.Settings;
+using ISLe8.Core.Status;
 
 namespace ISLe8.Core.Island;
 
@@ -52,6 +54,12 @@ public sealed class IslandModel
     /// <summary>At most this many notifications wait behind a banner; older ones give way.</summary>
     public const int NotificationQueueLimit = 5;
 
+    /// <summary>A status banner's ears slide back under the pill this long before the island folds in.</summary>
+    public static readonly TimeSpan StatusRetract = TimeSpan.FromMilliseconds(240);
+
+    /// <summary>The fold that follows springs as the ears sprang out, for this long.</summary>
+    public static readonly TimeSpan SoftCloseTime = TimeSpan.FromMilliseconds(700);
+
     private readonly AppSettings _settings;
     private readonly IIslandClock _clock;
     private IDisposable? _hoverTimer;
@@ -64,6 +72,7 @@ public sealed class IslandModel
     private IDisposable? _pendingTimer;
     private readonly List<AppNotification> _pending = [];
     private DateTimeOffset _closedAt = DateTimeOffset.MinValue;
+    private bool _softClose;
 
     public IslandModel(AppSettings settings, IIslandClock clock)
     {
@@ -101,6 +110,19 @@ public sealed class IslandModel
     /// <summary>Whether the last change made the island bigger. Growing and shrinking use different springs.</summary>
     public bool IsGrowing { get; private set; } = true;
 
+    /// <summary>A charging or cable banner is folding its ears back under the pill before it closes.</summary>
+    public bool IsRetractingStatus { get; private set; }
+
+    /// <summary>
+    /// The spring for the change just made (IslandModel.swift, animation): plugging in or out springs
+    /// out sideways with a visible bounce and back the same way; otherwise growing and shrinking differ.
+    /// </summary>
+    public SpringSpec Spring =>
+        State == IslandState.Alert && Alert.IsStatus() ? SpringSpec.Status
+        : _softClose ? SpringSpec.SoftClose
+        : IsGrowing ? SpringSpec.Open
+        : SpringSpec.Close;
+
     /// <summary>
     /// A click anywhere else would close the island (<see cref="ClickedOutside"/>). Only then does the
     /// app need to watch the mouse outside its window.
@@ -118,6 +140,9 @@ public sealed class IslandModel
 
     /// <summary>One banner took another's place without the state changing.</summary>
     public event Action? AlertChanged;
+
+    /// <summary><see cref="IsRetractingStatus"/> changed.</summary>
+    public event Action? RetractingChanged;
 
     /// <summary><see cref="PendingNotificationCount"/> changed.</summary>
     public event Action? PendingNotificationsChanged;
@@ -137,7 +162,7 @@ public sealed class IslandModel
         // A banner stays while the pointer rests on it, so there is time to read it; a click opens the island.
         if (State == IslandState.Alert)
         {
-            Cancel(ref _alertTimer);
+            CancelAlert();
             if (!inside) EndAlert(AlertAfterHover);
             Changed?.Invoke();
             return;
@@ -189,7 +214,7 @@ public sealed class IslandModel
         }
         Cancel(ref _hoverTimer);
         Cancel(ref _closeTimer);
-        Cancel(ref _alertTimer);
+        CancelAlert();
         Select(tab);
         Transition(IslandState.Expanded);
     }
@@ -205,7 +230,7 @@ public sealed class IslandModel
             if (State == IslandState.DropTarget) return;
             Cancel(ref _hoverTimer);
             Cancel(ref _closeTimer);
-            Cancel(ref _alertTimer);
+            CancelAlert();
             Transition(IslandState.DropTarget);
         }
         else if (State == IslandState.DropTarget)
@@ -231,7 +256,7 @@ public sealed class IslandModel
     {
         Cancel(ref _hoverTimer);
         Cancel(ref _closeTimer);
-        Cancel(ref _alertTimer);
+        CancelAlert();
         Transition(IslandState.Pill);
     }
 
@@ -243,10 +268,13 @@ public sealed class IslandModel
     public void ShowAlert(IslandAlert alert, TimeSpan duration)
     {
         if (!CanShowAlert) return;
-        Cancel(ref _alertTimer);
+        CancelAlert();
+        var old = Alert;
         Alert = alert;
         if (State == IslandState.Alert)
         {
+            // Swapping one banner for another can change its size without a state change.
+            IsGrowing = old is null || IslandSizes.Alert(alert).Height >= IslandSizes.Alert(old).Height;
             AlertChanged?.Invoke();
             Changed?.Invoke();
         }
@@ -255,6 +283,31 @@ public sealed class IslandModel
             Transition(IslandState.Alert);
         }
         EndAlert(duration);
+    }
+
+    /// <summary>
+    /// Volume or brightness (IslandModel.swift, showHUD). Unlike other banners it also shows while
+    /// the pointer rests on the island, since it answers a key just pressed. It never covers an open
+    /// island or a notification.
+    /// </summary>
+    public void ShowHud(HudValue value)
+    {
+        if (IsLocked || State is IslandState.Expanded or IslandState.DropTarget || IsShowingNotification) return;
+        Cancel(ref _hoverTimer);
+        CancelAlert();
+        var old = Alert;
+        Alert = new HudAlert(value);
+        if (State == IslandState.Alert)
+        {
+            IsGrowing = old is null || IslandSizes.Alert(Alert).Width >= IslandSizes.Alert(old).Width;
+            AlertChanged?.Invoke();
+            Changed?.Invoke();
+        }
+        else
+        {
+            Transition(IslandState.Alert);
+        }
+        EndAlert(AlertDurations.Hud);
     }
 
     /// <summary>
@@ -284,7 +337,7 @@ public sealed class IslandModel
         IsLocked = locked;
         Cancel(ref _hoverTimer);
         Cancel(ref _closeTimer);
-        Cancel(ref _alertTimer);
+        CancelAlert();
         IsPinned = false;
         if (_pending.Count > 0)
         {
@@ -299,7 +352,7 @@ public sealed class IslandModel
     public void DismissAlert()
     {
         if (State != IslandState.Alert) return;
-        Cancel(ref _alertTimer);
+        CancelAlert();
         Transition(IslandState.Pill);
     }
 
@@ -330,8 +383,49 @@ public sealed class IslandModel
         _alertTimer = _clock.After(after, () =>
         {
             _alertTimer = null;
-            if (State == IslandState.Alert) Transition(IslandState.Pill);
+            if (State != IslandState.Alert) return;
+            if (!Alert.IsStatus())
+            {
+                Transition(IslandState.Pill);
+                return;
+            }
+            // The ears slide back under the pill first, then the island folds in as it sprang out.
+            SetRetracting(true);
+            _alertTimer = _clock.After(StatusRetract, () =>
+            {
+                SetRetracting(false);
+                if (State != IslandState.Alert)
+                {
+                    _alertTimer = null;
+                    return;
+                }
+                _softClose = true;
+                _alertTimer = _clock.After(SoftCloseTime, () =>
+                {
+                    _alertTimer = null;
+                    _softClose = false;
+                });
+                Transition(IslandState.Pill);
+            });
         });
+
+    /// <summary>
+    /// Whatever the banner was waiting for is called off; a status banner halfway through folding
+    /// stops folding, and the next change springs as usual.
+    /// </summary>
+    private void CancelAlert()
+    {
+        Cancel(ref _alertTimer);
+        _softClose = false;
+        SetRetracting(false);
+    }
+
+    private void SetRetracting(bool retracting)
+    {
+        if (retracting == IsRetractingStatus) return;
+        IsRetractingStatus = retracting;
+        RetractingChanged?.Invoke();
+    }
 
     /// <summary>Pinning keeps the island open; pinning it from the pill (the menu) opens it.</summary>
     public void SetPinned(bool pinned)
@@ -405,7 +499,7 @@ public sealed class IslandModel
     {
         Cancel(ref _hoverTimer);
         Cancel(ref _closeTimer);
-        Cancel(ref _alertTimer);
+        CancelAlert();
         if (tab is { } chosen) Select(chosen);
         else if (State != IslandState.Expanded) ChooseTabForOpening();
         Transition(IslandState.Expanded);
@@ -447,7 +541,7 @@ public sealed class IslandModel
 
     private void Open()
     {
-        Cancel(ref _alertTimer);
+        CancelAlert();
         if (State != IslandState.Expanded) ChooseTabForOpening();
         Transition(IslandState.Expanded);
     }

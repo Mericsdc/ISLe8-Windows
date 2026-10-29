@@ -157,6 +157,21 @@ public sealed class AppSettings
 
     /// <summary>The open island's header shows the device whose battery runs out first.</summary>
     public bool ShowDevicesChip { get; set; } = true;
+
+    /// <summary>Settings › System › HUDs: the volume in the ears when it changes.</summary>
+    public bool ShowVolumeHud { get; set; } = true;
+
+    /// <summary>The brightness in the ears, only when changed with the brightness keys.</summary>
+    public bool ShowBrightnessHud { get; set; } = true;
+
+    /// <summary>Settings › System › Battery: plugged in, unplugged, and the battery at 20 % and 10 %.</summary>
+    public bool ShowBatteryAlerts { get; set; } = true;
+
+    /// <summary>Settings › Appearance › Header: this computer's battery, and the power going into it while it charges.</summary>
+    public bool ShowBatteryChip { get; set; } = true;
+
+    /// <summary>A green LAN chip while online by cable, and the ears when the cable goes in or out.</summary>
+    public bool ShowNetworkChip { get; set; } = true;
     public bool SwipeToChangeTabs { get; set; } = true;
 
     /// <summary>Kept out of screenshots, recordings and shared screens.</summary>
