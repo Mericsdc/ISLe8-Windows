@@ -6,6 +6,8 @@ public enum PillActivity
     None,
     Media,
     Timer,
+    /// <summary>An agent working or waiting, or a script's activity (PORTING.md §3.12).</summary>
+    Agent,
 }
 
 public enum PillKind

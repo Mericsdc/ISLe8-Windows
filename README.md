@@ -34,6 +34,10 @@ Gereken: Windows 10 2004+ ya da Windows 11.
 - Bildirim alanındaki kapsül simgesi: tıklayınca Ayarlar açılır, sağ tıklayınca **Ayarlar…** ve
   **ISLe8'den çık**. Windows 11 yeni simgeleri görev çubuğundaki **^** okunun altına koyar; oradan
   görev çubuğuna sürükleyebilirsin. ISLe8 çalışırken yeniden açmak da Ayarlar'ı açar.
+- **AI sekmesi:** Claude Code ve Codex'in ne yaptığı, adım adım; izin isteklerine adadan Onayla / Reddet. Bağlamak için
+  **Ayarlar › Ajanlar › Bağla** (kendiliğinden bağlanmaz). Komut satırından: `isle8 ping`, `isle8 open agents`,
+  `isle8 activity start --id derleme --title "Derleme" --progress 0.4` (kurulu sürümde her terminalde `isle8`; zip'te
+  klasördeki `isle8-cli.exe`).
 - Oturum açılınca kendiliğinden başlasın: **Ayarlar › Genel › Girişte başlat**. ISLe8'in klasörünü
   taşırsan kayıt bir sonraki açılışta yeni yere döner.
 

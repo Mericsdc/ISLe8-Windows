@@ -131,6 +131,15 @@ public sealed class AppSettings
     /// <summary>Apps that recently sent notifications, newest first, for the mute list (<see cref="Notifications.NotificationRules.Remember"/>).</summary>
     public List<Notifications.NotificationApp> NotificationSeenApps { get; set; } = [];
 
+    /// <summary>Settings › Agents: a tool's permission request is asked on the island (Approve / Deny).</summary>
+    public bool AgentApprovalsOnIsland { get; set; } = true;
+
+    /// <summary>Seconds without an answer before the question goes back to the agent, 15–300 in steps of 15.</summary>
+    public int AgentApprovalTimeout { get; set; } = 90;
+
+    /// <summary>A banner when an agent finishes its turn.</summary>
+    public bool AgentDoneAlert { get; set; } = true;
+
     /// <summary>Settings › System › Wireless devices: a banner with the batteries when one connects.</summary>
     public bool ShowDeviceConnectedAlert { get; set; } = true;
 
@@ -184,6 +193,7 @@ public sealed class AppSettings
         ClipboardLimit = Math.Clamp((int)Math.Round(ClipboardLimit / 50.0) * 50, 50, 1000);
         ClipboardMaxAgeDays = Math.Clamp(ClipboardMaxAgeDays, 1, 365);
         NotificationDuration = Math.Round(Clamp(NotificationDuration, 2, 10, 4) * 2) / 2;
+        AgentApprovalTimeout = Math.Clamp((int)Math.Round(AgentApprovalTimeout / 15.0) * 15, 15, 300);
         ClipboardExcludedApps = (ClipboardExcludedApps ?? []).Select(app => (app ?? "").Trim()).Where(app => app.Length > 0)
             .Distinct(StringComparer.OrdinalIgnoreCase).ToList();
         MutedNotificationApps = (MutedNotificationApps ?? []).Where(app => !string.IsNullOrWhiteSpace(app))

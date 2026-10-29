@@ -182,6 +182,24 @@ PORTING.md §2 › Boyutlar; değerler `IslandSizes`'ta, Core testleriyle.
   üstüne açılıyor. Üstte başka bir çubuk (üstteki görev çubuğu) varsa şerit onun altına giriyor. Ayarlar › Genel
   › "Pencereler adanın altında başlasın" ile kapatılabiliyor.
 
+### AI sekmesi
+
+- **Kanal** (`AgentServer`, Mac: LocalServer.swift): kullanıcıya özel named pipe; bağlantı başına bir JSON satırı gelir,
+  bir satır döner. Bütün beklemeler örtüşen G/Ç; boştayken hiçbir iş parçacığı dönmez. Onay isteyen hook'un ucu açık kalır;
+  kapanırsa (ajan vazgeçti) soru adadan kalkar.
+- **Model** (`AgentHub`, Mac: AgentsModule.swift): oturumlar, son 8 adım ve süreleri, plan (`TodoWrite`/`update_plan`),
+  değişen dosyalar, onaylar (zaman aşımı ayardan, 90 sn), betik aktiviteleri; bitmiş oturum 10 dk sonra düşer. Platformdan
+  bağımsız, Core testlerinde.
+- **Komut** (`src/ISLe8.Cli`): `isle8 hook|activity|open|close|devices|ping`. Hook her zaman 0 ile çıkar; ISLe8 kapalıyken
+  150 ms'de sessizce çıkar. Dosyası `isle8-cli.exe` (NTFS'te `isle8.exe` = `ISLe8.exe`), pakette `isle8` takma adı.
+- **Görünüm:** onay kartı (turuncu kenar), birden çok oturumda üstte seçici, çalışma kartı (durum, süre, "Adım 2/4", parçalı
+  çubuk, son 4 adım, "Oturuma git"), betik satırı. Kulak: ajanın simgesi ve rengindeki çubuklar, beklerken nabız gibi atan
+  turuncu ünlem, betikte yüzde. Öncelik Mac'teki gibi: ajan (55, onay 100) > medya (50) > zamanlayıcı (40). Onay bekleyen
+  ajan varken ada AI sekmesinde açılır.
+- **Banner'lar:** onay 15 sn (440 × pill + 100, düğmeler basılabilir), bitti 4 sn (400 × pill + 50).
+- **Hook kurulumu** (`AgentHooks`): Ayarlar › Ajanlar › Bağla. Yalnızca `isle8 hook` çağıran girdilere dokunulur, ilk
+  değişiklikten önce `.isle8-backup`; dosya geçersiz JSON'sa yazılmaz.
+
 ### Cihazlar sekmesi
 
 - **Okuma** (`DeviceService`, Mac: DevicesModule.swift): Mac macOS'un Bluetooth raporunu okuyor. Windows, Ayarlar'da
@@ -342,7 +360,7 @@ PORTING.md §2 › Boyutlar; değerler `IslandSizes`'ta, Core testleriyle.
 | Raf | sürükle-bırak, AirDrop | Pill'e sürükle-bırak (OLE drop), Share UI (`IDataTransferManagerInterop.ShowShareUIForWindow`; Nearby Share dahil) | W2 |
 | Bildirim aynası | usernoted veritabanı | `UserNotificationListener` (MSIX + `userNotificationListener` yeteneği + kullanıcı izni), `NotificationChanged` olayı | **W3** ✅ |
 | Takvim | EventKit | `AppointmentManager.RequestStoreAsync(AllCalendarsReadOnly)` (`appointments` yeteneği) | W3 |
-| AI sekmesi | Unix soket + hook'lar | `\\.\pipe\isle8-agents`; hook'lar `isle8` komutunu çağırır (MSIX App Execution Alias). componest tarzı kart: mevcut adım, süre, "Adım 3/6", son adımlar, Onayla/Reddet | W4 |
+| AI sekmesi | Unix soket + hook'lar | `\\.\pipe\isle8-<SID>-<oturum>` (yalnızca bu kullanıcı); hook'lar `isle8` komutunu çağırır (`isle8-cli.exe`, MSIX App Execution Alias). componest tarzı kart: mevcut adım, süre, "Adım 3/6", son adımlar, Onayla/Reddet | **W4** ✅ (kullanım limitleri hariç) |
 | Kullanım limitleri | LimitBar veri katmanı | `codex`, `claude -p /usage`, `agy` CLI'ları; tasarruf modu 15 dk. Token/şifre okunmaz | W4 |
 | Kablosuz cihaz pilleri | Bluetooth raporu | Windows'un tuttuğu PnP özelliği `{104EA319-6EE2-4701-BD47-8DDBF425BBE5} 2` (kapsayıcıdaki düğümler), yoksa BLE GATT Battery Service (0x180F/0x2A19); `DeviceWatcher` ile (olay güdümlü); AirPods kulaklık/kutu yayından | **W5** ✅ (iPhone/iPad hariç) |
 | Tema sistemi | 7 tema, JSON | Aynı 7 tema ve JSON biçimi (Mac'te dışa aktarılan tema Windows'ta açılır). Glass → Mica/Acrylic | W0 (temalar) / W5 (cam, düzenleyici) |

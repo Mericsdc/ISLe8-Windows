@@ -1185,4 +1185,183 @@
   <data name="Settings_WirelessNote" xml:space="preserve">
     <value>AirPods (iki kulaklık ve kutu), Beats, Bluetooth kulaklık ve hoparlörler, klavyeler, fareler, oyun kumandaları: pilini Windows'a bildiren her cihaz. Pil bilgisi Windows Ayarları'nın gösterdiği yerden, cihaz bağlanınca, ada açılınca ve bağlıyken 10 dakikada bir okunur. AirPods'un iki kulaklığı ve kutusu ayrı ayrı yalnızca Cihazlar sekmesi açıkken, AirPods'un yayınından okunur.</value>
   </data>
+  <data name="Settings_Agents" xml:space="preserve">
+    <value>Ajanlar</value>
+    <comment>mac: Ajanlar</comment>
+  </data>
+  <data name="Agents_Thinking" xml:space="preserve">
+    <value>Düşünüyor…</value>
+    <comment>mac: Düşünüyor…</comment>
+  </data>
+  <data name="Agents_WaitingInput" xml:space="preserve">
+    <value>Girdi bekliyor</value>
+    <comment>mac: Girdi bekliyor</comment>
+  </data>
+  <data name="Agents_Done" xml:space="preserve">
+    <value>Bitti</value>
+    <comment>mac: Bitti</comment>
+  </data>
+  <data name="Agents_Reading" xml:space="preserve">
+    <value>Okuyor: {0}</value>
+    <comment>mac: Okuyor: %@</comment>
+  </data>
+  <data name="Agents_Writing" xml:space="preserve">
+    <value>Yazıyor: {0}</value>
+    <comment>mac: Yazıyor: %@</comment>
+  </data>
+  <data name="Agents_Editing" xml:space="preserve">
+    <value>Düzenliyor: {0}</value>
+    <comment>mac: Düzenliyor: %@</comment>
+  </data>
+  <data name="Agents_Patching" xml:space="preserve">
+    <value>Yama uyguluyor</value>
+    <comment>mac: Yama uyguluyor</comment>
+  </data>
+  <data name="Agents_Searching" xml:space="preserve">
+    <value>Arıyor: {0}</value>
+    <comment>mac: Arıyor: %@</comment>
+  </data>
+  <data name="Agents_WebSearch" xml:space="preserve">
+    <value>Web'de arıyor: {0}</value>
+    <comment>mac: Web'de arıyor: %@</comment>
+  </data>
+  <data name="Agents_Subagent" xml:space="preserve">
+    <value>Alt ajan: {0}</value>
+    <comment>mac: Alt ajan: %@</comment>
+  </data>
+  <data name="Agents_PlanUpdated" xml:space="preserve">
+    <value>Plan güncellendi</value>
+    <comment>mac: Plan güncellendi</comment>
+  </data>
+  <data name="Agents_TurnSeconds" xml:space="preserve">
+    <value>{0} sn</value>
+    <comment>mac: %lld sn</comment>
+  </data>
+  <data name="Agents_FileChanged" xml:space="preserve">
+    <value>{0} dosya değişti</value>
+  </data>
+  <data name="Agents_FilesChanged" xml:space="preserve">
+    <value>{0} dosya değişti</value>
+  </data>
+  <data name="Agents_WaitingApproval" xml:space="preserve">
+    <value>Onay bekliyor</value>
+    <comment>mac: Onay bekliyor</comment>
+  </data>
+  <data name="Agents_WaitingForYou" xml:space="preserve">
+    <value>Seni bekliyor</value>
+    <comment>mac: Seni bekliyor</comment>
+  </data>
+  <data name="Agents_Ready" xml:space="preserve">
+    <value>Hazır</value>
+    <comment>mac: Hazır</comment>
+  </data>
+  <data name="Agents_Step" xml:space="preserve">
+    <value>Adım {0}/{1}</value>
+    <comment>mac: Adım %lld/%lld</comment>
+  </data>
+  <data name="Agents_StepOne" xml:space="preserve">
+    <value>{0} adım</value>
+  </data>
+  <data name="Agents_Steps" xml:space="preserve">
+    <value>{0} adım</value>
+  </data>
+  <data name="Agents_GoToSession" xml:space="preserve">
+    <value>Oturuma git</value>
+    <comment>mac: Oturuma git</comment>
+  </data>
+  <data name="Agents_Approve" xml:space="preserve">
+    <value>Onayla</value>
+    <comment>mac: Onayla</comment>
+  </data>
+  <data name="Agents_Deny" xml:space="preserve">
+    <value>Reddet</value>
+    <comment>mac: Reddet</comment>
+  </data>
+  <data name="Agents_AskInTerminal" xml:space="preserve">
+    <value>Terminalde sor</value>
+    <comment>mac: Terminalde sor</comment>
+  </data>
+  <data name="Agents_WantsApproval" xml:space="preserve">
+    <value>{0} onay istiyor · {1}</value>
+    <comment>mac: %@ onay istiyor · %@</comment>
+  </data>
+  <data name="Agents_Finished" xml:space="preserve">
+    <value>{0} bitti · {1}</value>
+    <comment>mac: %@ bitti · %@</comment>
+  </data>
+  <data name="Agents_YourTurn" xml:space="preserve">
+    <value>Sıra sende</value>
+    <comment>mac: Sıra sende</comment>
+  </data>
+  <data name="Agents_NoneRunning" xml:space="preserve">
+    <value>Çalışan ajan yok</value>
+    <comment>mac: Çalışan ajan yok</comment>
+  </data>
+  <data name="Agents_EmptyNote" xml:space="preserve">
+    <value>Claude Code ya da Codex çalışınca burada görünür. Bağlamak için: Ayarlar &gt; Ajanlar.</value>
+    <comment>mac: Claude Code ya da Codex çalışınca burada görünür. Bağlamak için: Ayarlar &gt; Ajanlar.</comment>
+  </data>
+  <data name="Agents_Connections" xml:space="preserve">
+    <value>Bağlantılar</value>
+    <comment>mac: Bağlantılar</comment>
+  </data>
+  <data name="Agents_Connected" xml:space="preserve">
+    <value>Bağlı</value>
+    <comment>mac: Bağlı</comment>
+  </data>
+  <data name="Agents_Remove" xml:space="preserve">
+    <value>Kaldır</value>
+    <comment>mac: Kaldır</comment>
+  </data>
+  <data name="Agents_Connect" xml:space="preserve">
+    <value>Bağla</value>
+    <comment>mac: Bağla</comment>
+  </data>
+  <data name="Agents_ChangeFailed" xml:space="preserve">
+    <value>Değiştirilemedi: {0}</value>
+    <comment>mac: Değiştirilemedi: %@</comment>
+  </data>
+  <data name="Agents_ClaudeNote" xml:space="preserve">
+    <value>%USERPROFILE%\.claude\settings.json'a eklenir. Bu bilgisayardaki tüm Claude Code oturumlarını etkiler; Claude uygulamasının Code sekmesi de dahil.</value>
+  </data>
+  <data name="Agents_CodexNote" xml:space="preserve">
+    <value>%USERPROFILE%\.codex\hooks.json'a eklenir. Codex, kullanıcı hook'larını çalıştırmadan önce onay ister: Codex'te /hooks yazıp ISLe8'in hook'larına güven.</value>
+  </data>
+  <data name="Agents_ConnectionsNote" xml:space="preserve">
+    <value>Mevcut ayarlar korunur, ilk değişiklikten önce dosyanın yedeği (.isle8-backup) alınır. ISLe8 kapalıyken hook'lar hiçbir şey yapmadan geçer.</value>
+    <comment>mac: Mevcut ayarlar korunur, ilk değişiklikten önce dosyanın yedeği (.isle8-backup) alınır. ISLe8 kapalıyken hook'lar hiçbir şey yapmadan geçer.</comment>
+  </data>
+  <data name="Agents_NoCommand" xml:space="preserve">
+    <value>isle8 komutu bulunamadı: hook'lar kurulu ISLe8'le (scripts\install.ps1) ya da zip sürümüyle bağlanabilir.</value>
+  </data>
+  <data name="Agents_Approvals" xml:space="preserve">
+    <value>Onaylar</value>
+    <comment>mac: Onaylar</comment>
+  </data>
+  <data name="Agents_AskOnIsland" xml:space="preserve">
+    <value>İzin isteklerini adada sor</value>
+    <comment>mac: İzin isteklerini adada sor</comment>
+  </data>
+  <data name="Agents_AskOnIslandNote" xml:space="preserve">
+    <value>Ajan bir komut için izin isteyince adada Onayla / Reddet çıkar. Kapalıysa ajan her zamanki gibi kendi penceresinde sorar.</value>
+    <comment>mac: Ajan bir komut için izin isteyince adada Onayla / Reddet çıkar. Kapalıysa ajan her zamanki gibi kendi penceresinde sorar.</comment>
+  </data>
+  <data name="Agents_Timeout" xml:space="preserve">
+    <value>Cevap gelmezse {0} sn sonra ajana bırak</value>
+    <comment>mac: Cevap gelmezse %lld sn sonra ajana bırak</comment>
+  </data>
+  <data name="Agents_DoneAlert" xml:space="preserve">
+    <value>Ajan bitince haber ver</value>
+    <comment>mac: Ajan bitince haber ver</comment>
+  </data>
+  <data name="Agents_CommandLine" xml:space="preserve">
+    <value>Komut satırı</value>
+    <comment>mac: Komut satırı</comment>
+  </data>
+  <data name="Agents_CommandLineNote" xml:space="preserve">
+    <value>Herhangi bir betik adaya canlı aktivite koyabilir. isle8 komutu kurulu ISLe8'le gelir (Windows uygulama takma adı); her terminalde çalışır.</value>
+  </data>
+  <data name="Agents_CommandLineNoteZip" xml:space="preserve">
+    <value>Herhangi bir betik adaya canlı aktivite koyabilir. Zip sürümünde komut, ISLe8 klasöründeki isle8-cli.exe.</value>
+  </data>
 </root>

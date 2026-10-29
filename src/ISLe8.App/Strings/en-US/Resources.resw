@@ -1185,4 +1185,183 @@
   <data name="Settings_WirelessNote" xml:space="preserve">
     <value>AirPods (both buds and the case), Beats, Bluetooth headphones and speakers, keyboards, mice, game controllers: any device that tells Windows its battery. Levels are read where Windows Settings gets them, when a device connects, when the island opens and every 10 minutes while one is connected. AirPods' buds and case are read one by one only while the Devices tab is open, from what the AirPods broadcast.</value>
   </data>
+  <data name="Settings_Agents" xml:space="preserve">
+    <value>Agents</value>
+    <comment>mac: Ajanlar</comment>
+  </data>
+  <data name="Agents_Thinking" xml:space="preserve">
+    <value>Thinking…</value>
+    <comment>mac: Düşünüyor…</comment>
+  </data>
+  <data name="Agents_WaitingInput" xml:space="preserve">
+    <value>Waiting for input</value>
+    <comment>mac: Girdi bekliyor</comment>
+  </data>
+  <data name="Agents_Done" xml:space="preserve">
+    <value>Done</value>
+    <comment>mac: Bitti</comment>
+  </data>
+  <data name="Agents_Reading" xml:space="preserve">
+    <value>Reading: {0}</value>
+    <comment>mac: Okuyor: %@</comment>
+  </data>
+  <data name="Agents_Writing" xml:space="preserve">
+    <value>Writing: {0}</value>
+    <comment>mac: Yazıyor: %@</comment>
+  </data>
+  <data name="Agents_Editing" xml:space="preserve">
+    <value>Editing: {0}</value>
+    <comment>mac: Düzenliyor: %@</comment>
+  </data>
+  <data name="Agents_Patching" xml:space="preserve">
+    <value>Applying a patch</value>
+    <comment>mac: Yama uyguluyor</comment>
+  </data>
+  <data name="Agents_Searching" xml:space="preserve">
+    <value>Searching: {0}</value>
+    <comment>mac: Arıyor: %@</comment>
+  </data>
+  <data name="Agents_WebSearch" xml:space="preserve">
+    <value>Searching the web: {0}</value>
+    <comment>mac: Web'de arıyor: %@</comment>
+  </data>
+  <data name="Agents_Subagent" xml:space="preserve">
+    <value>Subagent: {0}</value>
+    <comment>mac: Alt ajan: %@</comment>
+  </data>
+  <data name="Agents_PlanUpdated" xml:space="preserve">
+    <value>Updated the plan</value>
+    <comment>mac: Plan güncellendi</comment>
+  </data>
+  <data name="Agents_TurnSeconds" xml:space="preserve">
+    <value>{0} s</value>
+    <comment>mac: %lld sn</comment>
+  </data>
+  <data name="Agents_FileChanged" xml:space="preserve">
+    <value>{0} file changed</value>
+  </data>
+  <data name="Agents_FilesChanged" xml:space="preserve">
+    <value>{0} files changed</value>
+  </data>
+  <data name="Agents_WaitingApproval" xml:space="preserve">
+    <value>Waiting for approval</value>
+    <comment>mac: Onay bekliyor</comment>
+  </data>
+  <data name="Agents_WaitingForYou" xml:space="preserve">
+    <value>Waiting for you</value>
+    <comment>mac: Seni bekliyor</comment>
+  </data>
+  <data name="Agents_Ready" xml:space="preserve">
+    <value>Ready</value>
+    <comment>mac: Hazır</comment>
+  </data>
+  <data name="Agents_Step" xml:space="preserve">
+    <value>Step {0} of {1}</value>
+    <comment>mac: Adım %lld/%lld</comment>
+  </data>
+  <data name="Agents_StepOne" xml:space="preserve">
+    <value>{0} step</value>
+  </data>
+  <data name="Agents_Steps" xml:space="preserve">
+    <value>{0} steps</value>
+  </data>
+  <data name="Agents_GoToSession" xml:space="preserve">
+    <value>Go to session</value>
+    <comment>mac: Oturuma git</comment>
+  </data>
+  <data name="Agents_Approve" xml:space="preserve">
+    <value>Approve</value>
+    <comment>mac: Onayla</comment>
+  </data>
+  <data name="Agents_Deny" xml:space="preserve">
+    <value>Deny</value>
+    <comment>mac: Reddet</comment>
+  </data>
+  <data name="Agents_AskInTerminal" xml:space="preserve">
+    <value>Ask in Terminal</value>
+    <comment>mac: Terminalde sor</comment>
+  </data>
+  <data name="Agents_WantsApproval" xml:space="preserve">
+    <value>{0} wants approval · {1}</value>
+    <comment>mac: %@ onay istiyor · %@</comment>
+  </data>
+  <data name="Agents_Finished" xml:space="preserve">
+    <value>{0} finished · {1}</value>
+    <comment>mac: %@ bitti · %@</comment>
+  </data>
+  <data name="Agents_YourTurn" xml:space="preserve">
+    <value>Your turn</value>
+    <comment>mac: Sıra sende</comment>
+  </data>
+  <data name="Agents_NoneRunning" xml:space="preserve">
+    <value>No agents running</value>
+    <comment>mac: Çalışan ajan yok</comment>
+  </data>
+  <data name="Agents_EmptyNote" xml:space="preserve">
+    <value>Claude Code or Codex show up here while they work. To connect them: Settings &gt; Agents.</value>
+    <comment>mac: Claude Code ya da Codex çalışınca burada görünür. Bağlamak için: Ayarlar &gt; Ajanlar.</comment>
+  </data>
+  <data name="Agents_Connections" xml:space="preserve">
+    <value>Connections</value>
+    <comment>mac: Bağlantılar</comment>
+  </data>
+  <data name="Agents_Connected" xml:space="preserve">
+    <value>Connected</value>
+    <comment>mac: Bağlı</comment>
+  </data>
+  <data name="Agents_Remove" xml:space="preserve">
+    <value>Remove</value>
+    <comment>mac: Kaldır</comment>
+  </data>
+  <data name="Agents_Connect" xml:space="preserve">
+    <value>Connect</value>
+    <comment>mac: Bağla</comment>
+  </data>
+  <data name="Agents_ChangeFailed" xml:space="preserve">
+    <value>Couldn't change it: {0}</value>
+    <comment>mac: Değiştirilemedi: %@</comment>
+  </data>
+  <data name="Agents_ClaudeNote" xml:space="preserve">
+    <value>Added to %USERPROFILE%\.claude\settings.json. It affects every Claude Code session on this PC, including the Code tab of the Claude app.</value>
+  </data>
+  <data name="Agents_CodexNote" xml:space="preserve">
+    <value>Added to %USERPROFILE%\.codex\hooks.json. Codex asks before it runs user hooks: type /hooks in Codex and trust ISLe8's hooks.</value>
+  </data>
+  <data name="Agents_ConnectionsNote" xml:space="preserve">
+    <value>Existing settings are kept, and the file is backed up (.isle8-backup) before the first change. While ISLe8 isn't running, the hooks do nothing.</value>
+    <comment>mac: Mevcut ayarlar korunur, ilk değişiklikten önce dosyanın yedeği (.isle8-backup) alınır. ISLe8 kapalıyken hook'lar hiçbir şey yapmadan geçer.</comment>
+  </data>
+  <data name="Agents_NoCommand" xml:space="preserve">
+    <value>The isle8 command wasn't found: hooks can be connected from the installed ISLe8 (scripts\install.ps1) or the zip.</value>
+  </data>
+  <data name="Agents_Approvals" xml:space="preserve">
+    <value>Approvals</value>
+    <comment>mac: Onaylar</comment>
+  </data>
+  <data name="Agents_AskOnIsland" xml:space="preserve">
+    <value>Ask for permissions on the island</value>
+    <comment>mac: İzin isteklerini adada sor</comment>
+  </data>
+  <data name="Agents_AskOnIslandNote" xml:space="preserve">
+    <value>When an agent asks permission for a command, Approve / Deny appears on the island. When off, the agent asks in its own window as usual.</value>
+    <comment>mac: Ajan bir komut için izin isteyince adada Onayla / Reddet çıkar. Kapalıysa ajan her zamanki gibi kendi penceresinde sorar.</comment>
+  </data>
+  <data name="Agents_Timeout" xml:space="preserve">
+    <value>If there's no answer, hand back to the agent after {0} s</value>
+    <comment>mac: Cevap gelmezse %lld sn sonra ajana bırak</comment>
+  </data>
+  <data name="Agents_DoneAlert" xml:space="preserve">
+    <value>Tell me when an agent finishes</value>
+    <comment>mac: Ajan bitince haber ver</comment>
+  </data>
+  <data name="Agents_CommandLine" xml:space="preserve">
+    <value>Command Line</value>
+    <comment>mac: Komut satırı</comment>
+  </data>
+  <data name="Agents_CommandLineNote" xml:space="preserve">
+    <value>Any script can put a live activity on the island. The isle8 command comes with the installed ISLe8 (a Windows app execution alias) and works in any terminal.</value>
+  </data>
+  <data name="Agents_CommandLineNoteZip" xml:space="preserve">
+    <value>Any script can put a live activity on the island. In the zip, the command is isle8-cli.exe in the ISLe8 folder.</value>
+  </data>
 </root>

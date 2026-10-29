@@ -23,6 +23,12 @@ public sealed record NotificationAlert(Notifications.AppNotification Notificatio
 /// <summary>A wireless device connected, or its battery ran low (PORTING.md §3.14).</summary>
 public sealed record DeviceAlert(Devices.WirelessDevice Device, bool IsLow) : IslandAlert;
 
+/// <summary>An agent asks to run a tool: Approve / Deny / Ask in Terminal (PORTING.md §3.12).</summary>
+public sealed record ApprovalAlert(Agents.AgentApproval Approval) : IslandAlert;
+
+/// <summary>An agent finished its turn.</summary>
+public sealed record AgentDoneAlert(Agents.AgentSession Session) : IslandAlert;
+
 /// <summary>How long each banner stays, from the Mac (AppDelegate.swift; PORTING.md §2).</summary>
 public static class AlertDurations
 {
@@ -30,4 +36,6 @@ public static class AlertDurations
     public static readonly TimeSpan Battery = TimeSpan.FromSeconds(3);
     public static readonly TimeSpan Timer = TimeSpan.FromSeconds(4);
     public static readonly TimeSpan Meeting = TimeSpan.FromSeconds(10);
+    public static readonly TimeSpan Approval = TimeSpan.FromSeconds(15);
+    public static readonly TimeSpan AgentDone = TimeSpan.FromSeconds(4);
 }

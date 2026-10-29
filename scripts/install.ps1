@@ -45,7 +45,14 @@ if ($LASTEXITCODE -ne 0) { throw "dotnet publish başarısız oldu (çıkış ko
 Get-ChildItem $layout -Recurse -Filter *.pdb | Remove-Item
 Copy-Item $manifest.FullName $layout
 
-Add-AppxPackage -Register (Join-Path $layout 'AppxManifest.xml') -ForceApplicationShutdown
+$manifestPath = Join-Path $layout 'AppxManifest.xml'
+try { Add-AppxPackage -Register $manifestPath -ForceApplicationShutdown -ErrorAction Stop }
+catch {
+    # Bir önceki kaydın yarım kaldığı durumda (0x80070490) Windows paketi ancak kaldırılınca yeniden alıyor.
+    Write-Warning $_.Exception.Message
+    Get-AppxPackage $name | Remove-AppxPackage
+    Add-AppxPackage -Register $manifestPath -ForceApplicationShutdown
+}
 $package = Get-AppxPackage $name
 '{0} {1} kuruldu: {2}' -f $package.Name, $package.Version, $layout
 Start-Process "shell:AppsFolder\$($package.PackageFamilyName)!App"

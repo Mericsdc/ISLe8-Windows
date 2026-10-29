@@ -16,6 +16,8 @@ using ISLe8.Core.Motion;
 using ISLe8.Core.Settings;
 using ISLe8.Core.Theming;
 using ISLe8.Localization;
+using ISLe8.Agents;
+using ISLe8.Core.Agents;
 using ISLe8.Devices;
 using ISLe8.Core.Devices;
 using ISLe8.Media;
@@ -62,6 +64,8 @@ internal sealed class IslandController : IDisposable
     private readonly ShelfStore _shelf;
     private readonly NotificationService _notifications;
     private readonly DeviceService _devices;
+    private readonly AgentHub _agents;
+    private readonly AgentServer _agentServer;
     private HotKey? _clipboardKey;
     private nint _foregroundBeforeKeyboard;
 
@@ -91,6 +95,8 @@ internal sealed class IslandController : IDisposable
         _shelf = new ShelfStore(AppPaths.DataFolder, new NtfsFileLocator(), () => DateTimeOffset.Now);
         _notifications = new NotificationService(_settings, _queue, () => _store.Save(_settings));
         _devices = new DeviceService(_queue, clock);
+        _agents = new AgentHub(_settings, clock);
+        _agentServer = new AgentServer(_agents, _queue);
         _outsideClicks = new OutsideClickWatcher(_queue, OnClickedOutside);
     }
 
@@ -177,6 +183,27 @@ internal sealed class IslandController : IDisposable
             _model.ShowAlert(new DeviceAlert(device, isLow), isLow ? DeviceAlertDurations.Low : DeviceAlertDurations.Connected);
         };
         _devices.Start();
+        _agents.Changed += OnAgentsChanged;
+        _agents.ApprovalRequested += approval =>
+        {
+            if (!_window.IsHiddenForFullscreen) _model.ShowAlert(new ApprovalAlert(approval), AlertDurations.Approval);
+        };
+        _agents.SessionFinished += session =>
+        {
+            if (!_window.IsHiddenForFullscreen) _model.ShowAlert(new AgentDoneAlert(session), AlertDurations.AgentDone);
+        };
+        // isle8 open [tab] and isle8 close.
+        _agents.IslandCommand += (action, tab) =>
+        {
+            if (action == "close") _model.Close();
+            else _model.Open(IslandTabs.Parse(tab));
+        };
+        // The answer is what was last read (DevicesChip.summary).
+        _agents.DevicesQuery = () => _devices.Devices.Select(BatteryColors.Summary).ToList();
+        // A module that needs the user wins the tab the island opens on (AppDelegate.swift).
+        _model.PreferredTab = () => _agents.NeedsAttention ? IslandTab.Agents : null;
+        _ = AgentLook.LoadAsync();
+        _agentServer.Start();
         // Windows asks once, the first time the installed ISLe8 starts with the mirror on.
         if (_notifications.Access == NotificationAccess.NotAsked) _ = _notifications.RequestAccessAsync();
         // A locked session shows no banners and keeps none for later (IslandModel.swift, setLocked).
@@ -213,6 +240,8 @@ internal sealed class IslandController : IDisposable
         _clipboardKey?.Dispose();
         _notifications.Dispose();
         _devices.Dispose();
+        _agents.Stop();
+        _agentServer.Dispose();
         Win32.WTSUnRegisterSessionNotification(_window.Hwnd);
         StopView();
         _media.Dispose();
@@ -231,7 +260,8 @@ internal sealed class IslandController : IDisposable
         if (_view is not null) StopView();
 
         _view = new IslandView(
-            theme, _settings, _media, _timer, _weather, _calendar, _notes, _system, _clipboard, _shelf, _notifications, _devices, _window.Hwnd, _queue,
+            theme, _settings, _media, _timer, _weather, _calendar, _notes, _system, _clipboard, _shelf, _notifications, _devices,
+            _agents, DecideApproval, GoToSession, _window.Hwnd, _queue,
             takeKeyboard: TakeKeyboard,
             dismissAlert: _model.DismissAlert,
             close: _model.Close,
@@ -303,6 +333,8 @@ internal sealed class IslandController : IDisposable
         _view.Clipboard.Detach();
         _view.Shelf.Detach();
         _view.Devices.Detach();
+        _view.Agents.Detach();
+        _view.AgentEar.Stop();
         _view.DevicesChip.Detach();
         _view.Bars.Stop();
         _view.Banner.Bars.Stop();
@@ -358,6 +390,7 @@ internal sealed class IslandController : IDisposable
         var expanded = _model.State == IslandState.Expanded;
         var devices = expanded && _model.Tab == IslandTab.Devices;
         _view.Devices.SetActive(devices);
+        _view.Agents.SetActive(expanded && _model.Tab == IslandTab.Agents);
         _devices.SetVisible(expanded);
         _devices.SetTabShown(devices);
     }
@@ -636,6 +669,30 @@ internal sealed class IslandController : IDisposable
     }
 
     /// <summary>One banner took another's place: the same size for now, so only the content changes.</summary>
+    // MARK: Agents
+
+    /// <summary>The ears follow the agents; the AI tab redraws itself; a banner for an answered approval goes.</summary>
+    private void OnAgentsChanged()
+    {
+        _view.AgentEar.Show(_agents.Ear);
+        _model.SetAgentLive(_agents.Ear is not null);
+        if (_model.State == IslandState.Alert && _model.Alert is ApprovalAlert shown && !_agents.Approvals.Contains(shown.Approval)) _model.DismissAlert();
+        UpdateBars();
+    }
+
+    /// <summary>Onayla / Reddet / Terminalde sor, from the banner or the AI tab.</summary>
+    private void DecideApproval(AgentApproval approval, bool? allow)
+    {
+        _agents.Decide(approval, allow);
+        if (_model.State == IslandState.Alert && _model.Alert is ApprovalAlert) _model.DismissAlert();
+    }
+
+    /// <summary>"Oturuma git": the terminal or app the agent runs in comes forward, and the island steps aside.</summary>
+    private void GoToSession(int processId)
+    {
+        if (AppWindows.Activate(processId)) _model.Close();
+    }
+
     private void OnAlertChanged() => _view.ShowAlert(_model.Alert, _model.PendingNotificationCount);
 
     // MARK: Keyboard

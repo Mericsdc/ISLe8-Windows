@@ -74,6 +74,8 @@ public static class IslandSizes
     {
         NotificationAlert or MeetingAlert => new(Math.Max(400, Notch + 200), HeaderHeight + 74),
         DeviceAlert => new(Math.Max(420, Notch + 220), HeaderHeight + 56),
+        ApprovalAlert => new(Math.Max(440, Notch + 240), HeaderHeight + 100),
+        AgentDoneAlert => new(Math.Max(400, Notch + 200), HeaderHeight + 50),
         _ => new(Math.Max(IslandMetrics.CompactPillWidth + 60, 340), HeaderHeight + 46),
     };
 

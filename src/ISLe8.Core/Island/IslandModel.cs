@@ -59,6 +59,7 @@ public sealed class IslandModel
     private IDisposable? _shrinkTimer;
     private bool _mediaActive;
     private bool _timerActive;
+    private bool _agentActive;
     private IDisposable? _alertTimer;
     private IDisposable? _pendingTimer;
     private readonly List<AppNotification> _pending = [];
@@ -386,6 +387,30 @@ public sealed class IslandModel
         }
     }
 
+    /// <summary>
+    /// An agent works or waits, or a script runs (<c>isle8 activity</c>): its ear comes before the
+    /// music's (IslandModule.swift: agents 55, an approval 100, media 50).
+    /// </summary>
+    public void SetAgentLive(bool live)
+    {
+        _agentActive = live;
+        UpdateActivity();
+    }
+
+    /// <summary>The tab the island should open on, when a module needs the user (an approval: the AI tab).</summary>
+    public Func<IslandTab?>? PreferredTab { get; set; }
+
+    /// <summary><c>isle8 open [tab]</c>: opens at once, on <paramref name="tab"/> or the usual one.</summary>
+    public void Open(IslandTab? tab)
+    {
+        Cancel(ref _hoverTimer);
+        Cancel(ref _closeTimer);
+        Cancel(ref _alertTimer);
+        if (tab is { } chosen) Select(chosen);
+        else if (State != IslandState.Expanded) ChooseTabForOpening();
+        Transition(IslandState.Expanded);
+    }
+
     /// <summary>A timer, stopwatch or Pomodoro is set (running or paused): the ear when music isn't.</summary>
     public void SetTimerLive(bool live)
     {
@@ -427,10 +452,15 @@ public sealed class IslandModel
         Transition(IslandState.Expanded);
     }
 
-    /// <summary>The last tab if the island was open a moment ago, otherwise the first one.</summary>
+    /// <summary>A module that needs the user wins; otherwise the last tab if the island was open a moment ago, else the first.</summary>
     private void ChooseTabForOpening()
     {
         var tabs = VisibleTabs;
+        if (PreferredTab?.Invoke() is { } preferred && IndexOf(tabs, preferred) >= 0)
+        {
+            Select(preferred);
+            return;
+        }
         if (_clock.Now - _closedAt > TabMemory || IndexOf(tabs, Tab) < 0) Select(tabs[0]);
     }
 
@@ -443,10 +473,10 @@ public sealed class IslandModel
         return -1;
     }
 
-    /// <summary>The ear goes to the activity with the highest priority (IslandModule.swift): media 50, timer 40.</summary>
+    /// <summary>The ear goes to the activity with the highest priority (IslandModule.swift): agents 55, media 50, timer 40.</summary>
     private void UpdateActivity()
     {
-        var activity = _mediaActive ? PillActivity.Media : _timerActive ? PillActivity.Timer : PillActivity.None;
+        var activity = _agentActive ? PillActivity.Agent : _mediaActive ? PillActivity.Media : _timerActive ? PillActivity.Timer : PillActivity.None;
         var pill = activity == PillActivity.None ? PillKind.Idle : PillKind.Compact;
         if (activity == Activity && pill == Pill) return;
         if (pill != Pill) IsGrowing = pill == PillKind.Compact;

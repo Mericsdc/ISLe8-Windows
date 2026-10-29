@@ -3,6 +3,38 @@
 Her maddeyi işaretle; olmayan varsa günlükle birlikte not et (README › Günlük ve ayarlar). W1'in
 adımları en üstte, W0'ın listesi altta.
 
+## AI sekmesi ve isle8 komutu (2026-10-29)
+
+Paketli Release JIT (`install.ps1 -NoAot`). Hook olayları, plan, adım süreleri, onay/zaman aşımı/vazgeçme, betik
+aktivitesi, kulak önceliği, açılış sekmesi ve hook kurulumu Core testlerinde (`AgentTests`; 270'ten 289'a).
+
+- [x] `isle8 ping` takma adla her terminalde "ISLe8 çalışıyor"; ISLe8 kapalıyken "ISLe8 çalışmıyor" (çıkış 1).
+- [x] Sahte bir Claude Code turu (`SessionStart`, `UserPromptSubmit`, `TodoWrite` 4 madde, `Read`, `Edit`, `Bash`):
+      kulakta Claude simgesi ve turuncu çubuklar; `isle8 open agents` sekmeyi açıyor: "$ dotnet test …", 0:04,
+      "Claude Code · ISLe8-Windows-main", "Adım 2/4", dört parçalı çubuk, süreleriyle adımlar, "Oturuma git".
+- [x] `Stop` sonrası "Claude Code bitti · ISLe8-Windows-main" banner'ı ve son mesaj.
+- [x] İzin isteği: "Claude Code onay istiyor · …" banner'ı, "$ git push origin main", Onayla / Reddet / Terminalde sor.
+      Onaylanınca hook `{"hookSpecificOutput":…"behavior":"allow"}` yazdı.
+- [x] Bekleyen hook öldürülünce banner kalkıyor, çıktı boş; kulak turuncu ünleme geçiyor (oturum seni bekliyor).
+- [x] `isle8 activity start --id derleme --title "Derleme" --progress 0.4`: kulakta terminal simgesi ve %40; `end` kaldırıyor.
+- [x] `isle8 devices`: "Pil bildiren bağlı kablosuz cihaz yok".
+- [x] Ayarlar › Ajanlar: Claude Code ve Codex için "Bağla", notlar, onay ayarları (90 sn), komut satırı örnekleri.
+- [x] Hook isteği ve yanıtı 110 ms (JIT; AOT'ta daha kısa).
+- [ ] Ayarlar › Ajanlar › Claude Code › Bağla; gerçek bir Claude Code oturumunda kart canlı ilerliyor, onay adadan veriliyor.
+- [ ] Codex'te `/hooks` ile güvenince aynısı.
+- [ ] "Oturuma git" Windows Terminal'i / VS Code'u / Claude uygulamasını öne getiriyor.
+- [ ] Onaya 90 sn cevap verilmezse ajan kendi penceresinde soruyor.
+- [ ] ISLe8 kapalıyken Claude Code hook'lar yokmuş gibi devam ediyor.
+
+**Ölçüm** (ada kapalı)
+
+| Tarih | Yapı | Durum | CPU | Özel bellek | Çalışma kümesi |
+|---|---|---|---|---|---|
+| 2026-10-29 | AI sekmesi, paketli Release JIT x64 | Yeni açılmış (35 sn), pipe dinleniyor, medya oturumu yok, bilgisayar kullanılıyordu, 60 sn | %0,011 (hedef < %0,1) | 44,6 MB (hedef < 80 MB) | 164,2 MB |
+| 2026-10-29 | AI sekmesi, paketli Release JIT x64 | Ayarlar iki kez açılıp kapatılmış, sekmeler ve banner'lar denenmiş, 60 sn | %0,064 | **82,2 MB** | 236,9 MB |
+
+- [ ] İkinci satır: kullanımdan sonra bellek yine 80 MB'ın üstünde (Raf ölçümündeki açık madde). W6'nın ölçüm turunda bakılacak.
+
 ## Cihazlar sekmesi (2026-10-29)
 
 Paketli Release JIT (`install.ps1 -NoAot`). Kısa ad, tür (ad, Apple ürün kimliği, Class of Device, LE görünümü),
@@ -61,6 +93,10 @@ süre ve banner boyutu Core testlerinde (`NotificationTests`; 246'dan 257'ye).
 ## Üstte ayrılan şerit (2026-10-29)
 
 - [x] Ada açılınca Windows'un çalışma alanı y=66'dan başlıyor (%150'de 44 DIP); masaüstü simgeleri şeridin altında.
+- [x] **Hata (canlı):** ada üzerine gelince açılıyor ama tam ekran tarayıcının altında kalıyordu; yalnızca şerit içindeki
+      sabitle/ayarlar düğmeleri görünüyordu. Pencere "her zaman üstte" özelliğini kaybetmişti. Düzeltme: alta indiren her
+      pencere hareketi engelleniyor, açılışta yeniden üste alınıyor. Günlük her açılışta "kept on top (asked to go after …,
+      Chrome_WidgetWin_1)" diyor: adayı bir Chrome penceresinin arkasına koyma isteği açılışta geliyor.
 - [ ] Tam ekran tarayıcının sekmeleri pill'in altında kalmıyor (canlı).
 - [ ] Ayarlar › Genel › "Pencereler adanın altında başlasın" kapatılınca şerit kalkıyor; ISLe8 kapanınca da kalkıyor.
 

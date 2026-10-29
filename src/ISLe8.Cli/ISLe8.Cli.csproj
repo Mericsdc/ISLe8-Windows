@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    The isle8 command (CommandLineTool.swift). On the Mac it is the app's own binary started with
+    arguments; a WinUI app has no console, so here it is a small console program beside ISLe8.exe.
+    Its file is isle8-cli.exe: NTFS ignores case, and isle8.exe would be ISLe8.exe. The package's
+    app execution alias makes it "isle8" on the PATH.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <AssemblyName>isle8-cli</AssemblyName>
+    <RootNamespace>ISLe8.Cli</RootNamespace>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
+    <PublishAot>true</PublishAot>
+    <IsAotCompatible>true</IsAotCompatible>
+    <JsonSerializerIsReflectionEnabledByDefault>false</JsonSerializerIsReflectionEnabledByDefault>
+    <!-- Hooks run often; nothing in here needs culture data. -->
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\ISLe8.Core\Agents\AgentPipe.cs" Link="AgentPipe.cs" />
+  </ItemGroup>
+
+</Project>

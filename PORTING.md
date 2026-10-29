@@ -71,6 +71,13 @@ Komutlar: `isle8 hook claude|codex`, `isle8 activity start|update|end --id … [
 
 **Windows notu:** WinUI uygulaması GUI alt sistemindedir, stdin/stdout bağlı gelmez. `isle8` için pakete ayrı, küçük bir **konsol** projesi eklenmeli (Native AOT, `isle8.exe`) ve MSIX'te App Execution Alias olarak tanımlanmalı. `AttachConsole` yöntemi stdin borusu için güvenilir değil.
 
+**Windows'ta yapılan (2026-10-29):**
+- Konsol projesi `src/ISLe8.Cli`. Dosyası **`isle8-cli.exe`**: NTFS büyük/küçük harf ayırmadığı için `isle8.exe` aynı klasördeki `ISLe8.exe` ile aynı dosya olurdu. Paketin ikinci uygulama girdisi (`Cli`, `desktop4:Subsystem="console"`, Başlat'ta yok) `isle8.exe` takma adını verir; her terminalde `isle8` çalışır. Zip sürümünde komut klasördeki `isle8-cli.exe`.
+- Pipe adı `\\.\pipe\isle8-<kullanıcı SID>-<oturum no>`, iki uçta da `PipeOptions.CurrentUserOnly`. ISLe8 kapalıyken bağlantı 150 ms içinde vazgeçer.
+- Hook'un stdin'i UTF-8; başında BOM (PowerShell'in borusu) ya da UTF-16 gelirse de okunur.
+- `app_pid`: ebeveyn zinciri `CreateToolhelp32Snapshot` ile; kendi görünür penceresi olan ilk süreç (Windows Terminal, VS Code, Claude). Explorer'da durulur; bulunamazsa klasik konsolun penceresi.
+- `--icon`, SF Symbol yerine bir Segoe Fluent Icons kod noktası alır (`E768`).
+
 ---
 
 ## 2. Ada davranışı (her modülün üstünde)
@@ -349,6 +356,12 @@ Her modülde: Mac dosyaları → Windows karşılığı → önemli davranışla
   - Windows'ta ebeveyn zinciri `CreateToolhelp32Snapshot` ile yürünür. Windows Terminal'de pencere `WindowsTerminal.exe`'ye aittir.
   - Öne getirme Windows'un ön plan kısıtlarına takılabilir: ada tıklamayı aldığı anda `SetForegroundWindow` çağrılmalı; gerekirse `AllowSetForegroundWindow`.
 - **`isle8 activity`:** Betikler kulağa ve AI sekmesine canlı aktivite koyabilir (başlık, alt başlık, ilerleme).
+- **Windows'ta yapılan:**
+  - Hook komutu tırnaklı tam yol ve ileri eğik çizgiyle yazılır (`"C:/Users/…/WindowsApps/isle8.exe" hook claude`): Claude Code hook'ları Windows'ta Git Bash'le de çalıştırabiliyor.
+  - Ajan simgeleri Claude ve ChatGPT (`OpenAI.Codex`) masaüstü uygulamalarının logosundan; uygulama yoksa Claude için çizilmiş kıvılcım, Codex için Segoe'nin kod simgesi.
+  - "Oturuma git" pencereyi `app_pid`'in ilk görünür penceresinden bulup öne getirir; tıklama adaya geldiği anda çağrıldığı için Windows izin verir.
+  - Mac'te AI sekmesinin altındaki/yanındaki kullanım halkaları (§3.13) henüz yok; o gelene kadar çalışma kartları tüm genişliği kullanır.
+  - Mac'te onay banner'ı kararla kendiliğinden kapanmıyor; burada karar verilince (ya da hook vazgeçince) banner kapanır.
 - **Kabul:**
   - Sahte hook olaylarıyla kart doğru ("Adım 2/4", süreler, bitti satırı).
   - Gerçek Claude Code oturumunda onay adadan veriliyor.

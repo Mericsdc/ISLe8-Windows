@@ -81,6 +81,7 @@ internal sealed class SettingsWindow(IslandController island, SettingsStore stor
         navigation.MenuItems.Add(Section("Settings_Notifications", Glyphs.Bell, NotificationsPage.Build));
         navigation.MenuItems.Add(Section("Settings_System", Glyphs.System, SystemPage.Build));
         navigation.MenuItems.Add(Section("Settings_Widgets", Glyphs.Widgets, WidgetsPage.Build));
+        navigation.MenuItems.Add(Section("Settings_Agents", Glyphs.Agents, AgentsPage.Build));
         navigation.SelectionChanged += (_, args) =>
         {
             if (args.SelectedItem is NavigationViewItem { Tag: Func<SettingsContext, FrameworkElement> build }) navigation.Content = Page(build(context));

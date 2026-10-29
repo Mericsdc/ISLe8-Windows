@@ -58,6 +58,17 @@
     <ProjectReference Include="..\ISLe8.Core\ISLe8.Core.csproj" />
   </ItemGroup>
 
+  <!-- isle8-cli.exe travels beside ISLe8.exe, built the same way: the package's alias and the
+       zip's hooks call it. Its own file names (isle8-cli.*) never meet ISLe8's. -->
+  <Target Name="BuildIsle8Cli" AfterTargets="Build" Condition="'$(RuntimeIdentifier)' != ''">
+    <MSBuild Projects="..\ISLe8.Cli\ISLe8.Cli.csproj" Targets="Build"
+             Properties="Configuration=$(Configuration);RuntimeIdentifier=$(RuntimeIdentifier);SelfContained=$(SelfContained);OutDir=$(TargetDir)" />
+  </Target>
+  <Target Name="PublishIsle8Cli" AfterTargets="Publish">
+    <MSBuild Projects="..\ISLe8.Cli\ISLe8.Cli.csproj" Targets="Publish"
+             Properties="Configuration=$(Configuration);RuntimeIdentifier=$(RuntimeIdentifier);SelfContained=$(SelfContained);PublishAot=$(PublishAot);PublishDir=$([MSBuild]::NormalizeDirectory('$(MSBuildProjectDirectory)', '$(PublishDir)'))" />
+  </Target>
+
   <!-- Lets Visual Studio deploy and debug the single-project MSIX. -->
   <ItemGroup Condition="'$(DisableMsixProjectCapabilityAddedByProject)' != 'true' And '$(EnableMsixTooling)' == 'true'">
     <ProjectCapability Include="Msix" />

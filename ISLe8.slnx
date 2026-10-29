@@ -7,6 +7,7 @@
     <Project Path="src/ISLe8.App/ISLe8.App.csproj">
       <Deploy />
     </Project>
+    <Project Path="src/ISLe8.Cli/ISLe8.Cli.csproj" />
     <Project Path="src/ISLe8.Core/ISLe8.Core.csproj" />
   </Folder>
   <Folder Name="/tests/">

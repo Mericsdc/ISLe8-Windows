@@ -13,6 +13,8 @@ using ISLe8.Core.Shelf;
 using ISLe8.ShelfTab;
 using ISLe8.SystemTab;
 using ISLe8.Core.Weather;
+using ISLe8.Agents;
+using ISLe8.Core.Agents;
 using ISLe8.Devices;
 using ISLe8.Media;
 using ISLe8.Notifications;
@@ -52,6 +54,7 @@ internal sealed class IslandView
     public IslandView(
         IslandTheme theme, AppSettings settings, MediaService media, IslandTimer timer, WeatherService weather, CalendarService calendar,
         NotesStore notes, SystemSampler system, ClipboardService clipboard, ShelfStore shelf, NotificationService notifications, DeviceService devices,
+        AgentHub agents, Action<AgentApproval, bool?> decide, Action<int> goToSession,
         nint window, DispatcherQueue queue,
         Action takeKeyboard, Action dismissAlert, Action close,
         Action<IReadOnlyList<string>> dropToShelf, Action<IReadOnlyList<string>> dropToShare)
@@ -93,6 +96,10 @@ internal sealed class IslandView
             Children = { pillArtwork, barsHost, TimerEar.Leading, TimerEar.Trailing },
         };
         TimerEar.SetShown(false, seen: false);
+        AgentEar = new AgentEarView();
+        AgentEar.Leading.HorizontalAlignment = HorizontalAlignment.Left;
+        PillLayer.Children.Add(AgentEar.Leading);
+        PillLayer.Children.Add(AgentEar.Trailing);
 
         Home = new HomeView(media, timer, weather, calendar, settings, theme, queue, takeKeyboard);
         _tabs[IslandTab.Home] = Home.Root;
@@ -107,7 +114,8 @@ internal sealed class IslandView
         DropTarget = new DropTargetView(dropToShelf, dropToShare);
         Devices = new DevicesTabView(devices, theme);
         _tabs[IslandTab.Devices] = Devices.Root;
-        _tabs[IslandTab.Agents] = Placeholder(IslandTab.Agents);
+        Agents = new AgentsTabView(agents, theme, queue, decide, goToSession);
+        _tabs[IslandTab.Agents] = Agents.Root;
 
         var content = new Grid { Padding = new Thickness(IslandSizes.ContentInset, IslandSizes.ContentTop, IslandSizes.ContentInset, 0) };
         foreach (var view in _tabs.Values)
@@ -160,6 +168,12 @@ internal sealed class IslandView
         DeviceBanner = new DeviceBanner();
         DeviceBanner.Root.Margin = new Thickness(14, 0, 14, 4);
         Grid.SetRow(DeviceBanner.Root, 1);
+        ApprovalBanner = new ApprovalBanner(theme, decide);
+        ApprovalBanner.Root.Margin = new Thickness(14, 0, 14, 6);
+        Grid.SetRow(ApprovalBanner.Root, 1);
+        AgentDoneBanner = new AgentDoneBanner();
+        AgentDoneBanner.Root.Margin = new Thickness(14, 0, 14, 4);
+        Grid.SetRow(AgentDoneBanner.Root, 1);
         AlertLayer = new Grid
         {
             HorizontalAlignment = HorizontalAlignment.Left,
@@ -167,7 +181,7 @@ internal sealed class IslandView
             Visibility = Visibility.Collapsed,
             IsHitTestVisible = false,
             RowDefinitions = { new RowDefinition { Height = new GridLength(IslandSizes.HeaderHeight) }, new RowDefinition() },
-            Children = { Banner.Root, TimerBanner.Root, MeetingBanner.Root, NotificationBanner.Root, DeviceBanner.Root },
+            Children = { Banner.Root, TimerBanner.Root, MeetingBanner.Root, NotificationBanner.Root, DeviceBanner.Root, ApprovalBanner.Root, AgentDoneBanner.Root },
         };
         Grid.SetRow(Banner.Root, 1);
 
@@ -203,6 +217,10 @@ internal sealed class IslandView
     public MeetingBanner MeetingBanner { get; }
     public NotificationBanner NotificationBanner { get; }
     public DeviceBanner DeviceBanner { get; }
+    public ApprovalBanner ApprovalBanner { get; }
+    public AgentDoneBanner AgentDoneBanner { get; }
+    public AgentsTabView Agents { get; }
+    public AgentEarView AgentEar { get; }
     public DevicesTabView Devices { get; }
     public DevicesChip DevicesChip { get; }
     public TimerEar TimerEar { get; }
@@ -218,8 +236,9 @@ internal sealed class IslandView
     /// <summary>The ears show <paramref name="activity"/>: media's artwork and bars, or the timer, which ticks while <paramref name="seen"/>.</summary>
     public void ShowEar(PillActivity activity, bool seen)
     {
-        foreach (var part in _mediaEar) part.Visibility = activity == PillActivity.Timer ? Visibility.Collapsed : Visibility.Visible;
+        foreach (var part in _mediaEar) part.Visibility = activity is PillActivity.Media or PillActivity.None ? Visibility.Visible : Visibility.Collapsed;
         TimerEar.SetShown(activity == PillActivity.Timer, seen);
+        AgentEar.SetShown(activity == PillActivity.Agent, seen);
     }
 
     /// <summary>The banner for <paramref name="alert"/>: one content at a time.</summary>
@@ -230,13 +249,17 @@ internal sealed class IslandView
         MeetingBanner.Root.Visibility = alert is MeetingAlert ? Visibility.Visible : Visibility.Collapsed;
         NotificationBanner.Root.Visibility = alert is NotificationAlert ? Visibility.Visible : Visibility.Collapsed;
         DeviceBanner.Root.Visibility = alert is DeviceAlert ? Visibility.Visible : Visibility.Collapsed;
+        ApprovalBanner.Root.Visibility = alert is ApprovalAlert ? Visibility.Visible : Visibility.Collapsed;
+        AgentDoneBanner.Root.Visibility = alert is AgentDoneAlert ? Visibility.Visible : Visibility.Collapsed;
         if (alert is TimerAlert timer) TimerBanner.Show(timer.Event);
         else if (alert is MeetingAlert meeting) MeetingBanner.Show(meeting.Entry);
         else if (alert is NotificationAlert notification) NotificationBanner.Show(notification.Notification, pendingNotifications);
         else if (alert is DeviceAlert device) DeviceBanner.Show(device.Device, device.IsLow);
+        else if (alert is ApprovalAlert approval) ApprovalBanner.Show(approval.Approval);
+        else if (alert is AgentDoneAlert done) AgentDoneBanner.Show(done.Session);
         else Banner.Refresh();
         // Only a banner with a button takes the pointer itself; otherwise a click opens the island.
-        AlertLayer.IsHitTestVisible = alert is MeetingAlert && MeetingBanner.HasJoin;
+        AlertLayer.IsHitTestVisible = alert is MeetingAlert && MeetingBanner.HasJoin || alert is ApprovalAlert;
     }
 
     /// <summary>Where the drop target's zones sit while files are dragged onto the island.</summary>
