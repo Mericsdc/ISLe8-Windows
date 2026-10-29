@@ -43,6 +43,9 @@ internal static class Glyphs
     public const string Break = "\uEC32";
     public const string Stop = "\uE71A";
     public const string Widgets = "\uECA5";
+    public const string Share = "\uE72D";
+    public const string ShelfIn = "\uE896";
+    public const string CloseCircle = "\uE711";
     public const string Search = "\uE721";
     public const string Unpin = "\uE77A";
     public const string CheckCircle = "\uE930";

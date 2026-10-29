@@ -292,6 +292,10 @@ Her modülde: Mac dosyaları → Windows karşılığı → önemli davranışla
   - Sağ tık menüsü: aç, klasörde göster, paylaş, zip, dönüştür, kaldır.
 - **Yapılamayan:** AirDrop alımı. Nearby Share ile gelenler İndirilenler'e düşer; Mac'teki "sharingd" işaretinin Windows karşılığı yok, ayırt edilemez. İsteğe bağlı olarak İndirilenler izlenip yalnızca "yeni dosya" banner'ı gösterilebilir.
 - **Kabul:** Explorer'dan bırakma, rafta kalma, dışarı sürükleme ve paylaş penceresi çalışıyor.
+- **Windows'ta yapılan:** Mac'teki yer imi (bookmark) yerine NTFS dosya kimliği; aynı sürücüde taşınan ya da
+  adı değişen dosya bulunur, başka sürücüye taşınan bulunamaz. Dönüştür menüsünde PNG ve JPEG var; HEIC
+  kodlayıcısı her Windows'ta kurulu olmadığı için yok. Mac'teki "notch'a sürükle" ve "AirDrop'la gönder"
+  metinleri "pill'e sürükle" ve "paylaş" oldu.
 
 ### 3.11 Bildirim aynası (W3, MSIX gerekir)
 

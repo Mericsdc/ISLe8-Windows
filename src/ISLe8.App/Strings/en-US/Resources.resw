@@ -977,4 +977,65 @@
     <value>Add App…</value>
     <comment>mac: Uygulama ekle…</comment>
   </data>
+  <data name="Shelf_DropHere" xml:space="preserve">
+    <value>Drop on Shelf</value>
+    <comment>mac: Rafa bırak</comment>
+  </data>
+  <data name="Shelf_ShareZone" xml:space="preserve">
+    <value>Share</value>
+  </data>
+  <data name="Shelf_Title" xml:space="preserve">
+    <value>Shelf</value>
+    <comment>mac: Raf</comment>
+  </data>
+  <data name="Shelf_Count" xml:space="preserve">
+    <value>{0} items</value>
+  </data>
+  <data name="Shelf_CountOne" xml:space="preserve">
+    <value>{0} item</value>
+  </data>
+  <data name="Shelf_Clear" xml:space="preserve">
+    <value>Clear</value>
+    <comment>mac: Temizle</comment>
+  </data>
+  <data name="Shelf_EmptyTitle" xml:space="preserve">
+    <value>Drag files to the pill</value>
+  </data>
+  <data name="Shelf_EmptyDetail" xml:space="preserve">
+    <value>They wait here; drag them anywhere or share them.</value>
+  </data>
+  <data name="Shelf_Remove" xml:space="preserve">
+    <value>Remove from Shelf</value>
+    <comment>mac: Raftan kaldır</comment>
+  </data>
+  <data name="Shelf_Open" xml:space="preserve">
+    <value>Open</value>
+    <comment>mac: Aç</comment>
+  </data>
+  <data name="Shelf_ShowInFolder" xml:space="preserve">
+    <value>Show in Folder</value>
+  </data>
+  <data name="Shelf_Share" xml:space="preserve">
+    <value>Share…</value>
+    <comment>mac: Paylaş…</comment>
+  </data>
+  <data name="Shelf_Zip" xml:space="preserve">
+    <value>Compress as Zip</value>
+    <comment>mac: Zip olarak sıkıştır</comment>
+  </data>
+  <data name="Shelf_Convert" xml:space="preserve">
+    <value>Convert</value>
+    <comment>mac: Dönüştür</comment>
+  </data>
+  <data name="Settings_Shelf" xml:space="preserve">
+    <value>Shelf</value>
+  </data>
+  <data name="Settings_CopyToShelf" xml:space="preserve">
+    <value>Copy files dropped on the shelf</value>
+    <comment>mac: Rafa bırakılan dosyaların kopyasını al</comment>
+  </data>
+  <data name="Settings_CopyToShelfNote" xml:space="preserve">
+    <value>When off, the shelf points at the original file and still finds it if it moves.</value>
+    <comment>mac: Kapalıyken raf orijinal dosyayı gösterir; dosya taşınsa da bulunur.</comment>
+  </data>
 </root>

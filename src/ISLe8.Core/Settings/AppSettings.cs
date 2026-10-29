@@ -101,6 +101,9 @@ public sealed class AppSettings
     /// <summary>A banner five minutes before a meeting (Settings › Widgets).</summary>
     public bool MeetingHeadsUp { get; set; } = true;
 
+    /// <summary>Settings › Shelf: files dropped on the shelf are copied into ISLe8's folder first.</summary>
+    public bool CopyFilesToShelf { get; set; }
+
     /// <summary>Settings › Clipboard: keep a history of what is copied.</summary>
     public bool RecordClipboard { get; set; } = true;
 

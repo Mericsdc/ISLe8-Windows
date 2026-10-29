@@ -13,6 +13,8 @@ public enum IslandState
     Alert,
     /// <summary>The full island.</summary>
     Expanded,
+    /// <summary>Files are being dragged onto the island: two zones, the shelf and sharing.</summary>
+    DropTarget,
 }
 
 /// <summary>
@@ -114,6 +116,8 @@ public sealed class IslandModel
     public void SetHovering(bool inside, bool touch = false)
     {
         IsHovering = inside;
+        // A file drag decides on its own when the drop target closes.
+        if (State == IslandState.DropTarget) return;
         // A banner stays while the pointer rests on it, so there is time to read it; a click opens the island.
         if (State == IslandState.Alert)
         {
@@ -169,6 +173,33 @@ public sealed class IslandModel
         Cancel(ref _closeTimer);
         Cancel(ref _alertTimer);
         Select(tab);
+        Transition(IslandState.Expanded);
+    }
+
+    /// <summary>
+    /// Files are being dragged onto the island (true) or away again (false). On, the drop target opens
+    /// from any state; off, it returns to the pill (IslandModel.swift, setFileDragNearby).
+    /// </summary>
+    public void SetFileDragNearby(bool near)
+    {
+        if (near)
+        {
+            if (State == IslandState.DropTarget) return;
+            Cancel(ref _hoverTimer);
+            Cancel(ref _closeTimer);
+            Cancel(ref _alertTimer);
+            Transition(IslandState.DropTarget);
+        }
+        else if (State == IslandState.DropTarget)
+        {
+            Transition(IslandState.Pill);
+        }
+    }
+
+    /// <summary>Files landed on the shelf zone: show them.</summary>
+    public void ShowShelfAfterDrop()
+    {
+        Select(IslandTab.Shelf);
         Transition(IslandState.Expanded);
     }
 

@@ -72,6 +72,9 @@ public static class IslandSizes
     public static DipSize Alert(IslandAlert alert) =>
         new(Math.Max(IslandMetrics.CompactPillWidth + 60, 340), HeaderHeight + 46);
 
+    /// <summary>The drop target's two zones under the pill's row (IslandModel.swift, size(for: .dropTarget)).</summary>
+    public static DipSize DropTarget => new(Math.Max(460, Notch + 240), HeaderHeight + 112);
+
     /// <summary>A banner's corners: the Mac's bottom radius for alerts (IslandModel.swift, bottomRadius).</summary>
     public const double AlertCornerRadius = 20;
 

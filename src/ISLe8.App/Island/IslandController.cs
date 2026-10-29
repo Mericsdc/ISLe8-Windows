@@ -6,6 +6,8 @@ using ISLe8.Core.Calendar;
 using ISLe8.ClipboardTab;
 using ISLe8.Core.Clipboard;
 using ISLe8.Core.Notes;
+using ISLe8.Core.Shelf;
+using ISLe8.ShelfTab;
 using ISLe8.SystemTab;
 using ISLe8.Core.Timer;
 using ISLe8.Core.Weather;
@@ -54,6 +56,7 @@ internal sealed class IslandController : IDisposable
     private readonly NotesStore _notes;
     private readonly SystemSampler _system;
     private readonly ClipboardService _clipboard;
+    private readonly ShelfStore _shelf;
     private HotKey? _clipboardKey;
     private nint _foregroundBeforeKeyboard;
 
@@ -80,6 +83,7 @@ internal sealed class IslandController : IDisposable
         _notes = new NotesStore(AppPaths.DataFolder, () => DateTimeOffset.Now);
         _system = new SystemSampler(_queue);
         _clipboard = new ClipboardService(_settings, new ClipboardHistory(AppPaths.DataFolder), _window.Hwnd, _queue);
+        _shelf = new ShelfStore(AppPaths.DataFolder, new NtfsFileLocator(), () => DateTimeOffset.Now);
         _outsideClicks = new OutsideClickWatcher(_queue, OnClickedOutside);
     }
 
@@ -187,15 +191,42 @@ internal sealed class IslandController : IDisposable
         if (_view is not null) StopView();
 
         _view = new IslandView(
-            theme, _settings, _media, _timer, _weather, _calendar, _notes, _system, _clipboard, _queue,
+            theme, _settings, _media, _timer, _weather, _calendar, _notes, _system, _clipboard, _shelf, _window.Hwnd, _queue,
             takeKeyboard: TakeKeyboard,
             dismissAlert: _model.DismissAlert,
-            close: _model.Close);
+            close: _model.Close,
+            dropToShelf: paths =>
+            {
+                _shelf.Add(paths, _settings.CopyFilesToShelf);
+                _model.ShowShelfAfterDrop();
+            },
+            dropToShare: paths =>
+            {
+                _model.Close();
+                ShelfActions.Share(paths, _window.Hwnd, L.Get("Shelf_Title"));
+            });
         _view.Area.PointerEntered += (_, e) => UpdateHover(e, touchInside: true);
         _view.Area.PointerMoved += (_, e) => UpdateHover(e, touchInside: true);
         _view.Area.PointerExited += (_, e) => UpdateHover(e, touchInside: false);
         _view.Area.PointerPressed += OnPointerPressed;
         _view.Area.PointerWheelChanged += OnPointerWheelChanged;
+        // Files dragged onto the pill open the drop target (PORTING.md §3.10).
+        _view.Area.DragEnter += (_, e) =>
+        {
+            if (!e.DataView.Contains(Windows.ApplicationModel.DataTransfer.StandardDataFormats.StorageItems)) return;
+            e.AcceptedOperation = Windows.ApplicationModel.DataTransfer.DataPackageOperation.Copy;
+            _model.SetFileDragNearby(true);
+        };
+        _view.Area.DragOver += (_, e) =>
+        {
+            if (e.DataView.Contains(Windows.ApplicationModel.DataTransfer.StandardDataFormats.StorageItems)) e.AcceptedOperation = Windows.ApplicationModel.DataTransfer.DataPackageOperation.Copy;
+        };
+        // A leave also bubbles up from a zone; only leaving the island itself counts.
+        _view.Area.DragLeave += (_, _) => _queue.TryEnqueue(() =>
+        {
+            if (_model.State == IslandState.DropTarget && !CursorOnIsland()) _model.SetFileDragNearby(false);
+        });
+        _view.Area.Drop += (_, _) => _queue.TryEnqueue(() => _model.SetFileDragNearby(false));
         _view.Area.ContextFlyout = BuildMenu();
         _view.Dock.SetTabs(_model.VisibleTabs, _model.Tab);
         _view.Dock.Chosen += _model.Select;
@@ -230,6 +261,7 @@ internal sealed class IslandController : IDisposable
         _view.Notes.Detach();
         _view.System.Detach();
         _view.Clipboard.Detach();
+        _view.Shelf.Detach();
         _view.Bars.Stop();
         _view.Banner.Bars.Stop();
         _view.TimerEar.Stop();
@@ -241,15 +273,17 @@ internal sealed class IslandController : IDisposable
         var state = _model.State;
         var expanded = state == IslandState.Expanded;
         var alert = state == IslandState.Alert;
+        var dropTarget = state == IslandState.DropTarget;
         var shape = Shape(layout, state);
         var open = OpenRect(layout);
         _settled = true;
         _view.ApplyLayout(layout, open, _settings.HomeStyle, _model.Tab);
         _view.SetHomeColumns(_settings.HomeStyle, _settings.HomeTiles, open.Width);
         _view.SetAlert(AlertRect(layout));
+        _view.SetDropTarget(layout.Open(IslandSizes.DropTarget));
         _surface.SetLayout(layout);
         _surface.JumpTo(shape, Corner(shape, state), shadow: expanded);
-        _surface.SetOpen(expanded || alert, animate: false);
+        _surface.SetOpen(expanded || alert || dropTarget, animate: false);
         _window.SetHitRegion(Region(layout, state));
         _outline.Reset(layout.OpenRegion(open));
 
@@ -258,6 +292,8 @@ internal sealed class IslandController : IDisposable
         IslandSurface.SetContentShown(_view.ExpandedLayer, expanded);
         _view.AlertLayer.Visibility = alert ? Visibility.Visible : Visibility.Collapsed;
         IslandSurface.SetOpacity(_view.AlertLayer, alert ? 1 : 0);
+        _view.DropTarget.Root.Visibility = dropTarget ? Visibility.Visible : Visibility.Collapsed;
+        IslandSurface.SetOpacity(_view.DropTarget.Root, dropTarget ? 1 : 0);
         IslandSurface.SetOpacity(_view.PillLayer, state is IslandState.Pill or IslandState.Peek && _model.Pill == PillKind.Compact ? 1 : 0);
         UpdatePlayer();
         UpdateBars();
@@ -296,6 +332,7 @@ internal sealed class IslandController : IDisposable
     {
         IslandState.Expanded => OpenRect(layout),
         IslandState.Alert => AlertRect(layout),
+        IslandState.DropTarget => layout.Open(IslandSizes.DropTarget),
         IslandState.Peek => layout.Peek(_model.Pill),
         _ => layout.Pill(_model.Pill),
     };
@@ -305,6 +342,7 @@ internal sealed class IslandController : IDisposable
     {
         IslandState.Expanded => IslandSizes.CornerRadius(_settings.Theme),
         IslandState.Alert => IslandSizes.AlertCornerRadius,
+        IslandState.DropTarget => IslandSizes.CornerRadius(_settings.Theme),
         _ => shape.Height / 2,
     };
 
@@ -313,6 +351,7 @@ internal sealed class IslandController : IDisposable
     {
         IslandState.Expanded => layout.ExpandedRegion,
         IslandState.Alert => layout.OpenRegion(AlertRect(layout)),
+        IslandState.DropTarget => layout.OpenRegion(layout.Open(IslandSizes.DropTarget)),
         IslandState.Peek => layout.PeekRegion(_model.Pill),
         _ => layout.PillRegion(_model.Pill),
     };
@@ -324,6 +363,7 @@ internal sealed class IslandController : IDisposable
         {
             IslandState.Expanded => layout.OpenRegion(OpenRect(layout)),
             IslandState.Alert => layout.OpenRegion(AlertRect(layout)),
+            IslandState.DropTarget => layout.OpenRegion(layout.Open(IslandSizes.DropTarget)),
             IslandState.Peek => layout.PeekRegion(_model.Pill),
             _ => layout.PillRegion(_model.Pill),
         };
@@ -366,20 +406,28 @@ internal sealed class IslandController : IDisposable
             _surface.Fade(_view.AlertLayer, 1, MotionTimings.ContentDelay, MotionTimings.ContentFadeIn);
             _surface.Fade(_view.PillLayer, 0, TimeSpan.Zero, MotionTimings.ContentFadeOut);
         }
-        else if (from == IslandState.Expanded)
+        else if (state == IslandState.DropTarget)
+        {
+            _view.SetDropTarget(shape);
+            _view.DropTarget.Root.Visibility = Visibility.Visible;
+            _surface.Fade(_view.DropTarget.Root, 1, MotionTimings.ContentDelay, MotionTimings.ContentFadeIn);
+            _surface.Fade(_view.PillLayer, 0, TimeSpan.Zero, MotionTimings.ContentFadeOut);
+        }
+        if (from == IslandState.Expanded && state != IslandState.Expanded)
         {
             _view.ExpandedLayer.IsHitTestVisible = false;
             _surface.Reveal(_view.ExpandedLayer, show: false);
         }
         if (from == IslandState.Alert) _surface.Fade(_view.AlertLayer, 0, TimeSpan.Zero, MotionTimings.ContentFadeOut);
-        if (state == IslandState.Pill && from is IslandState.Expanded or IslandState.Alert && _model.Pill == PillKind.Compact)
+        if (from == IslandState.DropTarget) _surface.Fade(_view.DropTarget.Root, 0, TimeSpan.Zero, MotionTimings.ContentFadeOut);
+        if (state == IslandState.Pill && from is IslandState.Expanded or IslandState.Alert or IslandState.DropTarget && _model.Pill == PillKind.Compact)
         {
             _surface.Fade(_view.PillLayer, 1, MotionTimings.ContentDelay, MotionTimings.ContentFadeIn);
         }
 
         // Growing takes the bigger mouse region now; shrinking keeps it until the shape has settled.
-        if (state is IslandState.Peek or IslandState.Alert) _window.SetHitRegion(Region(layout, state));
-        _surface.SetOpen(state is IslandState.Expanded or IslandState.Alert, animate: true);
+        if (state is IslandState.Peek or IslandState.Alert or IslandState.DropTarget) _window.SetHitRegion(Region(layout, state));
+        _surface.SetOpen(state is IslandState.Expanded or IslandState.Alert or IslandState.DropTarget, animate: true);
         _surface.MorphTo(shape, Corner(shape, state), Spring(), shadow: state == IslandState.Expanded, Settle);
         UpdatePlayer();
         UpdateBars();
@@ -448,6 +496,7 @@ internal sealed class IslandController : IDisposable
         _settled = true;
         if (_model.State == IslandState.Pill) _view.ExpandedLayer.Visibility = Visibility.Collapsed;
         if (_model.State != IslandState.Alert) _view.AlertLayer.Visibility = Visibility.Collapsed;
+        if (_model.State != IslandState.DropTarget) _view.DropTarget.Root.Visibility = Visibility.Collapsed;
         _window.SetHitRegion(Region(layout, _model.State));
         UpdateBars();
     }

@@ -9,6 +9,8 @@ using ISLe8.Core.Notes;
 using ISLe8.Core.Timer;
 using ISLe8.Notes;
 using ISLe8.ClipboardTab;
+using ISLe8.Core.Shelf;
+using ISLe8.ShelfTab;
 using ISLe8.SystemTab;
 using ISLe8.Core.Weather;
 using ISLe8.Media;
@@ -47,8 +49,9 @@ internal sealed class IslandView
 
     public IslandView(
         IslandTheme theme, AppSettings settings, MediaService media, IslandTimer timer, WeatherService weather, CalendarService calendar,
-        NotesStore notes, SystemSampler system, ClipboardService clipboard, DispatcherQueue queue,
-        Action takeKeyboard, Action dismissAlert, Action close)
+        NotesStore notes, SystemSampler system, ClipboardService clipboard, ShelfStore shelf, nint window, DispatcherQueue queue,
+        Action takeKeyboard, Action dismissAlert, Action close,
+        Action<IReadOnlyList<string>> dropToShelf, Action<IReadOnlyList<string>> dropToShare)
     {
         BackgroundHost = new Grid { IsHitTestVisible = false };
 
@@ -96,7 +99,10 @@ internal sealed class IslandView
         _tabs[IslandTab.System] = System.Root;
         Clipboard = new ClipboardTabView(clipboard, settings, theme, takeKeyboard, close);
         _tabs[IslandTab.Clipboard] = Clipboard.Root;
-        foreach (var tab in new[] { IslandTab.Shelf, IslandTab.Agents, IslandTab.Devices })
+        Shelf = new ShelfTabView(shelf, () => settings.CopyFilesToShelf, window);
+        _tabs[IslandTab.Shelf] = Shelf.Root;
+        DropTarget = new DropTargetView(dropToShelf, dropToShare);
+        foreach (var tab in new[] { IslandTab.Agents, IslandTab.Devices })
         {
             _tabs[tab] = Placeholder(tab);
         }
@@ -161,7 +167,8 @@ internal sealed class IslandView
             Background = Ui.Clear(),
             HorizontalAlignment = HorizontalAlignment.Left,
             VerticalAlignment = VerticalAlignment.Top,
-            Children = { PillLayer, AlertLayer, ExpandedLayer },
+            AllowDrop = true,
+            Children = { PillLayer, AlertLayer, ExpandedLayer, DropTarget.Root },
         };
 
         Root = new Grid { Children = { BackgroundHost, Area } };
@@ -179,6 +186,8 @@ internal sealed class IslandView
     public NotesTab Notes { get; }
     public SystemTabView System { get; }
     public ClipboardTabView Clipboard { get; }
+    public ShelfTabView Shelf { get; }
+    public DropTargetView DropTarget { get; }
     public MediaBanner Banner { get; }
     public TimerBanner TimerBanner { get; }
     public MeetingBanner MeetingBanner { get; }
@@ -211,6 +220,9 @@ internal sealed class IslandView
         // Only a banner with a button takes the pointer itself; otherwise a click opens the island.
         AlertLayer.IsHitTestVisible = alert is MeetingAlert && MeetingBanner.HasJoin;
     }
+
+    /// <summary>Where the drop target's zones sit while files are dragged onto the island.</summary>
+    public void SetDropTarget(DipRect rect) => Place(DropTarget.Root, rect);
 
     /// <summary>Where the banner sits while one shows.</summary>
     public void SetAlert(DipRect alert) => Place(AlertLayer, alert);

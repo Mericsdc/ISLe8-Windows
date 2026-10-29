@@ -173,6 +173,18 @@ PORTING.md §2 › Boyutlar; değerler `IslandSizes`'ta, Core testleriyle.
 - **Banner:** 340 × 78; üst satır (pill kadar) boş, içerik altında; köşe 20 (Mac'in alt köşesi). Şarkı
   banner'ı: kapak 30, başlık, sanatçı, sağda çubuklar (çubuk ayarından bağımsız, Mac'teki gibi).
 
+### Raf sekmesi
+
+- **Bırakma hedefi:** Mac'te dosya sürüklemesi notch'a yaklaşınca algılanıyor; Windows'ta dosya pill'in üstüne
+  gelince (`DragEnter`) ada 460 × 144'lük bırakma hedefine açılıyor: boş pill satırının altında "Rafa bırak"
+  ve "Paylaş" (Mac'te AirDrop). Sürükleme adadan çıkınca pill'e dönüyor. Rafa bırakılınca Raf sekmesi açılıyor.
+- **Raf** (`ShelfStore`, Mac: ShelfStore.swift): dosyanın kendisini gösteriyor; taşınsa ya da adı değişse de
+  aynı sürücüde NTFS dosya kimliğiyle (`OpenFileById`) bulunuyor, Mac'teki yer imleri gibi. Ayarla kopya alınıyor.
+  `shelf.json`. Kutucuklar Explorer'ın küçük resmiyle; dışarı sürüklenebiliyor.
+- **Paylaş:** Windows'un paylaşım penceresi (`IDataTransferManagerInterop.ShowShareUIForWindow`), Yakındaki
+  Paylaşım dahil. Zip `System.IO.Compression` ile, dönüştürme `BitmapDecoder`/`BitmapEncoder` ile, dosyanın yanına
+  (yazılamıyorsa ISLe8'in klasörüne), "ad 2.zip" gibi boş bir adla.
+
 ### Pano sekmesi
 
 - **Kayıt** (`ClipboardService`, Mac: ClipboardService.swift): Mac panoyu yarım saniyede bir sorguluyor;

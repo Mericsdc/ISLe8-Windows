@@ -977,4 +977,65 @@
     <value>Uygulama ekle…</value>
     <comment>mac: Uygulama ekle…</comment>
   </data>
+  <data name="Shelf_DropHere" xml:space="preserve">
+    <value>Rafa bırak</value>
+    <comment>mac: Rafa bırak</comment>
+  </data>
+  <data name="Shelf_ShareZone" xml:space="preserve">
+    <value>Paylaş</value>
+  </data>
+  <data name="Shelf_Title" xml:space="preserve">
+    <value>Raf</value>
+    <comment>mac: Raf</comment>
+  </data>
+  <data name="Shelf_Count" xml:space="preserve">
+    <value>{0} öğe</value>
+  </data>
+  <data name="Shelf_CountOne" xml:space="preserve">
+    <value>{0} öğe</value>
+  </data>
+  <data name="Shelf_Clear" xml:space="preserve">
+    <value>Temizle</value>
+    <comment>mac: Temizle</comment>
+  </data>
+  <data name="Shelf_EmptyTitle" xml:space="preserve">
+    <value>Dosyaları pill'e sürükle</value>
+  </data>
+  <data name="Shelf_EmptyDetail" xml:space="preserve">
+    <value>Burada bekler; istediğin yere sürükleyip bırakabilir ya da paylaşabilirsin.</value>
+  </data>
+  <data name="Shelf_Remove" xml:space="preserve">
+    <value>Raftan kaldır</value>
+    <comment>mac: Raftan kaldır</comment>
+  </data>
+  <data name="Shelf_Open" xml:space="preserve">
+    <value>Aç</value>
+    <comment>mac: Aç</comment>
+  </data>
+  <data name="Shelf_ShowInFolder" xml:space="preserve">
+    <value>Klasörde göster</value>
+  </data>
+  <data name="Shelf_Share" xml:space="preserve">
+    <value>Paylaş…</value>
+    <comment>mac: Paylaş…</comment>
+  </data>
+  <data name="Shelf_Zip" xml:space="preserve">
+    <value>Zip olarak sıkıştır</value>
+    <comment>mac: Zip olarak sıkıştır</comment>
+  </data>
+  <data name="Shelf_Convert" xml:space="preserve">
+    <value>Dönüştür</value>
+    <comment>mac: Dönüştür</comment>
+  </data>
+  <data name="Settings_Shelf" xml:space="preserve">
+    <value>Raf</value>
+  </data>
+  <data name="Settings_CopyToShelf" xml:space="preserve">
+    <value>Rafa bırakılan dosyaların kopyasını al</value>
+    <comment>mac: Rafa bırakılan dosyaların kopyasını al</comment>
+  </data>
+  <data name="Settings_CopyToShelfNote" xml:space="preserve">
+    <value>Kapalıyken raf orijinal dosyayı gösterir; dosya taşınsa da bulunur.</value>
+    <comment>mac: Kapalıyken raf orijinal dosyayı gösterir; dosya taşınsa da bulunur.</comment>
+  </data>
 </root>

@@ -3,6 +3,31 @@
 Her maddeyi işaretle; olmayan varsa günlükle birlikte not et (README › Günlük ve ayarlar). W1'in
 adımları en üstte, W0'ın listesi altta.
 
+## Raf sekmesi (2026-10-29)
+
+Debug (JIT). Raf deposu (öne alma, kopya, taşınan dosyayı bulma, silinenin düşmesi), benzersiz adlar ve
+bırakma hedefi durumu Core testlerinde (`ShelfTests`; 240'tan 245'e). Sürükleme canlı denenecek.
+
+- [ ] Explorer'dan bir dosyayı pill'e sürükleyince ada "Rafa bırak" ve "Paylaş" bölgelerine açılıyor; üzerine
+      gelinen bölge renkleniyor; dışarı çıkınca ada pill'e dönüyor.
+- [ ] "Rafa bırak"a bırakınca ada Raf sekmesinde açılıyor; dosya kutucukta küçük resmiyle, "1 öğe".
+- [ ] "Paylaş"a bırakınca Windows'un paylaşım penceresi açılıyor (Yakındaki Paylaşım dahil).
+- [ ] Kutucuk dışarı (masaüstü, e-posta) sürüklenebiliyor; çift tıklama açıyor; üzerine gelince ✕ kaldırıyor.
+- [ ] Sağ tık: Aç, Klasörde göster, Paylaş…, Zip olarak sıkıştır (yanına .zip, rafa ekleniyor), görselde
+      Dönüştür › PNG/JPEG, Raftan kaldır.
+- [ ] Dosya başka klasöre taşınınca ya da adı değişince uygulama yeniden açıldığında rafta yine görünüyor.
+- [ ] Ayarlar › Raf › "Rafa bırakılan dosyaların kopyasını al" açıkken kopya ISLe8 klasöründe, kaldırılınca siliniyor.
+
+**Ölçüm** (Release JIT, ada kapalı)
+
+| Tarih | Yapı | Durum | CPU | Özel bellek | Çalışma kümesi |
+|---|---|---|---|---|---|
+| 2026-10-29 | Raf, Release JIT x64 | Yeni açılmış, Chrome'da medya duraklatılmış, 45 sn | %0,007 (hedef < %0,1) | 41,8 MB (hedef < 80 MB) | 152,9 MB |
+| 2026-10-29 | Raf, Release JIT x64 | Ölçüm sırasında bilgisayar kullanılıyordu (son giriş 0,4 sn önce) | %0,051 | **84,1 MB** | 208,9 MB |
+
+- [ ] Kullanımdan sonra bellek 80 MB'ın üstünde kalabiliyor (ikinci satır). Hangi görünümün (renkli emoji
+      yazı tipi, Ayarlar penceresi, sekmeler) tuttuğu W6'nın tam ölçüm turunda bulunmalı; boşta, yeni açılmışken 41,8 MB.
+
 ## Pano sekmesi (2026-10-29)
 
 Debug (JIT). Geçmiş, arama (büyük/küçük harf, aksan, Türkçe ı/I, kelime başı), aynı içeriğin üste çıkması,
