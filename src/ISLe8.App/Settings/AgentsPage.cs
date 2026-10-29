@@ -1,8 +1,10 @@
 using ISLe8.Agents;
 using ISLe8.Core.Agents;
+using ISLe8.Core.Usage;
 using ISLe8.Localization;
 using ISLe8.Shell;
 using ISLe8.UI;
+using ISLe8.Usage;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -37,6 +39,8 @@ internal static class AgentsPage
         page.Children.Add(problem);
         page.Children.Add(SettingsUi.Description(palette, L.Get("Agents_ConnectionsNote")));
 
+        page.Children.Add(UsageSection(context));
+
         page.Children.Add(SettingsUi.SectionHeader(L.Get("Agents_Approvals")));
         page.Children.Add(SettingsUi.Card(palette, L.Get("Agents_AskOnIsland"), SettingsUi.Switch(settings.AgentApprovalsOnIsland, on =>
         {
@@ -68,6 +72,51 @@ internal static class AgentsPage
         }
         page.Children.Add(SettingsUi.Description(palette, L.Get(AppPackage.IsInstalled ? "Agents_CommandLineNote" : "Agents_CommandLineNoteZip")));
         return page;
+    }
+
+    /// <summary>Settings › Agents › Usage limits (CustomizationSettings.swift, UsageSettings): on or off, each service, saver mode.</summary>
+    private static StackPanel UsageSection(SettingsContext context)
+    {
+        var settings = context.Settings;
+        var palette = context.Palette;
+        var section = new StackPanel();
+        section.Children.Add(SettingsUi.SectionHeader(L.Get("Usage_Section")));
+        var details = new StackPanel { Visibility = settings.UsageEnabled ? Visibility.Visible : Visibility.Collapsed };
+        section.Children.Add(SettingsUi.Card(palette, L.Get("Usage_Show"), SettingsUi.Switch(settings.UsageEnabled, on =>
+        {
+            settings.UsageEnabled = on;
+            details.Visibility = on ? Visibility.Visible : Visibility.Collapsed;
+            context.Save();
+            context.Island.ApplyUsageSettings();
+        }), L.Get("Usage_ShowNote")));
+        foreach (var vendor in UsageVendors.All)
+        {
+            var id = UsageVendors.Id(vendor);
+            var heading = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
+            if (UsageLook.Mark(vendor, 14, context.Palette.SecondaryText) is { } mark)
+            {
+                mark.VerticalAlignment = VerticalAlignment.Center;
+                heading.Children.Add(mark);
+            }
+            heading.Children.Add(new TextBlock { Text = UsageVendors.Product(vendor), VerticalAlignment = VerticalAlignment.Center });
+            heading.Children.Add(new TextBlock { Text = $"({UsageVendors.Cli(vendor)})", FontFamily = AgentLook.Mono, Foreground = palette.SecondaryText, VerticalAlignment = VerticalAlignment.Center });
+            details.Children.Add(SettingsUi.Card(palette, heading, SettingsUi.Switch(!settings.UsageDisabledVendors.Contains(id), on =>
+            {
+                settings.UsageDisabledVendors.Remove(id);
+                if (!on) settings.UsageDisabledVendors.Add(id);
+                context.Save();
+                context.Island.ApplyUsageSettings();
+            })));
+        }
+        details.Children.Add(SettingsUi.Card(palette, L.Get("Usage_Saver"), SettingsUi.Switch(settings.UsageSaverMode, on =>
+        {
+            settings.UsageSaverMode = on;
+            context.Save();
+            context.Island.ApplyUsageSettings();
+        }), L.Get("Usage_SaverNote")));
+        section.Children.Add(details);
+        section.Children.Add(SettingsUi.Description(palette, L.Get("Usage_SectionNote")));
+        return section;
     }
 
     /// <summary>One agent: its icon and name, Connected and Remove, or Connect, and where it goes.</summary>

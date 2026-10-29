@@ -41,6 +41,8 @@
     <!-- Published too: the unpackaged zip loads the tray and window icons from Assets at run time. -->
     <Content Include="Assets\*.png" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="Assets\*.ico" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <!-- The usage limits come from LimitBar (MIT); its license travels with ISLe8. -->
+    <Content Include="Assets\LimitBar-LICENSE.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Manifest Include="$(ApplicationManifest)" />
   </ItemGroup>
 

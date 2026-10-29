@@ -285,7 +285,8 @@ internal sealed class ClipboardTabView
         }
     }
 
-    private static string Ago(DateTimeOffset when)
+    /// <summary>"5 dakika önce": also the limits card's last reading.</summary>
+    internal static string Ago(DateTimeOffset when)
     {
         var (unit, count) = RelativeTime.Of(when, DateTimeOffset.Now);
         return unit switch

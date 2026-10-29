@@ -388,6 +388,23 @@ Her modülde: Mac dosyaları → Windows karşılığı → önemli davranışla
   - Geniş'te AI sekmesinin altında servis başına halka; Kompakt ve Minimal'de (196 pt) çalışma kartının **sağında**, eşit satırlardan oluşan 270 pt'lik bir sütunda (pencereler tek satırda, sıfırlanma zamanı ipucunda). %70'te turuncu, %90'da kırmızı. Pencere etiketleri: "5 saat", "Haftalık".
   - %90'ı geçince 6 sn'lik banner; aynı pencere tekrar geçmedikçe bir kez.
 - **Kabul:** Üç CLI kuruluyken ve girişliyken değerler Mac'tekiyle aynı; kapalı adada CLI temposu ölçümle doğrulanıyor.
+- **Windows'ta yapılan (2026-10-29):**
+  - **Bulma:** PATH'e körü körüne güvenilmez. Sabit kurulum yerleri (`%USERPROFILE%\.local\bin`, `%LOCALAPPDATA%\agy\bin`,
+    `%APPDATA%\npm`, bun/volta/pnpm) ve kullanıcının PATH'inde yalnızca profil ya da Program Files altındaki klasörler.
+    npm kısayolu (`.cmd`) cmd.exe ya da node olmadan, gösterdiği yerel ikiliye çözülür: Claude Code paketindeki
+    `claude.exe`, Codex'in platform paketindeki `codex.exe`.
+  - **Güven:** Mac'teki sahiplik/izin denetiminin karşılığı ACL denetimi. Dosya, klasörü (DLL yerleştirilebilecek yer) ve üstündeki
+    her klasör; bu kullanıcının, Yöneticiler'in, SYSTEM'in ya da TrustedInstaller'ın olmalı ve Everyone, Users, Authenticated
+    Users, Interactive ya da Guests'e yazma, silme, izin/sahiplik değiştirme vermemeli. Geçmeyen çalıştırılmaz.
+  - **Ortam:** izin listesi (USERPROFILE, APPDATA, LOCALAPPDATA, SystemRoot, PATHEXT …); PATH yalnızca CLI'nin klasörü ve
+    System32. ISLe8'in ortamındaki hiçbir token ya da anahtar geçmez. Bu önemli çıktı: Claude masaüstü uygulamasının içinden
+    başlatılan bir süreç `CLAUDE_CODE_*`/`ANTHROPIC_*` değişkenlerini taşıyor ve `claude auth status` o zaman yanlış
+    sonuç veriyordu.
+  - **Claude:** `/usage` kullandıkça ödenen bir hesapta 5 saatlik/haftalık satır yerine maliyet özeti ("Total cost: …")
+    döndürüyor. Mac bunu "okunamadı" sayıyor; Windows'ta "Kota sınırı yok" (yeni durum `NoLimits`).
+  - **Uyku:** `WM_POWERBROADCAST` (askıya alma / devam). Mac'teki Düşük Güç modu yerine Windows'un Enerji tasarrufu.
+  - Codex oturum kayıtları `FileSystemWatcher` ile izlenir (Mac'te kqueue), yazmalar 2 sn'de bir okunur.
+  - Önbellek `%LOCALAPPDATA%\LRXe8\ISLe8\usage\state.json`. LimitBar'ın MIT lisansı pakette `Assets\LimitBar-LICENSE.txt`.
 
 ### 3.14 Kablosuz cihaz pilleri ve Cihazlar sekmesi (W5)
 

@@ -29,6 +29,9 @@ public sealed record ApprovalAlert(Agents.AgentApproval Approval) : IslandAlert;
 /// <summary>An agent finished its turn.</summary>
 public sealed record AgentDoneAlert(Agents.AgentSession Session) : IslandAlert;
 
+/// <summary>A usage limit crossed 90 % (PORTING.md §3.13).</summary>
+public sealed record UsageAlert(Usage.UsageSnapshot Snapshot, Usage.UsageWindow Window) : IslandAlert;
+
 /// <summary>How long each banner stays, from the Mac (AppDelegate.swift; PORTING.md §2).</summary>
 public static class AlertDurations
 {
@@ -38,4 +41,5 @@ public static class AlertDurations
     public static readonly TimeSpan Meeting = TimeSpan.FromSeconds(10);
     public static readonly TimeSpan Approval = TimeSpan.FromSeconds(15);
     public static readonly TimeSpan AgentDone = TimeSpan.FromSeconds(4);
+    public static readonly TimeSpan UsageLimit = TimeSpan.FromSeconds(6);
 }

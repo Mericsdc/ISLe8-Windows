@@ -54,7 +54,7 @@ internal sealed class IslandView
     public IslandView(
         IslandTheme theme, AppSettings settings, MediaService media, IslandTimer timer, WeatherService weather, CalendarService calendar,
         NotesStore notes, SystemSampler system, ClipboardService clipboard, ShelfStore shelf, NotificationService notifications, DeviceService devices,
-        AgentHub agents, Action<AgentApproval, bool?> decide, Action<int> goToSession,
+        AgentHub agents, Action<AgentApproval, bool?> decide, Action<int> goToSession, Usage.UsageService usage,
         nint window, DispatcherQueue queue,
         Action takeKeyboard, Action dismissAlert, Action close,
         Action<IReadOnlyList<string>> dropToShelf, Action<IReadOnlyList<string>> dropToShare)
@@ -114,7 +114,7 @@ internal sealed class IslandView
         DropTarget = new DropTargetView(dropToShelf, dropToShare);
         Devices = new DevicesTabView(devices, theme);
         _tabs[IslandTab.Devices] = Devices.Root;
-        Agents = new AgentsTabView(agents, theme, queue, decide, goToSession);
+        Agents = new AgentsTabView(agents, usage, settings, theme, queue, decide, goToSession);
         _tabs[IslandTab.Agents] = Agents.Root;
 
         var content = new Grid { Padding = new Thickness(IslandSizes.ContentInset, IslandSizes.ContentTop, IslandSizes.ContentInset, 0) };
@@ -174,6 +174,9 @@ internal sealed class IslandView
         AgentDoneBanner = new AgentDoneBanner();
         AgentDoneBanner.Root.Margin = new Thickness(14, 0, 14, 4);
         Grid.SetRow(AgentDoneBanner.Root, 1);
+        UsageBanner = new Usage.UsageBanner(theme);
+        UsageBanner.Root.Margin = new Thickness(14, 0, 14, 4);
+        Grid.SetRow(UsageBanner.Root, 1);
         AlertLayer = new Grid
         {
             HorizontalAlignment = HorizontalAlignment.Left,
@@ -181,7 +184,7 @@ internal sealed class IslandView
             Visibility = Visibility.Collapsed,
             IsHitTestVisible = false,
             RowDefinitions = { new RowDefinition { Height = new GridLength(IslandSizes.HeaderHeight) }, new RowDefinition() },
-            Children = { Banner.Root, TimerBanner.Root, MeetingBanner.Root, NotificationBanner.Root, DeviceBanner.Root, ApprovalBanner.Root, AgentDoneBanner.Root },
+            Children = { Banner.Root, TimerBanner.Root, MeetingBanner.Root, NotificationBanner.Root, DeviceBanner.Root, ApprovalBanner.Root, AgentDoneBanner.Root, UsageBanner.Root },
         };
         Grid.SetRow(Banner.Root, 1);
 
@@ -219,6 +222,7 @@ internal sealed class IslandView
     public DeviceBanner DeviceBanner { get; }
     public ApprovalBanner ApprovalBanner { get; }
     public AgentDoneBanner AgentDoneBanner { get; }
+    public Usage.UsageBanner UsageBanner { get; }
     public AgentsTabView Agents { get; }
     public AgentEarView AgentEar { get; }
     public DevicesTabView Devices { get; }
@@ -251,12 +255,14 @@ internal sealed class IslandView
         DeviceBanner.Root.Visibility = alert is DeviceAlert ? Visibility.Visible : Visibility.Collapsed;
         ApprovalBanner.Root.Visibility = alert is ApprovalAlert ? Visibility.Visible : Visibility.Collapsed;
         AgentDoneBanner.Root.Visibility = alert is AgentDoneAlert ? Visibility.Visible : Visibility.Collapsed;
+        UsageBanner.Root.Visibility = alert is UsageAlert ? Visibility.Visible : Visibility.Collapsed;
         if (alert is TimerAlert timer) TimerBanner.Show(timer.Event);
         else if (alert is MeetingAlert meeting) MeetingBanner.Show(meeting.Entry);
         else if (alert is NotificationAlert notification) NotificationBanner.Show(notification.Notification, pendingNotifications);
         else if (alert is DeviceAlert device) DeviceBanner.Show(device.Device, device.IsLow);
         else if (alert is ApprovalAlert approval) ApprovalBanner.Show(approval.Approval);
         else if (alert is AgentDoneAlert done) AgentDoneBanner.Show(done.Session);
+        else if (alert is UsageAlert usage) UsageBanner.Show(usage.Snapshot, usage.Window);
         else Banner.Refresh();
         // Only a banner with a button takes the pointer itself; otherwise a click opens the island.
         AlertLayer.IsHitTestVisible = alert is MeetingAlert && MeetingBanner.HasJoin || alert is ApprovalAlert;

@@ -1369,4 +1369,138 @@
   <data name="Devices_SpareLevel" xml:space="preserve">
     <value>Yedek pil %{0}</value>
   </data>
+  <data name="Usage_Limits" xml:space="preserve">
+    <value>Limitler</value>
+    <comment>mac: Limitler</comment>
+  </data>
+  <data name="Usage_Refresh" xml:space="preserve">
+    <value>Yenile</value>
+    <comment>mac: Yenile</comment>
+  </data>
+  <data name="Usage_SignedOut" xml:space="preserve">
+    <value>Giriş yapılmamış</value>
+    <comment>mac: Giriş yapılmamış</comment>
+  </data>
+  <data name="Usage_Unreadable" xml:space="preserve">
+    <value>Okunamadı</value>
+    <comment>mac: Okunamadı</comment>
+  </data>
+  <data name="Usage_Resets" xml:space="preserve">
+    <value>Sıfırlanma {0}</value>
+    <comment>mac: Sıfırlanma %@</comment>
+  </data>
+  <data name="Usage_FiveHour" xml:space="preserve">
+    <value>5 saat</value>
+    <comment>mac: 5 saat</comment>
+  </data>
+  <data name="Usage_Weekly" xml:space="preserve">
+    <value>Haftalık</value>
+    <comment>mac: Haftalık</comment>
+  </data>
+  <data name="Usage_ModelWeekly" xml:space="preserve">
+    <value>{0} haftalık</value>
+    <comment>mac: %@ haftalık</comment>
+  </data>
+  <data name="Usage_Minutes" xml:space="preserve">
+    <value>{0} dk</value>
+    <comment>mac: %lld dk</comment>
+  </data>
+  <data name="Usage_Quota" xml:space="preserve">
+    <value>Kota</value>
+    <comment>mac: Kota</comment>
+  </data>
+  <data name="Usage_AlmostFullResets" xml:space="preserve">
+    <value>Limit dolmak üzere · sıfırlanma {0}</value>
+    <comment>mac: Limit dolmak üzere · sıfırlanma %@</comment>
+  </data>
+  <data name="Usage_AlmostFull" xml:space="preserve">
+    <value>Limit dolmak üzere</value>
+    <comment>mac: Limit dolmak üzere</comment>
+  </data>
+  <data name="Usage_Today" xml:space="preserve">
+    <value>bugün {0}</value>
+    <comment>mac: bugün %@</comment>
+  </data>
+  <data name="Usage_Tomorrow" xml:space="preserve">
+    <value>yarın {0}</value>
+    <comment>mac: yarın %@</comment>
+  </data>
+  <data name="Usage_LoginCodex" xml:space="preserve">
+    <value>Terminal’de codex login çalıştır</value>
+    <comment>mac: Terminal’de codex login çalıştır</comment>
+  </data>
+  <data name="Usage_LoginClaude" xml:space="preserve">
+    <value>Terminal’de claude auth login çalıştır</value>
+    <comment>mac: Terminal’de claude auth login çalıştır</comment>
+  </data>
+  <data name="Usage_LoginGemini" xml:space="preserve">
+    <value>Terminal’de agy ile giriş yap</value>
+    <comment>mac: Terminal’de agy ile giriş yap</comment>
+  </data>
+  <data name="Usage_Waiting" xml:space="preserve">
+    <value>Kullanım verisi bekleniyor.</value>
+    <comment>mac: Kullanım verisi bekleniyor.</comment>
+  </data>
+  <data name="Usage_ClaudeTimeout" xml:space="preserve">
+    <value>Claude sorgusu zaman aşımına uğradı.</value>
+    <comment>mac: Claude sorgusu zaman aşımına uğradı.</comment>
+  </data>
+  <data name="Usage_ClaudeNoData" xml:space="preserve">
+    <value>Claude kullanım verisi döndürmedi (kod {0}).</value>
+    <comment>mac: Claude kullanım verisi döndürmedi (kod %lld).</comment>
+  </data>
+  <data name="Usage_ClaudeNoLines" xml:space="preserve">
+    <value>Claude CLI kota satırı döndürmedi (CLI sürümü değişmiş olabilir). Limitler okunamadı.</value>
+    <comment>mac: Claude CLI kota satırı döndürmedi (CLI sürümü değişmiş olabilir). Limitler okunamadı.</comment>
+  </data>
+  <data name="Usage_GeminiTimeout" xml:space="preserve">
+    <value>Antigravity sorgusu zaman aşımına uğradı.</value>
+    <comment>mac: Antigravity sorgusu zaman aşımına uğradı.</comment>
+  </data>
+  <data name="Usage_GeminiNoData" xml:space="preserve">
+    <value>Antigravity kota verisi döndürmedi (kod {0}).</value>
+    <comment>mac: Antigravity kota verisi döndürmedi (kod %lld).</comment>
+  </data>
+  <data name="Usage_GeminiNoGemini" xml:space="preserve">
+    <value>Antigravity yanıtında Gemini kotası bulunamadı.</value>
+    <comment>mac: Antigravity yanıtında Gemini kotası bulunamadı.</comment>
+  </data>
+  <data name="Usage_CodexFailed" xml:space="preserve">
+    <value>Codex kota verisi alınamadı.</value>
+    <comment>mac: Codex kota verisi alınamadı.</comment>
+  </data>
+  <data name="Usage_ServerFallback" xml:space="preserve">
+    <value>Sunucuya erişilemedi; son yerel kayıt gösteriliyor.</value>
+    <comment>mac: Sunucuya erişilemedi; son yerel kayıt gösteriliyor.</comment>
+  </data>
+  <data name="Usage_Untrusted" xml:space="preserve">
+    <value>{0} izinleri güvenilir değil; çalıştırılmadı.</value>
+    <comment>mac: %@ izinleri güvenilir değil; çalıştırılmadı.</comment>
+  </data>
+  <data name="Usage_NoLimits" xml:space="preserve">
+    <value>Kota sınırı yok</value>
+  </data>
+  <data name="Usage_Show" xml:space="preserve">
+    <value>Kullanım limitlerini göster</value>
+    <comment>mac: Kullanım limitlerini göster</comment>
+  </data>
+  <data name="Usage_ShowNote" xml:space="preserve">
+    <value>Claude Code, Codex ve Antigravity'nin kalan kotası; her servisin kendi komut satırı aracıyla sorulur. ISLe8 parola, token ya da çerez okumaz.</value>
+    <comment>mac: Claude Code, Codex ve Antigravity'nin kalan kotası; her servisin kendi komut satırı aracıyla sorulur. ISLe8 parola, token ya da çerez okumaz.</comment>
+  </data>
+  <data name="Usage_Saver" xml:space="preserve">
+    <value>Tasarruf modu</value>
+    <comment>mac: Tasarruf modu</comment>
+  </data>
+  <data name="Usage_SaverNote" xml:space="preserve">
+    <value>Codex ve Antigravity'ye 15 dakikada bir sorulur (kapalıysa 5). Claude en fazla 20 dakikada bir sorulur. Codex'in kendi kayıtları her zaman anında okunur.</value>
+    <comment>mac: Codex ve Antigravity'ye 15 dakikada bir sorulur (kapalıysa 5). Claude en fazla 20 dakikada bir sorulur. Codex'in kendi kayıtları her zaman anında okunur.</comment>
+  </data>
+  <data name="Usage_Section" xml:space="preserve">
+    <value>Kullanım limitleri</value>
+    <comment>mac: Kullanım limitleri</comment>
+  </data>
+  <data name="Usage_SectionNote" xml:space="preserve">
+    <value>LimitBar LRX'ten taşındı. Bir servisin limiti %90'ı geçince adada kısa bir uyarı çıkar. Giriş, servisin kendi aracıyla yapılır: codex login, claude auth login, agy. Windows'ta her araç kendi iş nesnesinde (Job Object), boş bir çalışma klasöründe, izin listeli ortam değişkenleriyle ve süre sınırıyla çalışır; başkalarının yazabildiği bir klasördeki araç çalıştırılmaz.</value>
+  </data>
 </root>

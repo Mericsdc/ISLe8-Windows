@@ -1,4 +1,6 @@
 using ISLe8.Core.Agents;
+using ISLe8.Core.Settings;
+using ISLe8.Usage;
 using ISLe8.Core.Theming;
 using ISLe8.Core.Timer;
 using ISLe8.Localization;
@@ -207,8 +209,10 @@ internal static class AgentLook
 
 /// <summary>
 /// The AI tab (AgentViews.swift, AgentsTab): an approval first, then the run card of the session
-/// being followed, after componest's agent status component; a script's activity below. It scrolls
-/// inside the island's fixed height. Drawn only while on screen; the clock ticks only while an agent works.
+/// being followed, after componest's agent status component; a script's activity below; the usage
+/// limits under the runs on the dashboard, or in a 270-wide column beside them in the shorter
+/// layouts. It scrolls inside the island's fixed height. Drawn only while on screen; the clock ticks
+/// only while an agent works.
 /// </summary>
 internal sealed class AgentsTabView
 {
@@ -217,24 +221,35 @@ internal sealed class AgentsTabView
     private readonly Action<AgentApproval, bool?> _decide;
     private readonly Action<int> _goToSession;
     private readonly StackPanel _stack = new() { Spacing = 8 };
+    private readonly UsageService _usage;
+    private readonly AppSettings _settings;
+    private readonly Grid _layout = new() { ColumnSpacing = 10 };
+    private readonly StackPanel _scrolled = new() { Spacing = 8 };
     private readonly DispatcherQueueTimer _ticker;
     private readonly List<Action> _tickers = [];
     private string? _followed;
     private bool _active;
     private bool _stale = true;
 
-    public AgentsTabView(AgentHub hub, IslandTheme theme, DispatcherQueue queue, Action<AgentApproval, bool?> decide, Action<int> goToSession)
+    public AgentsTabView(AgentHub hub, UsageService usage, AppSettings settings, IslandTheme theme, DispatcherQueue queue, Action<AgentApproval, bool?> decide, Action<int> goToSession)
     {
         _hub = hub;
+        _usage = usage;
+        _settings = settings;
         _theme = theme;
         _decide = decide;
         _goToSession = goToSession;
-        Root = new ScrollViewer
+        _scrolled.Children.Add(_stack);
+        var scroller = new ScrollViewer
         {
-            Content = _stack,
+            Content = _scrolled,
             VerticalScrollBarVisibility = ScrollBarVisibility.Hidden,
             HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
         };
+        _layout.ColumnDefinitions.Add(new ColumnDefinition());
+        _layout.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        _layout.Children.Add(scroller);
+        Root = _layout;
         _ticker = queue.CreateTimer();
         _ticker.Interval = TimeSpan.FromSeconds(1);
         _ticker.Tick += (_, _) =>
@@ -242,9 +257,10 @@ internal sealed class AgentsTabView
             foreach (var tick in _tickers) tick();
         };
         _hub.Changed += OnChanged;
+        _usage.Changed += OnChanged;
     }
 
-    public ScrollViewer Root { get; }
+    public Grid Root { get; }
 
     public void SetActive(bool active)
     {
@@ -256,6 +272,7 @@ internal sealed class AgentsTabView
     public void Detach()
     {
         _hub.Changed -= OnChanged;
+        _usage.Changed -= OnChanged;
         _ticker.Stop();
     }
 
@@ -287,7 +304,28 @@ internal sealed class AgentsTabView
             if (_hub.Followed(_followed) is { } session) _stack.Children.Add(RunCard(session));
             foreach (var activity in _hub.Activities.Take(_hub.Sessions.Count == 0 ? 3 : 1)) _stack.Children.Add(ScriptRow(activity));
         }
+        PlaceUsage();
         UpdateTicker();
+    }
+
+    /// <summary>The limits card: under the runs on the dashboard; beside them in the strips, which are too short to stack it.</summary>
+    private void PlaceUsage()
+    {
+        while (_scrolled.Children.Count > 1) _scrolled.Children.RemoveAt(1);
+        while (_layout.Children.Count > 1) _layout.Children.RemoveAt(1);
+        var dashboard = _settings.HomeStyle == HomeStyle.Dashboard;
+        var strip = new UsageStrip(_usage, _theme, stacked: !dashboard);
+        var shown = strip.Build();
+        _layout.ColumnDefinitions[1].Width = shown && !dashboard ? new GridLength(270) : new GridLength(0);
+        if (!shown) return;
+        if (dashboard)
+        {
+            _scrolled.Children.Add(strip.Root);
+            return;
+        }
+        strip.Root.VerticalAlignment = VerticalAlignment.Stretch;
+        Grid.SetColumn(strip.Root, 1);
+        _layout.Children.Add(strip.Root);
     }
 
     private Border EmptyState()

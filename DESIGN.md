@@ -197,6 +197,11 @@ PORTING.md §2 › Boyutlar; değerler `IslandSizes`'ta, Core testleriyle.
   turuncu ünlem, betikte yüzde. Öncelik Mac'teki gibi: ajan (55, onay 100) > medya (50) > zamanlayıcı (40). Onay bekleyen
   ajan varken ada AI sekmesinde açılır.
 - **Banner'lar:** onay 15 sn (440 × pill + 100, düğmeler basılabilir), bitti 4 sn (400 × pill + 50).
+- **Kullanım limitleri** (`UsageService`, `UsageCli`; Mac: Modules/Usage, LimitBar'dan): Codex app-server
+  (`account/rateLimits/read`) ve oturum kayıtları, `claude -p /usage` + `auth status`, `agy -p /quota`. Her CLI kendi Job
+  Object'inde (`KILL_ON_JOB_CLOSE`), boş bir geçici klasörde, izin listeli ortamla, pencere açmadan, düşük öncelikte ve süre
+  sınırıyla; yalnızca ACL'i başkasına yazma vermeyen klasörlerden. Tempo Mac'teki gibi; kart Geniş'te çalışma kartlarının altında,
+  Kompakt/Minimal'de sağda 270'lik sütunda; %90'da 6 sn'lik banner.
 - **Hook kurulumu** (`AgentHooks`): Ayarlar › Ajanlar › Bağla. Yalnızca `isle8 hook` çağıran girdilere dokunulur, ilk
   değişiklikten önce `.isle8-backup`; dosya geçersiz JSON'sa yazılmaz.
 
@@ -366,7 +371,7 @@ PORTING.md §2 › Boyutlar; değerler `IslandSizes`'ta, Core testleriyle.
 | Bildirim aynası | usernoted veritabanı | `UserNotificationListener` (MSIX + `userNotificationListener` yeteneği + kullanıcı izni), `NotificationChanged` olayı | **W3** ✅ |
 | Takvim | EventKit | `AppointmentManager.RequestStoreAsync(AllCalendarsReadOnly)` (`appointments` yeteneği) | W3 |
 | AI sekmesi | Unix soket + hook'lar | `\\.\pipe\isle8-<SID>-<oturum>` (yalnızca bu kullanıcı); hook'lar `isle8` komutunu çağırır (`isle8-cli.exe`, MSIX App Execution Alias). componest tarzı kart: mevcut adım, süre, "Adım 3/6", son adımlar, Onayla/Reddet | **W4** ✅ (kullanım limitleri hariç) |
-| Kullanım limitleri | LimitBar veri katmanı | `codex`, `claude -p /usage`, `agy` CLI'ları; tasarruf modu 15 dk. Token/şifre okunmaz | W4 |
+| Kullanım limitleri | LimitBar veri katmanı | `codex` app-server ve oturum kayıtları, `claude -p /usage`, `agy -p /quota`; Job Object, izin listeli ortam, ACL denetimi; tasarruf modu 15 dk. Token/şifre okunmaz | **W4** ✅ |
 | Kablosuz cihaz pilleri | Bluetooth raporu | Windows'un tuttuğu PnP özelliği `{104EA319-6EE2-4701-BD47-8DDBF425BBE5} 2` (kapsayıcıdaki düğümler), yoksa BLE GATT Battery Service (0x180F/0x2A19); `DeviceWatcher` ile (olay güdümlü); AirPods kulaklık/kutu yayından | **W5** ✅ (iPhone/iPad hariç) |
 | Tema sistemi | 7 tema, JSON | Aynı 7 tema ve JSON biçimi (Mac'te dışa aktarılan tema Windows'ta açılır). Glass → Mica/Acrylic | W0 (temalar) / W5 (cam, düzenleyici) |
 | Dil | String Catalog | `Strings/tr-TR`, `Strings/en-US` `.resw`; menüden uygulamaya özel dil | **W0** ✅ |

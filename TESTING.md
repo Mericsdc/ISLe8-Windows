@@ -35,6 +35,32 @@ aktivitesi, kulak önceliği, açılış sekmesi ve hook kurulumu Core testlerin
 
 - [ ] İkinci satır: kullanımdan sonra bellek yine 80 MB'ın üstünde (Raf ölçümündeki açık madde). W6'nın ölçüm turunda bakılacak.
 
+## Kullanım limitleri (2026-10-29)
+
+Paketli Release JIT. Claude /usage satırları, maliyet özeti (`NoLimits`), hesap, Antigravity grupları, Codex sunucusu ve oturum
+kaydı, yüzde yuvarlama, tempo ve %90 uyarısı Core testlerinde (`UsageTests`; 293'ten 303'e), test bilgisayarındaki gerçek
+yanıtlarla.
+
+- [x] Codex (npm'den, yerel `codex.exe` doğrudan): app-server 1,5 sn'de; 5 saat %10, haftalık %68, plan "ChatGPT Team".
+- [x] Antigravity (`agy`): 6,4 sn; Gemini 4 Argon haftalık %99 (kırmızı halka, turuncu yazı), Gemini Models %5.
+- [x] Claude (`claude.exe`, izin listeli ortamla): giriş var, abonelik türü boş; `/usage` maliyet özeti döndürüyor → "Kota sınırı yok".
+- [x] AI sekmesi (Kompakt): sağda "Limitler" sütunu, "şimdi", yenile düğmesi; tooltip'te ürün ve plan.
+- [x] ISLe8'den kalan CLI süreci yok (görünen `codex.exe`'ler ChatGPT uygulamasının).
+- [x] **Hata (bulundu, düzeltildi):** ada kapalıyken sekme değişince (`isle8 open agents`, Ctrl+Alt+V) sekme boş görünüyordu;
+      daha önce geçişle soldurulan sekmenin saydamlığı 0'da kalıyordu. Kapalı geçişte saydamlık 1'e dönüyor.
+- [ ] Yenile düğmesi: Codex ve Claude en fazla 30 sn'de bir canlı sorulur; dönen halka görünüyor.
+- [ ] Bir pencere %90'ı geçince "Limit dolmak üzere · sıfırlanma …" banner'ı bir kez çıkıyor.
+- [ ] Codex'te bir istek gönderilince 2 sn içinde Codex satırı güncelleniyor (oturum kaydından, CLI çalışmadan).
+- [ ] Bilgisayar uyuyup uyanınca sorgular durup yeniden başlıyor.
+- [ ] Ayarlar › Ajanlar › Kullanım limitleri: anahtar kapatılınca kart kalkıyor, servis anahtarları ve tasarruf modu çalışıyor.
+- [ ] Geniş (Dashboard) düzende kart çalışma kartlarının altında, servisler yan yana.
+
+**Ölçüm** (ada kapalı)
+
+| Tarih | Yapı | Durum | CPU | Özel bellek | Çalışma kümesi |
+|---|---|---|---|---|---|
+| 2026-10-29 | Limitler, paketli Release JIT x64 | Açılıştaki sorgulardan sonra, tasarruf modu açık, ada iki kez açılmış, medya yok, 60 sn | %0,004 (hedef < %0,1) | 55,9 MB (hedef < 80 MB) | 188,9 MB |
+
 ## Cihazlar: alıcıyla bağlanan cihazlar (2026-10-29)
 
 Canlı geri bildirim: "takılı ekipmanlarımın şarjı görünmüyor (SteelSeries kulaklık, Razer fare)". İkisi de Bluetooth değil,

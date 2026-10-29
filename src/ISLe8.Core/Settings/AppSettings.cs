@@ -140,6 +140,15 @@ public sealed class AppSettings
     /// <summary>A banner when an agent finishes its turn.</summary>
     public bool AgentDoneAlert { get; set; } = true;
 
+    /// <summary>Settings › Agents › Usage limits: off, nothing runs at all.</summary>
+    public bool UsageEnabled { get; set; } = true;
+
+    /// <summary>Codex and Antigravity every 15 minutes instead of 5; on by default (the CLIs alone cost about 0.3 % CPU at 5).</summary>
+    public bool UsageSaverMode { get; set; } = true;
+
+    /// <summary>Vendors turned off ("codex", "claude", "gemini"), so one added later starts out on.</summary>
+    public List<string> UsageDisabledVendors { get; set; } = [];
+
     /// <summary>Settings › System › Wireless devices: a banner with the batteries when one connects.</summary>
     public bool ShowDeviceConnectedAlert { get; set; } = true;
 

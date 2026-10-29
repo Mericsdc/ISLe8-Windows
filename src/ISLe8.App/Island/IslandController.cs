@@ -66,6 +66,7 @@ internal sealed class IslandController : IDisposable
     private readonly DeviceService _devices;
     private readonly AgentHub _agents;
     private readonly AgentServer _agentServer;
+    private readonly Usage.UsageService _usage;
     private HotKey? _clipboardKey;
     private nint _foregroundBeforeKeyboard;
 
@@ -97,6 +98,7 @@ internal sealed class IslandController : IDisposable
         _devices = new DeviceService(_queue, clock);
         _agents = new AgentHub(_settings, clock);
         _agentServer = new AgentServer(_agents, _queue);
+        _usage = new Usage.UsageService(_settings, _queue, clock, AppPaths.DataFolder);
         _outsideClicks = new OutsideClickWatcher(_queue, OnClickedOutside);
     }
 
@@ -108,6 +110,9 @@ internal sealed class IslandController : IDisposable
 
     /// <summary>The notification mirror, for Settings › Notifications.</summary>
     public NotificationService Notifications => _notifications;
+
+    /// <summary>Settings › Agents › Usage limits.</summary>
+    public void ApplyUsageSettings() => _usage.ApplySettings();
 
     /// <summary>Settings › System › Wireless devices: the header's chip shows at once.</summary>
     public void ApplyDeviceSettings() => _view.DevicesChip.Refresh();
@@ -204,6 +209,21 @@ internal sealed class IslandController : IDisposable
         _model.PreferredTab = () => _agents.NeedsAttention ? IslandTab.Agents : null;
         _ = AgentLook.LoadAsync();
         _agentServer.Start();
+        _usage.LimitWarning += (snapshot, window) =>
+        {
+            if (!_window.IsHiddenForFullscreen) _model.ShowAlert(new UsageAlert(snapshot, window), AlertDurations.UsageLimit);
+        };
+        // Nothing asks a CLI while Windows sleeps.
+        _window.AddMessageHandler((message, wParam, _) =>
+        {
+            if (message == 0x0218 /* WM_POWERBROADCAST */)
+            {
+                if (wParam == 4 /* PBT_APMSUSPEND */) _usage.SetSleeping(true);
+                else if (wParam is 7 or 0x12 /* PBT_APMRESUMESUSPEND, PBT_APMRESUMEAUTOMATIC */) _usage.SetSleeping(false);
+            }
+            return null;
+        });
+        _usage.Start();
         // Windows asks once, the first time the installed ISLe8 starts with the mirror on.
         if (_notifications.Access == NotificationAccess.NotAsked) _ = _notifications.RequestAccessAsync();
         // A locked session shows no banners and keeps none for later (IslandModel.swift, setLocked).
@@ -242,6 +262,7 @@ internal sealed class IslandController : IDisposable
         _devices.Dispose();
         _agents.Stop();
         _agentServer.Dispose();
+        _usage.Dispose();
         Win32.WTSUnRegisterSessionNotification(_window.Hwnd);
         StopView();
         _media.Dispose();
@@ -261,7 +282,7 @@ internal sealed class IslandController : IDisposable
 
         _view = new IslandView(
             theme, _settings, _media, _timer, _weather, _calendar, _notes, _system, _clipboard, _shelf, _notifications, _devices,
-            _agents, DecideApproval, GoToSession, _window.Hwnd, _queue,
+            _agents, DecideApproval, GoToSession, _usage, _window.Hwnd, _queue,
             takeKeyboard: TakeKeyboard,
             dismissAlert: _model.DismissAlert,
             close: _model.Close,
@@ -392,6 +413,7 @@ internal sealed class IslandController : IDisposable
         _view.Devices.SetActive(devices);
         _view.Agents.SetActive(expanded && _model.Tab == IslandTab.Agents);
         _devices.SetVisible(expanded);
+        _usage.SetVisible(expanded);
         _devices.SetTabShown(devices);
     }
 
@@ -531,8 +553,9 @@ internal sealed class IslandController : IDisposable
 
         if (_model.State != IslandState.Expanded)
         {
-            // Closed: the next opening simply shows it.
+            // Closed: the next opening simply shows it. A tab left with a crossfade kept its visual at 0.
             _view.ShowTab(tab);
+            IslandSurface.SetOpacity(_view.TabView(tab), 1);
             _outline.Reset(layout.OpenRegion(open));
             UpdatePlayer();
             return;
