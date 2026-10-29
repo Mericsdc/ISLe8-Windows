@@ -312,6 +312,18 @@ Her modülde: Mac dosyaları → Windows karşılığı → önemli davranışla
   - Zamanlama: her zaman / yalnızca kilit açıkken.
   - Odak modunda gösterme (Windows: Odak Yardımı/Rahatsız Etme durumu; okunabiliyorsa).
 - **Kabul:** Teams/Outlook/Chrome bildirimi adada çıkıyor; susturulan uygulama çıkmıyor; izin verilmemişse ayarlarda yönlendirme var.
+- **Windows'ta yapılan:**
+  - `NotificationChanged` olayı paketli masaüstü uygulamasında çalışıyor; yukarıdaki "olay çalışmazsa" yedeğine gerek kalmadı.
+  - Zamanlama seçicisi ("Her zaman / Sadece ekran açıkken / Sadece kilit ekranında") yok: Windows'ta kilit ekranı
+    adası yok (§3.18), kilitliyken ada zaten görünmüyor. Kilitliyken gelenler banner olmuyor, kuyrukta da beklemiyor.
+  - Odak modu Windows'ta "Rahatsız etmeyin": anahtar "Rahatsız etmeyin açıkken gösterme" oldu. Mac'teki
+    "zamanlanmışları algılayamaz" notu Windows'ta geçerli değil; zamanlanmış ve odak oturumuyla açılanı da görüyor.
+  - Erişim satırı Mac'teki "Tam Disk Erişimi" yerine Windows'un izni: "İzin ver…", reddedildiyse "Windows ayarları…"
+    (Gizlilik › Bildirimler), zip sürümünde "Kurulu sürüm gerekiyor". Açıklama Windows'a göre yazıldı.
+  - Uygulamalar AppUserModelID ile tutuluyor (Mac'te bundle ID); listede Windows'un verdiği ad ve simge.
+  - Tıklama gönderen uygulamanın açık penceresini öne getiriyor; çalışan bir tarayıcıyı yeniden başlatmak yeni
+    pencere açacağı için önce açık pencere aranıyor. Bildirimin kendi eylemi (ör. Gmail'de o e-postayı açmak)
+    başka bir uygulamadan tetiklenemiyor.
 
 ### 3.12 AI: ajan hook'ları ve çalışma kartı (W4)
 
@@ -417,7 +429,8 @@ Her modülde: Mac dosyaları → Windows karşılığı → önemli davranışla
 - **Windows:**
   - Ayrı bir WinUI penceresi: sol menü + bölümler, Mica arka plan.
   - Tray: `Shell_NotifyIcon` ile Ayarlar ve Çıkış. **Tray simgesi Ayarlar > Genel'den gizlenebilir**; o zaman ayarlar adadaki ⚙ düğmesiyle ya da uygulama yeniden açılınca açılır.
-  - Başlangıçta açılma: MSIX `StartupTask`, paketsizse `HKCU\…\Run`.
+  - Başlangıçta açılma: MSIX `StartupTask` (`ISLe8Startup`), paketsizse `HKCU\…\Run`. Kullanıcı görevi Windows'un
+    Başlangıç listesinden kapattıysa ISLe8 onu açamıyor; anahtar o zaman Windows Ayarları › Uygulamalar › Başlangıç'ı açıyor.
   - Uygulama yeniden açılınca (ikinci örnek) Ayarlar açılır.
 - **Ayarlar (Mac ile aynı bölümler):** Genel, Görünüm, Düzen, Kısayollar, Medya, Raf, Pano, Bildirimler, Sistem, Widget'lar, Ajanlar. "Kilit Ekranı" yok.
 - **Genel bölümü:**
@@ -496,7 +509,7 @@ Her modülde: Mac dosyaları → Windows karşılığı → önemli davranışla
 ## 4. DESIGN.md §4 ile farklar
 
 - **Plana eklenmesi gerekenler:** ses/parlaklık göstergesi (§3.2), kamera/mikrofon göstergesi ve uyanık tut (§3.4), komut paleti (§3.16), ayarlar penceresi (§3.17), takvim hızlı ekleme (§3.6), `isle8.exe` konsol yardımcısı (§1), Notlar (§3.19), Sistem sekmesi ve LAN (§3.20), klavye temizliği (§3.21), özel günler (§3.22), iPhone/iPad pilleri (§3.14), durum kulakları (§2).
-- **Öne alınması gereken:** MSIX paket kimliği. Bildirim aynası, App Execution Alias ve `StartupTask` paket kimliği istiyor; takvim yalnızca ek kaynağı (AppointmentStore) için istiyor, asıl yolu ICS (§3.6). Kimlik kararı W1'de verilmeli (tam MSIX ya da harici konumlu "sparse" paket). Sürüm zip'leri bu kararla değişir.
+- **Öne alınan:** MSIX paket kimliği. Bildirim aynası, App Execution Alias ve `StartupTask` paket kimliği istiyor; takvim yalnızca ek kaynağı (AppointmentStore) için istiyor, asıl yolu ICS (§3.6). **Karar (2026-10-29): tam MSIX**, dosya ve kayıt defteri sanallaştırması kapalı (ayarlar zip sürümüyle aynı klasörde). Yerel kurulum `scripts/install.ps1` (Geliştirici Modu, imzasız, klasöründen kayıt); imzalı .msix ve Releases'e konması W6'da. Zip sürümü bildirim aynası olmadan sürüyor.
 - **Varsayılan değişiklikleri:** Tasarruf modu varsayılan açık. Açılma gecikmesi 0. Bütün sekmeler aynı yükseklikte.
 
 ## 5. Önerilen aşama sırası

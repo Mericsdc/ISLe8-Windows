@@ -17,6 +17,9 @@ public sealed record TimerAlert(TimerEvent Event) : IslandAlert;
 /// <summary>A meeting starts in five minutes.</summary>
 public sealed record MeetingAlert(Calendar.CalendarEntry Entry) : IslandAlert;
 
+/// <summary>Another app's notification (PORTING.md §3.11). Its time comes from Settings › Notifications.</summary>
+public sealed record NotificationAlert(Notifications.AppNotification Notification) : IslandAlert;
+
 /// <summary>How long each banner stays, from the Mac (AppDelegate.swift; PORTING.md §2).</summary>
 public static class AlertDurations
 {

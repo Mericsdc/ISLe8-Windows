@@ -14,6 +14,7 @@ using ISLe8.ShelfTab;
 using ISLe8.SystemTab;
 using ISLe8.Core.Weather;
 using ISLe8.Media;
+using ISLe8.Notifications;
 using ISLe8.Timer;
 using ISLe8.UI;
 using Microsoft.UI.Dispatching;
@@ -49,7 +50,8 @@ internal sealed class IslandView
 
     public IslandView(
         IslandTheme theme, AppSettings settings, MediaService media, IslandTimer timer, WeatherService weather, CalendarService calendar,
-        NotesStore notes, SystemSampler system, ClipboardService clipboard, ShelfStore shelf, nint window, DispatcherQueue queue,
+        NotesStore notes, SystemSampler system, ClipboardService clipboard, ShelfStore shelf, NotificationService notifications,
+        nint window, DispatcherQueue queue,
         Action takeKeyboard, Action dismissAlert, Action close,
         Action<IReadOnlyList<string>> dropToShelf, Action<IReadOnlyList<string>> dropToShare)
     {
@@ -150,6 +152,9 @@ internal sealed class IslandView
         MeetingBanner = new MeetingBanner(dismissAlert);
         MeetingBanner.Root.Margin = new Thickness(14, 0, 14, 4);
         Grid.SetRow(MeetingBanner.Root, 1);
+        NotificationBanner = new NotificationBanner(notifications);
+        NotificationBanner.Root.Margin = new Thickness(14, 0, 14, 4);
+        Grid.SetRow(NotificationBanner.Root, 1);
         AlertLayer = new Grid
         {
             HorizontalAlignment = HorizontalAlignment.Left,
@@ -157,7 +162,7 @@ internal sealed class IslandView
             Visibility = Visibility.Collapsed,
             IsHitTestVisible = false,
             RowDefinitions = { new RowDefinition { Height = new GridLength(IslandSizes.HeaderHeight) }, new RowDefinition() },
-            Children = { Banner.Root, TimerBanner.Root, MeetingBanner.Root },
+            Children = { Banner.Root, TimerBanner.Root, MeetingBanner.Root, NotificationBanner.Root },
         };
         Grid.SetRow(Banner.Root, 1);
 
@@ -191,6 +196,7 @@ internal sealed class IslandView
     public MediaBanner Banner { get; }
     public TimerBanner TimerBanner { get; }
     public MeetingBanner MeetingBanner { get; }
+    public NotificationBanner NotificationBanner { get; }
     public TimerEar TimerEar { get; }
     public AudioBars Bars { get; }
 
@@ -209,13 +215,15 @@ internal sealed class IslandView
     }
 
     /// <summary>The banner for <paramref name="alert"/>: one content at a time.</summary>
-    public void ShowAlert(IslandAlert? alert)
+    public void ShowAlert(IslandAlert? alert, int pendingNotifications)
     {
         Banner.Root.Visibility = alert is null or NowPlayingAlert ? Visibility.Visible : Visibility.Collapsed;
         TimerBanner.Root.Visibility = alert is TimerAlert ? Visibility.Visible : Visibility.Collapsed;
         MeetingBanner.Root.Visibility = alert is MeetingAlert ? Visibility.Visible : Visibility.Collapsed;
+        NotificationBanner.Root.Visibility = alert is NotificationAlert ? Visibility.Visible : Visibility.Collapsed;
         if (alert is TimerAlert timer) TimerBanner.Show(timer.Event);
         else if (alert is MeetingAlert meeting) MeetingBanner.Show(meeting.Entry);
+        else if (alert is NotificationAlert notification) NotificationBanner.Show(notification.Notification, pendingNotifications);
         else Banner.Refresh();
         // Only a banner with a button takes the pointer itself; otherwise a click opens the island.
         AlertLayer.IsHitTestVisible = alert is MeetingAlert && MeetingBanner.HasJoin;

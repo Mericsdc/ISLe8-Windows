@@ -182,6 +182,25 @@ PORTING.md §2 › Boyutlar; değerler `IslandSizes`'ta, Core testleriyle.
   üstüne açılıyor. Üstte başka bir çubuk (üstteki görev çubuğu) varsa şerit onun altına giriyor. Ayarlar › Genel
   › "Pencereler adanın altında başlasın" ile kapatılabiliyor.
 
+### Paket ve bildirim aynası
+
+- **Paket:** Tam MSIX (`com.lrxe8.isle8`). Bildirim aynası ve "Girişte başlat"ın başlangıç görevi paket kimliği
+  istiyor. Paketin dosya ve kayıt defteri sanallaştırması kapalı (`desktop6:FileSystemWriteVirtualization`,
+  `unvirtualizedResources`): ayarlar ve geçmiş zip sürümüyle aynı klasörde. Paketsiz (zip) sürüm de çalışıyor;
+  orada Ayarlar › Bildirimler "Kurulu sürüm gerekiyor" diyor. Yerel kurulum `scripts\install.ps1` (Geliştirici
+  Modu); imzalı .msix W6'da.
+- **Bildirim aynası** (`NotificationService`, Mac: NotificationModule.swift): Mac Bildirim Merkezi'nin veritabanını
+  okuyor; Windows'ta `UserNotificationListener` var. Yeni bildirim `NotificationChanged` olayıyla geliyor, arada
+  hiçbir şey çalışmıyor. Toast'un ilk satırı başlık, kalanı tek satır (Mac'te alt başlık · gövde). Gmail gibi siteler
+  tarayıcının bildirimiyle geliyor.
+- **Banner:** Mac'teki gibi 400 × (pill + 74): uygulama simgesi (34), adı ve "+N", başlık, iki satır. Üzerine gelince
+  süre duruyor; tıklayınca gönderen uygulamanın açık penceresi öne geliyor (pencerenin `System.AppUserModel.ID`'si),
+  yoksa uygulama AppUserModelID'siyle başlatılıyor. Toplantı banner'ı da Mac'teki gibi bu boyutta.
+- **Kuyruk** (`IslandModel.ShowNotification`): banner varken ya da ada açıkken gelenler en fazla 5 bekliyor, ada
+  dinlenince sıradaki çıkıyor. Oturum kilitlenince (`WTSRegisterSessionNotification`) bekleyenler siliniyor, banner çıkmıyor.
+- **Rahatsız etmeyin:** Windows bunu başka uygulamalara bir API ile vermiyor; kabuğun yayımladığı WNF durumu
+  (`WNF_SHEL_QUIETHOURS_ACTIVE_PROFILE_CHANGED`, 0 = kısıtsız) okunuyor. Elle, zamanlamayla ya da odak oturumuyla açılanı görüyor.
+
 ### Raf sekmesi
 
 - **Bırakma hedefi:** Mac'te dosya sürüklemesi notch'a yaklaşınca algılanıyor; Windows'ta dosya pill'in üstüne
@@ -302,7 +321,7 @@ PORTING.md §2 › Boyutlar; değerler `IslandSizes`'ta, Core testleriyle.
 | Home (3 sütun) + dock | SwiftUI | Takvim ayı + günün etkinlikleri · büyük oynatıcı · hava (hissedilen, nem, rüzgar, UV, 5 saat, 5 gün); Geniş / Kompakt / Minimal düzen ("Pano" değil: Pano bir sekme) | W1 |
 | Pano geçmişi | changeCount, SQLite + FTS5 | `AddClipboardFormatListener` (`WM_CLIPBOARDUPDATE`), Microsoft.Data.Sqlite + FTS5. `ExcludeClipboardContentFromMonitorProcessing`, `CanIncludeInClipboardHistory = 0` ya da `CanUploadToCloudClipboard = 0` taşıyan içerik (parola yöneticileri) kaydedilmez | W2 |
 | Raf | sürükle-bırak, AirDrop | Pill'e sürükle-bırak (OLE drop), Share UI (`IDataTransferManagerInterop.ShowShareUIForWindow`; Nearby Share dahil) | W2 |
-| Bildirim aynası | usernoted veritabanı | `UserNotificationListener` (MSIX + `userNotificationListener` yeteneği + kullanıcı izni) | W3 |
+| Bildirim aynası | usernoted veritabanı | `UserNotificationListener` (MSIX + `userNotificationListener` yeteneği + kullanıcı izni), `NotificationChanged` olayı | **W3** ✅ |
 | Takvim | EventKit | `AppointmentManager.RequestStoreAsync(AllCalendarsReadOnly)` (`appointments` yeteneği) | W3 |
 | AI sekmesi | Unix soket + hook'lar | `\\.\pipe\isle8-agents`; hook'lar `isle8` komutunu çağırır (MSIX App Execution Alias). componest tarzı kart: mevcut adım, süre, "Adım 3/6", son adımlar, Onayla/Reddet | W4 |
 | Kullanım limitleri | LimitBar veri katmanı | `codex`, `claude -p /usage`, `agy` CLI'ları; tasarruf modu 15 dk. Token/şifre okunmaz | W4 |
@@ -350,7 +369,8 @@ Her faz `scripts/measure.ps1` ile biter; bütçe aşılırsa faz bitmiş sayılm
 7. **Cam tema (W5):** `SystemBackdrop` bütün pencereye uygulanır, ada ise pencereden küçük. Şekilli
    akrilik için araştırma gerekiyor; o zamana kadar Glass yarı saydam düz renk.
 8. **Bildirimler (W3):** `NotificationChanged` olayı paketli masaüstü uygulamalarında tetiklenmeyebilir;
-   o durumda `UserNotificationChangedTrigger` arka plan görevi gerekir.
+   o durumda `UserNotificationChangedTrigger` arka plan görevi gerekir. **Doğrulandı (2026-10-29):** olay
+   Windows 11'de paketli ISLe8'e geliyor.
 9. **Takvim (W3):** AppointmentStore yalnızca Windows'a eklenmiş hesapları görür; yeni Outlook bu
    depoya yazmıyor. Gerekirse Microsoft Graph ya da ICS aboneliği.
 10. **Menü ve odak:** Odak almayan bir pencerenin açılır menüsü dışarı tıklayınca kapanmayabilir; bu
@@ -366,7 +386,7 @@ Her faz `scripts/measure.ps1` ile biter; bütçe aşılırsa faz bitmiş sayılm
 | Konu | Karar |
 |---|---|
 | Teknoloji | C# + WinUI 3, .NET 10, Native AOT, MSIX |
-| Paket kimliği | `com.lrxe8.isle8`, yayıncı `CN=LRXe8` |
+| Paket kimliği | `com.lrxe8.isle8`, yayıncı `CN=LRXe8`; tam MSIX, sanallaştırma kapalı (2026-10-29) |
 | Platformlar | x64 ve ARM64 (32 bit yok) |
 | En düşük Windows | Windows 10 2004 (19041) |
 | Varsayılan tema | Ember |

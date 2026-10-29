@@ -43,7 +43,7 @@ Bir şey ters giderse günlük dosyası burada (yalnızca hata ve yaşam döngü
 pano ya da bildirim içeriği yazılmaz):
 
 - Zip'ten ya da `scripts\run.ps1` ile: `%LOCALAPPDATA%\LRXe8\ISLe8\isle8.log`
-- Paketli (MSIX): `%LOCALAPPDATA%\Packages\com.lrxe8.isle8_*\LocalCache\Local\LRXe8\ISLe8\isle8.log`
+- Paketli (MSIX) sürüm de aynı klasörü kullanır; paketin sanallaştırması kapalı.
 
 Ayarlar aynı klasörde `settings.json`.
 
@@ -68,7 +68,20 @@ powershell -ExecutionPolicy Bypass -File scripts\run.ps1
 ```
 
 Visual Studio ile (paketli, MSIX): `ISLe8.slnx`'i aç, platformu `x64` (ARM64 bilgisayarda `ARM64`) seç,
-profil **ISLe8 (Package)** › F5. Bildirim aynası (W3) paket kimliği ister; o fazdan sonra bu yol gerekir.
+profil **ISLe8 (Package)** › F5. Bildirim aynası ve "Girişte başlat"ın başlangıç görevi paket kimliği ister.
+
+### Paketli kurulum (bildirim aynası için)
+
+Windows Ayarları › Sistem › Geliştiriciler için › **Geliştirici Modu**'nu aç, sonra:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\install.ps1
+```
+
+Derler, `artifacts\package-win-x64`'e yayınlar ve oradan kaydeder (C++ araçları yoksa `-NoAot`). ISLe8 Başlat
+menüsünde görünür; o klasörü silme. Kaldırmak: `Get-AppxPackage com.lrxe8.isle8 | Remove-AppxPackage`. Ayarlar ve
+geçmiş zip sürümüyle aynı klasörde kalır. Bildirimler: **Ayarlar › Bildirimler**; Gmail gibi siteler tarayıcının
+bildirimleriyle gelir.
 
 ### Yayın (zip)
 

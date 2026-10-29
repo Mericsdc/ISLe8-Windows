@@ -77,6 +77,7 @@ internal static class Glyphs
     public const string Location = "\uE81D";
     public const string Forward = "\uE76C";
     public const string Back = "\uE76B";
+    public const string Bell = "\uEA8F";
     public const string Add = "";
     public const string Remove = "";
 }

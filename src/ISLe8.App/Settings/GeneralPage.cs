@@ -22,7 +22,7 @@ internal static class GeneralPage
         var page = new StackPanel { MaxWidth = 860 };
         page.Children.Add(SettingsUi.PageTitle(L.Get("Settings_General")));
 
-        page.Children.Add(SettingsUi.Card(palette, L.Get("Settings_OpenAtLogin"), SettingsUi.Switch(StartAtLogin.IsOn, StartAtLogin.Set)));
+        page.Children.Add(SettingsUi.Card(palette, L.Get("Settings_OpenAtLogin"), LoginSwitch()));
         page.Children.Add(ScreenCard(context));
         // Windows has no menu bar for the island to sit in, as the Mac's notch does; this keeps one free.
         page.Children.Add(SettingsUi.Card(palette, L.Get("Settings_ReserveStrip"), SettingsUi.Switch(settings.ReserveTopStrip, on =>
@@ -139,6 +139,29 @@ internal static class GeneralPage
             value, 0, maximum, 0.05,
             seconds => L.Format("Settings_Seconds", seconds.ToString("0.00", L.Culture)),
             changed));
+
+    /// <summary>Windows answers for the startup task in its own time; the switch waits for it, and shows what it said.</summary>
+    private static ToggleSwitch LoginSwitch()
+    {
+        var toggle = new ToggleSwitch { OnContent = "", OffContent = "", MinWidth = 0, IsEnabled = false };
+        var showing = false;
+        async void Show(Task<bool> state)
+        {
+            var on = await state;
+            showing = true;
+            toggle.IsOn = on;
+            showing = false;
+            toggle.IsEnabled = true;
+        }
+        toggle.Toggled += (_, _) =>
+        {
+            if (showing) return;
+            toggle.IsEnabled = false;
+            Show(StartAtLogin.SetAsync(toggle.IsOn));
+        };
+        Show(StartAtLogin.IsOnAsync());
+        return toggle;
+    }
 
     // MARK: Back up
 

@@ -1044,4 +1044,67 @@
   <data name="Settings_ReserveStripNote" xml:space="preserve">
     <value>Ekranın üstünde ada için ince bir şerit ayrılır, görev çubuğu gibi. Tam ekran açılan pencereler (tarayıcı sekmeleri) pill'in altında kalmaz; açık ada yine pencerelerin üstüne açılır.</value>
   </data>
+  <data name="Settings_Notifications" xml:space="preserve">
+    <value>Bildirimler</value>
+    <comment>mac: Bildirimler</comment>
+  </data>
+  <data name="Notifications_Show" xml:space="preserve">
+    <value>Bildirimleri adada göster</value>
+    <comment>mac: Bildirimleri adada göster</comment>
+  </data>
+  <data name="Notifications_Access" xml:space="preserve">
+    <value>Erişim</value>
+    <comment>mac: Erişim</comment>
+  </data>
+  <data name="Notifications_Off" xml:space="preserve">
+    <value>Kapalı</value>
+    <comment>mac: Kapalı</comment>
+  </data>
+  <data name="Notifications_Reading" xml:space="preserve">
+    <value>Okunuyor</value>
+    <comment>mac: Okunuyor</comment>
+  </data>
+  <data name="Notifications_Retry" xml:space="preserve">
+    <value>Tekrar dene</value>
+    <comment>mac: Tekrar dene</comment>
+  </data>
+  <data name="Notifications_Focus" xml:space="preserve">
+    <value>Rahatsız etmeyin açıkken gösterme</value>
+  </data>
+  <data name="Notifications_FocusNote" xml:space="preserve">
+    <value>Elle, zamanlamayla ya da bir odak oturumuyla açılan Rahatsız etmeyin'i algılar.</value>
+  </data>
+  <data name="Notifications_Duration" xml:space="preserve">
+    <value>Ekranda kalma süresi</value>
+    <comment>mac: Ekranda kalma süresi</comment>
+  </data>
+  <data name="Notifications_Apps" xml:space="preserve">
+    <value>Uygulamalar</value>
+    <comment>mac: Uygulamalar</comment>
+  </data>
+  <data name="Notifications_AppsEmpty" xml:space="preserve">
+    <value>Bildirim gönderen uygulamalar burada listelenir.</value>
+    <comment>mac: Bildirim gönderen uygulamalar burada listelenir.</comment>
+  </data>
+  <data name="Notifications_NeedsPackage" xml:space="preserve">
+    <value>Kurulu sürüm gerekiyor</value>
+  </data>
+  <data name="Notifications_NotAsked" xml:space="preserve">
+    <value>İzin verilmedi</value>
+  </data>
+  <data name="Notifications_Denied" xml:space="preserve">
+    <value>Windows'ta kapalı</value>
+  </data>
+  <data name="Notifications_Unavailable" xml:space="preserve">
+    <value>Bildirimler okunamadı</value>
+  </data>
+  <data name="Notifications_Allow" xml:space="preserve">
+    <value>İzin ver…</value>
+  </data>
+  <data name="Notifications_WindowsSettings" xml:space="preserve">
+    <value>Windows ayarları…</value>
+  </data>
+  <data name="Notifications_AccessNote" xml:space="preserve">
+    <value>Windows, başka uygulamaların bildirimlerini okumak için bir kez izin ister; bu izin yalnızca kurulu (MSIX) ISLe8'e verilebilir, zip'ten açılan sürüme verilmez. İzni sonradan Windows Ayarları &gt; Gizlilik ve güvenlik &gt; Bildirimler'den değiştirebilirsin. Gmail gibi siteler tarayıcının bildirimleriyle gelir. Bildirimler iki kez görünmesin diye, Windows Ayarları &gt; Sistem &gt; Bildirimler'de ilgili uygulamaların başlıklarını kapatabilirsin.</value>
+  </data>
 </root>

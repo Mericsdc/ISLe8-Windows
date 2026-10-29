@@ -66,11 +66,15 @@ public static class IslandSizes
         Enum.GetValues<IslandTab>().Select(tab => Open(settings, tab)).MaxBy(size => size.Height);
 
     /// <summary>
-    /// A banner: the wide pill plus 60, at least 340, and the pill's row plus 46 for its content
-    /// (IslandModel.swift, size(for: .alert)). Its top row stays empty, as the notch's does on the Mac.
+    /// A banner: the wide pill plus 60, at least 340, and the pill's row plus 46 for its content;
+    /// notifications and meetings, with more to say, the pill plus 200, at least 400, and the row
+    /// plus 74 (IslandModel.swift, size(for: .alert)). Its top row stays empty, as the notch's does on the Mac.
     /// </summary>
-    public static DipSize Alert(IslandAlert alert) =>
-        new(Math.Max(IslandMetrics.CompactPillWidth + 60, 340), HeaderHeight + 46);
+    public static DipSize Alert(IslandAlert alert) => alert switch
+    {
+        NotificationAlert or MeetingAlert => new(Math.Max(400, Notch + 200), HeaderHeight + 74),
+        _ => new(Math.Max(IslandMetrics.CompactPillWidth + 60, 340), HeaderHeight + 46),
+    };
 
     /// <summary>The drop target's two zones under the pill's row (IslandModel.swift, size(for: .dropTarget)).</summary>
     public static DipSize DropTarget => new(Math.Max(460, Notch + 240), HeaderHeight + 112);

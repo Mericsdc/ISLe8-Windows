@@ -328,6 +328,30 @@ internal static unsafe partial class Win32
     [LibraryImport("CoreMessaging.dll")]
     public static partial int CreateDispatcherQueueController(DispatcherQueueOptions options, out nint controller);
 
+    /// <summary>ERROR_INSUFFICIENT_BUFFER, or APPMODEL_ERROR_NO_PACKAGE (15700) outside a package.</summary>
+    [LibraryImport("kernel32.dll")]
+    public static partial int GetCurrentPackageFamilyName(ref uint length, char* name);
+
+    public const uint WM_WTSSESSION_CHANGE = 0x02B1;
+    public const nint WTS_SESSION_LOCK = 7;
+    public const nint WTS_SESSION_UNLOCK = 8;
+    public const uint NOTIFY_FOR_THIS_SESSION = 0;
+
+    [LibraryImport("wtsapi32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool WTSRegisterSessionNotification(nint hwnd, uint flags);
+
+    [LibraryImport("wtsapi32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool WTSUnRegisterSessionNotification(nint hwnd);
+
+    /// <summary>
+    /// Reads a Windows Notification Facility state. Not in the SDK headers, but stable since Windows 10
+    /// and the only way to read Do not disturb (<see cref="Notifications.FocusStatus"/>).
+    /// </summary>
+    [LibraryImport("ntdll.dll")]
+    public static partial int NtQueryWnfStateData(ref ulong stateName, nint typeId, nint explicitScope, out uint changeStamp, void* buffer, ref uint bufferSize);
+
     public static string ClassName(nint hwnd)
     {
         var buffer = stackalloc char[64];

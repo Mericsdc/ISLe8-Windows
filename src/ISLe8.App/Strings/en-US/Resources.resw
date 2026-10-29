@@ -1044,4 +1044,67 @@
   <data name="Settings_ReserveStripNote" xml:space="preserve">
     <value>A thin strip at the top of the screen is kept for the island, as for the taskbar. Maximised windows (a browser's tabs) stay clear of the pill; the open island still opens over windows.</value>
   </data>
+  <data name="Settings_Notifications" xml:space="preserve">
+    <value>Notifications</value>
+    <comment>mac: Bildirimler</comment>
+  </data>
+  <data name="Notifications_Show" xml:space="preserve">
+    <value>Show notifications on the island</value>
+    <comment>mac: Bildirimleri adada göster</comment>
+  </data>
+  <data name="Notifications_Access" xml:space="preserve">
+    <value>Access</value>
+    <comment>mac: Erişim</comment>
+  </data>
+  <data name="Notifications_Off" xml:space="preserve">
+    <value>Off</value>
+    <comment>mac: Kapalı</comment>
+  </data>
+  <data name="Notifications_Reading" xml:space="preserve">
+    <value>Reading</value>
+    <comment>mac: Okunuyor</comment>
+  </data>
+  <data name="Notifications_Retry" xml:space="preserve">
+    <value>Try Again</value>
+    <comment>mac: Tekrar dene</comment>
+  </data>
+  <data name="Notifications_Focus" xml:space="preserve">
+    <value>Don't show during Do not disturb</value>
+  </data>
+  <data name="Notifications_FocusNote" xml:space="preserve">
+    <value>Detects Do not disturb turned on by hand, on a schedule or by a focus session.</value>
+  </data>
+  <data name="Notifications_Duration" xml:space="preserve">
+    <value>Time on screen</value>
+    <comment>mac: Ekranda kalma süresi</comment>
+  </data>
+  <data name="Notifications_Apps" xml:space="preserve">
+    <value>Apps</value>
+    <comment>mac: Uygulamalar</comment>
+  </data>
+  <data name="Notifications_AppsEmpty" xml:space="preserve">
+    <value>Apps that send notifications are listed here.</value>
+    <comment>mac: Bildirim gönderen uygulamalar burada listelenir.</comment>
+  </data>
+  <data name="Notifications_NeedsPackage" xml:space="preserve">
+    <value>Needs the installed version</value>
+  </data>
+  <data name="Notifications_NotAsked" xml:space="preserve">
+    <value>Not allowed yet</value>
+  </data>
+  <data name="Notifications_Denied" xml:space="preserve">
+    <value>Turned off in Windows</value>
+  </data>
+  <data name="Notifications_Unavailable" xml:space="preserve">
+    <value>Couldn't read notifications</value>
+  </data>
+  <data name="Notifications_Allow" xml:space="preserve">
+    <value>Allow…</value>
+  </data>
+  <data name="Notifications_WindowsSettings" xml:space="preserve">
+    <value>Windows Settings…</value>
+  </data>
+  <data name="Notifications_AccessNote" xml:space="preserve">
+    <value>Windows asks once before ISLe8 can read other apps' notifications, and only the installed (MSIX) ISLe8 can be allowed, not the one opened from the zip. You can change it later in Windows Settings &gt; Privacy &amp; security &gt; Notifications. Sites such as Gmail come in through the browser's notifications. So that notifications don't show twice, you can turn off the banners of those apps in Windows Settings &gt; System &gt; Notifications.</value>
+  </data>
 </root>

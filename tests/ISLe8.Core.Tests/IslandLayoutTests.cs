@@ -7,7 +7,7 @@ public class IslandLayoutTests
     [Fact]
     public void TheStripKeptFreeHoldsThePillAndItsPeek()
     {
-        Assert.Equal(IslandMetrics.TopMargin + IslandMetrics.PillHeight + IslandMetrics.PeekGrowth.Height, IslandMetrics.ReservedHeight);
+        Assert.Equal(IslandMetrics.ReservedHeight, IslandMetrics.TopMargin + IslandMetrics.PillHeight + IslandMetrics.PeekGrowth.Height);
         Assert.Equal(66, IslandMetrics.ReservedPixels(1.5));
         Assert.Equal(44, IslandMetrics.ReservedPixels(1));
         Assert.True(new ISLe8.Core.Settings.AppSettings().ReserveTopStrip);

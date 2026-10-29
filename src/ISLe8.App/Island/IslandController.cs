@@ -17,6 +17,7 @@ using ISLe8.Core.Settings;
 using ISLe8.Core.Theming;
 using ISLe8.Localization;
 using ISLe8.Media;
+using ISLe8.Notifications;
 using ISLe8.Shell;
 using ISLe8.UI;
 using Microsoft.UI.Dispatching;
@@ -57,6 +58,7 @@ internal sealed class IslandController : IDisposable
     private readonly SystemSampler _system;
     private readonly ClipboardService _clipboard;
     private readonly ShelfStore _shelf;
+    private readonly NotificationService _notifications;
     private HotKey? _clipboardKey;
     private nint _foregroundBeforeKeyboard;
 
@@ -84,6 +86,7 @@ internal sealed class IslandController : IDisposable
         _system = new SystemSampler(_queue);
         _clipboard = new ClipboardService(_settings, new ClipboardHistory(AppPaths.DataFolder), _window.Hwnd, _queue);
         _shelf = new ShelfStore(AppPaths.DataFolder, new NtfsFileLocator(), () => DateTimeOffset.Now);
+        _notifications = new NotificationService(_settings, _queue, () => _store.Save(_settings));
         _outsideClicks = new OutsideClickWatcher(_queue, OnClickedOutside);
     }
 
@@ -92,6 +95,9 @@ internal sealed class IslandController : IDisposable
 
     /// <summary>The calendars, for Settings › Widgets.</summary>
     public CalendarService Calendar => _calendar;
+
+    /// <summary>The notification mirror, for Settings › Notifications.</summary>
+    public NotificationService Notifications => _notifications;
 
     /// <summary>The clipboard history, for Settings › Clipboard.</summary>
     public ClipboardService Clipboard => _clipboard;
@@ -145,6 +151,7 @@ internal sealed class IslandController : IDisposable
         _model.TabChanged += OnTabChanged;
         _model.Changed += OnModelChanged;
         _model.AlertChanged += OnAlertChanged;
+        _model.PendingNotificationsChanged += () => _view.NotificationBanner.SetPending(_model.PendingNotificationCount);
         _timer.Changed += OnTimerChanged;
         _timer.PhaseEnded += OnTimerPhaseEnded;
         _calendar.MeetingSoon += entry =>
@@ -152,6 +159,23 @@ internal sealed class IslandController : IDisposable
             if (!_window.IsHiddenForFullscreen) _model.ShowAlert(new MeetingAlert(entry), AlertDurations.Meeting);
         };
         _ = _calendar.Start();
+        _notifications.Arrived += notification =>
+        {
+            if (!_window.IsHiddenForFullscreen) _model.ShowNotification(notification);
+        };
+        _notifications.ApplySettings();
+        // Windows asks once, the first time the installed ISLe8 starts with the mirror on.
+        if (_notifications.Access == NotificationAccess.NotAsked) _ = _notifications.RequestAccessAsync();
+        // A locked session shows no banners and keeps none for later (IslandModel.swift, setLocked).
+        Win32.WTSRegisterSessionNotification(_window.Hwnd, Win32.NOTIFY_FOR_THIS_SESSION);
+        _window.AddMessageHandler((message, wParam, _) =>
+        {
+            if (message == Win32.WM_WTSSESSION_CHANGE && wParam is Win32.WTS_SESSION_LOCK or Win32.WTS_SESSION_UNLOCK)
+            {
+                _model.SetLocked(wParam == Win32.WTS_SESSION_LOCK);
+            }
+            return null;
+        });
         _window.AddMessageHandler(_clipboard.OnMessage);
         _clipboard.ApplySettings();
         // Ctrl+Alt+V opens the clipboard from anywhere, its search ready for typing (PORTING.md §3.9).
@@ -174,6 +198,8 @@ internal sealed class IslandController : IDisposable
     {
         _outsideClicks.Dispose();
         _clipboardKey?.Dispose();
+        _notifications.Dispose();
+        Win32.WTSUnRegisterSessionNotification(_window.Hwnd);
         StopView();
         _media.Dispose();
         _window.Dispose();
@@ -191,7 +217,7 @@ internal sealed class IslandController : IDisposable
         if (_view is not null) StopView();
 
         _view = new IslandView(
-            theme, _settings, _media, _timer, _weather, _calendar, _notes, _system, _clipboard, _shelf, _window.Hwnd, _queue,
+            theme, _settings, _media, _timer, _weather, _calendar, _notes, _system, _clipboard, _shelf, _notifications, _window.Hwnd, _queue,
             takeKeyboard: TakeKeyboard,
             dismissAlert: _model.DismissAlert,
             close: _model.Close,
@@ -400,7 +426,7 @@ internal sealed class IslandController : IDisposable
         }
         else if (state == IslandState.Alert)
         {
-            _view.ShowAlert(_model.Alert);
+            _view.ShowAlert(_model.Alert, _model.PendingNotificationCount);
             _view.SetAlert(shape);
             _view.AlertLayer.Visibility = Visibility.Visible;
             _surface.Fade(_view.AlertLayer, 1, MotionTimings.ContentDelay, MotionTimings.ContentFadeIn);
@@ -549,6 +575,13 @@ internal sealed class IslandController : IDisposable
     {
         var point = e.GetCurrentPoint(_view.Area);
         if (_model.State == IslandState.Expanded || !(point.Properties.IsLeftButtonPressed || e.Pointer.PointerDeviceType == PointerDeviceType.Touch)) return;
+        // A notification has done its job once clicked: its app comes forward (NotificationViews.swift).
+        if (_model.State == IslandState.Alert && _model.Alert is NotificationAlert notification)
+        {
+            SenderApp.Open(notification.Notification.AppId);
+            _model.DismissAlert();
+            return;
+        }
         _model.Click();
     }
 
@@ -580,7 +613,7 @@ internal sealed class IslandController : IDisposable
     }
 
     /// <summary>One banner took another's place: the same size for now, so only the content changes.</summary>
-    private void OnAlertChanged() => _view.ShowAlert(_model.Alert);
+    private void OnAlertChanged() => _view.ShowAlert(_model.Alert, _model.PendingNotificationCount);
 
     // MARK: Keyboard
 

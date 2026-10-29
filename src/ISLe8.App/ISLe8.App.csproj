@@ -27,13 +27,14 @@
     <!-- Lightness: no JIT, trimmed. Applies to dotnet publish and to app packages. -->
     <PublishAot>true</PublishAot>
     <JsonSerializerIsReflectionEnabledByDefault>false</JsonSerializerIsReflectionEnabledByDefault>
+    <!-- The Windows App SDK travels with ISLe8, in the package as in the zip: nothing else to install. -->
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
   </PropertyGroup>
 
   <!-- -p:Unpackaged=true: a plain .exe with the Windows App SDK beside it; no install, no identity.
-       Media works this way; the notification mirror (W3) needs the package. -->
+       Everything but the notification mirror and the startup task works this way. -->
   <PropertyGroup Condition="'$(Unpackaged)' == 'true'">
     <WindowsPackageType>None</WindowsPackageType>
-    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
   </PropertyGroup>
 
   <ItemGroup>

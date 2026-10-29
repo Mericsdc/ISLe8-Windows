@@ -44,10 +44,10 @@ public class CalendarTests
     }
 
     [Fact]
-    public void ARepeatingEventSkipsItsExceptionsAndGivesWayToItsMovedCopy()
+    public async Task ARepeatingEventSkipsItsExceptionsAndGivesWayToItsMovedCopy()
     {
         var service = Service(Feed, out _);
-        service.Refresh().GetAwaiter().GetResult();
+        await service.Refresh();
 
         var week = service.Between(new DateTimeOffset(2026, 10, 26, 0, 0, 0, Istanbul), new DateTimeOffset(2026, 11, 2, 0, 0, 0, Istanbul))
             .Where(e => e.Title.StartsWith("Günlük")).ToList();
@@ -73,10 +73,10 @@ public class CalendarTests
     }
 
     [Fact]
-    public void AMultiDayEventMarksEachDayAndMeetingLinksAreFoundInTheNotes()
+    public async Task AMultiDayEventMarksEachDayAndMeetingLinksAreFoundInTheNotes()
     {
         var service = Service(Feed, out _);
-        service.Refresh().GetAwaiter().GetResult();
+        await service.Refresh();
 
         var days = service.EventDays(new DateOnly(2026, 10, 28), new DateOnly(2026, 11, 1));
         Assert.True(days.ContainsKey(new DateOnly(2026, 10, 29)));
@@ -92,12 +92,12 @@ public class CalendarTests
     }
 
     [Fact]
-    public void FiveMinutesBeforeAMeetingAHeadsUpComesOnce()
+    public async Task FiveMinutesBeforeAMeetingAHeadsUpComesOnce()
     {
         var service = Service(Feed, out var clock, start: new DateTimeOffset(2026, 10, 29, 12, 0, 0, Istanbul));
         var soon = new List<CalendarEntry>();
         service.MeetingSoon += soon.Add;
-        service.Refresh().GetAwaiter().GetResult();
+        await service.Refresh();
 
         clock.Advance(TimeSpan.FromMinutes(24));
         Assert.Empty(soon);

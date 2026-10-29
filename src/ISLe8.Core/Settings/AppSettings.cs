@@ -115,6 +115,21 @@ public sealed class AppSettings
 
     /// <summary>Programs, by .exe name, whose copies are never recorded (password managers by default).</summary>
     public List<string> ClipboardExcludedApps { get; set; } = [.. Clipboard.ClipboardRules.DefaultExcludedApps];
+
+    /// <summary>Settings › Notifications: other apps' notifications show on the island (PORTING.md §3.11).</summary>
+    public bool NotificationsEnabled { get; set; } = true;
+
+    /// <summary>Seconds a notification banner stays up, 2–10 in steps of 0.5.</summary>
+    public double NotificationDuration { get; set; } = 4;
+
+    /// <summary>Not while Do not disturb or a focus session is on.</summary>
+    public bool RespectFocus { get; set; } = true;
+
+    /// <summary>AppUserModelIDs whose notifications never show.</summary>
+    public List<string> MutedNotificationApps { get; set; } = [];
+
+    /// <summary>Apps that recently sent notifications, newest first, for the mute list (<see cref="Notifications.NotificationRules.Remember"/>).</summary>
+    public List<Notifications.NotificationApp> NotificationSeenApps { get; set; } = [];
     public bool SwipeToChangeTabs { get; set; } = true;
 
     /// <summary>Kept out of screenshots, recordings and shared screens.</summary>
@@ -159,8 +174,13 @@ public sealed class AppSettings
         WeatherCity = (WeatherCity ?? "").Trim();
         ClipboardLimit = Math.Clamp((int)Math.Round(ClipboardLimit / 50.0) * 50, 50, 1000);
         ClipboardMaxAgeDays = Math.Clamp(ClipboardMaxAgeDays, 1, 365);
+        NotificationDuration = Math.Round(Clamp(NotificationDuration, 2, 10, 4) * 2) / 2;
         ClipboardExcludedApps = (ClipboardExcludedApps ?? []).Select(app => (app ?? "").Trim()).Where(app => app.Length > 0)
             .Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        MutedNotificationApps = (MutedNotificationApps ?? []).Where(app => !string.IsNullOrWhiteSpace(app))
+            .Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        NotificationSeenApps = (NotificationSeenApps ?? []).Where(app => app is not null && !string.IsNullOrWhiteSpace(app.Id))
+            .DistinctBy(app => app.Id, StringComparer.OrdinalIgnoreCase).Take(Notifications.NotificationRules.SeenLimit).ToList();
         CalendarFeeds = (CalendarFeeds ?? []).Select(feed => (feed ?? "").Trim())
             .Where(feed => Uri.TryCreate(feed, UriKind.Absolute, out var uri) && uri.Scheme is "https" or "http" or "webcal")
             .Distinct(StringComparer.Ordinal).ToList();

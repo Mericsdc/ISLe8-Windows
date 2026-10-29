@@ -1,4 +1,5 @@
 using ISLe8.Core.Geometry;
+using ISLe8.Core.Notifications;
 using ISLe8.Core.Settings;
 
 namespace ISLe8.Core.Island;
@@ -48,6 +49,9 @@ public sealed class IslandModel
     /// <summary>Reopening within this time returns to the tab you left; later it starts at the first tab.</summary>
     public static readonly TimeSpan TabMemory = TimeSpan.FromSeconds(15);
 
+    /// <summary>At most this many notifications wait behind a banner; older ones give way.</summary>
+    public const int NotificationQueueLimit = 5;
+
     private readonly AppSettings _settings;
     private readonly IIslandClock _clock;
     private IDisposable? _hoverTimer;
@@ -56,6 +60,8 @@ public sealed class IslandModel
     private bool _mediaActive;
     private bool _timerActive;
     private IDisposable? _alertTimer;
+    private IDisposable? _pendingTimer;
+    private readonly List<AppNotification> _pending = [];
     private DateTimeOffset _closedAt = DateTimeOffset.MinValue;
 
     public IslandModel(AppSettings settings, IIslandClock clock)
@@ -85,6 +91,12 @@ public sealed class IslandModel
     public bool IsHovering { get; private set; }
     public bool IsMenuOpen { get; private set; }
 
+    /// <summary>The session is locked: no banners, nothing waits for later (IslandModel.swift, setLocked).</summary>
+    public bool IsLocked { get; private set; }
+
+    /// <summary>Notifications waiting for the current banner to finish, shown as "+N" on it.</summary>
+    public int PendingNotificationCount => _pending.Count;
+
     /// <summary>Whether the last change made the island bigger. Growing and shrinking use different springs.</summary>
     public bool IsGrowing { get; private set; } = true;
 
@@ -105,6 +117,9 @@ public sealed class IslandModel
 
     /// <summary>One banner took another's place without the state changing.</summary>
     public event Action? AlertChanged;
+
+    /// <summary><see cref="PendingNotificationCount"/> changed.</summary>
+    public event Action? PendingNotificationsChanged;
 
     /// <summary>Anything changed: state, pill, pointer, pin or menu.</summary>
     public event Action? Changed;
@@ -128,6 +143,8 @@ public sealed class IslandModel
         }
         Cancel(ref _hoverTimer);
         Cancel(ref _closeTimer);
+        // A pointer that only passed over the pill held notifications back without moving the island.
+        if (!inside) ShowPendingLater();
 
         if (inside)
         {
@@ -224,7 +241,7 @@ public sealed class IslandModel
     /// </summary>
     public void ShowAlert(IslandAlert alert, TimeSpan duration)
     {
-        if (State is not (IslandState.Pill or IslandState.Alert) || IsHovering || IsMenuOpen) return;
+        if (!CanShowAlert) return;
         Cancel(ref _alertTimer);
         Alert = alert;
         if (State == IslandState.Alert)
@@ -239,12 +256,73 @@ public sealed class IslandModel
         EndAlert(duration);
     }
 
+    /// <summary>
+    /// Notifications queue up behind a banner that is already showing one, and wait while the island
+    /// is open or under the pointer, instead of being dropped (IslandModel.swift, showNotification).
+    /// </summary>
+    public void ShowNotification(AppNotification notification)
+    {
+        if (IsLocked) return;
+        if (CanShowAlert && !IsShowingNotification)
+        {
+            ShowAlert(new NotificationAlert(notification), NotificationDuration);
+            return;
+        }
+        _pending.Add(notification);
+        if (_pending.Count > NotificationQueueLimit) _pending.RemoveRange(0, _pending.Count - NotificationQueueLimit);
+        PendingNotificationsChanged?.Invoke();
+    }
+
+    /// <summary>
+    /// The session was locked or unlocked. Locking puts the island at rest and forgets what was
+    /// waiting; the Mac's lock-screen island has no Windows counterpart (PORTING.md §3.18).
+    /// </summary>
+    public void SetLocked(bool locked)
+    {
+        if (locked == IsLocked) return;
+        IsLocked = locked;
+        Cancel(ref _hoverTimer);
+        Cancel(ref _closeTimer);
+        Cancel(ref _alertTimer);
+        IsPinned = false;
+        if (_pending.Count > 0)
+        {
+            _pending.Clear();
+            PendingNotificationsChanged?.Invoke();
+        }
+        if (locked) Transition(IslandState.Pill);
+        Changed?.Invoke();
+    }
+
     /// <summary>A banner's button did what it offered (Katıl): the banner goes at once.</summary>
     public void DismissAlert()
     {
         if (State != IslandState.Alert) return;
         Cancel(ref _alertTimer);
         Transition(IslandState.Pill);
+    }
+
+    /// <summary>Only an island at rest (or showing another banner) takes one, and not under the pointer.</summary>
+    private bool CanShowAlert => State is IslandState.Pill or IslandState.Alert && !IsHovering && !IsMenuOpen && !IsLocked;
+
+    private bool IsShowingNotification => State == IslandState.Alert && Alert is NotificationAlert;
+
+    private TimeSpan NotificationDuration => TimeSpan.FromSeconds(_settings.NotificationDuration);
+
+    /// <summary>The next waiting notification, once the island is back at rest; after the change that let it, not inside it.</summary>
+    private void ShowPendingLater()
+    {
+        if (_pending.Count == 0) return;
+        Cancel(ref _pendingTimer);
+        _pendingTimer = _clock.After(TimeSpan.Zero, () =>
+        {
+            _pendingTimer = null;
+            if (_pending.Count == 0 || !CanShowAlert || IsShowingNotification) return;
+            var next = _pending[0];
+            _pending.RemoveAt(0);
+            PendingNotificationsChanged?.Invoke();
+            ShowAlert(new NotificationAlert(next), NotificationDuration);
+        });
     }
 
     private void EndAlert(TimeSpan after) =>
@@ -389,6 +467,7 @@ public sealed class IslandModel
         State = state;
         StateChanged?.Invoke(old);
         Changed?.Invoke();
+        if (state == IslandState.Pill) ShowPendingLater();
     }
 
     private static void Cancel(ref IDisposable? timer)

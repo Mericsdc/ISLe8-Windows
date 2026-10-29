@@ -3,6 +3,34 @@
 Her maddeyi işaretle; olmayan varsa günlükle birlikte not et (README › Günlük ve ayarlar). W1'in
 adımları en üstte, W0'ın listesi altta.
 
+## Paket (MSIX) ve bildirim aynası (2026-10-29)
+
+Paketli Debug, sonra `scripts\install.ps1 -NoAot` ile Release JIT. Bildirim kuyruğu, kilit, susturma listesi,
+süre ve banner boyutu Core testlerinde (`NotificationTests`; 246'dan 257'ye).
+
+- [x] `install.ps1` paketi `artifacts\package-win-x64`'ten kaydediyor ve açıyor; ayarlar, pano geçmişi, raf ve
+      notlar zip sürümüyle aynı klasörde (`%LOCALAPPDATA%\LRXe8\ISLe8`, paketin sanallaştırması kapalı).
+- [x] Bildirim erişimi: Windows izin vermiş, günlükte "notifications: listening"; `NotificationChanged` olayı
+      paketli masaüstü uygulamasında geliyor (DESIGN.md §6 madde 8'deki risk çıkmadı).
+- [x] Rahatsız etmeyin açıkken ada bildirim göstermiyor (Ayarlar › Bildirimler'deki anahtar açıkken); kapatınca
+      PowerShell'in deneme bildirimi adada çıktı: "Windows PowerShell", başlık, gövde.
+- [x] Üç bildirim art arda: ilki "+2" ile, 4 sn sonra ikincisi "+1" ile.
+- [x] Ayarlar › Bildirimler: "Okunuyor", açıklama, Rahatsız etmeyin anahtarı, 4,0 sn kaydırıcısı, boş uygulama listesi.
+- [x] Ayarlar › Genel › Girişte başlat: başlangıç görevinin durumunu okuyor (kapalı).
+- [ ] Gmail (Chrome) bildirimi adada Chrome'un simgesiyle çıkıyor; tıklayınca açık Chrome penceresi öne geliyor,
+      yeni pencere açılmıyor.
+- [ ] Teams/Outlook bildirimi çıkıyor; banner'a tıklayınca uygulama açılıyor.
+- [ ] Ayarlar › Bildirimler › Uygulamalar'da gönderen uygulama listeleniyor; anahtarı kapatılan uygulamanın bildirimi çıkmıyor.
+- [ ] Banner'ın üstüne gelince süre duruyor; imleç çıkınca 1,2 sn sonra kapanıyor.
+- [ ] Ekran kilitlenip açılınca kilitliyken gelenler adada birikmemiş oluyor.
+- [ ] Girişte başlat açılınca Windows Ayarları › Uygulamalar › Başlangıç'ta ISLe8 görünüyor; oturum açılınca ada geliyor.
+
+**Ölçüm** (ada kapalı)
+
+| Tarih | Yapı | Durum | CPU | Özel bellek | Çalışma kümesi |
+|---|---|---|---|---|---|
+| 2026-10-29 | Paketli, Release JIT x64 (`install.ps1 -NoAot`) | Yeni açılmış, bildirim dinleniyor, Chrome'da medya duraklatılmış, 60 sn | %0,002 (hedef < %0,1) | 49,6 MB (hedef < 80 MB) | 177,9 MB |
+
 ## Üstte ayrılan şerit (2026-10-29)
 
 - [x] Ada açılınca Windows'un çalışma alanı y=66'dan başlıyor (%150'de 44 DIP); masaüstü simgeleri şeridin altında.
