@@ -80,9 +80,9 @@ public class OpenIslandTests
     [Fact]
     public void TabsReadFromAFileAreCompletedAndOneAlwaysStays()
     {
-        var settings = SettingsStore.Import("""{ "tabOrder": ["devices", "gone", "home"], "hiddenTabs": ["home", "shelf", "clipboard", "agents", "devices"] }""");
+        var settings = SettingsStore.Import("""{ "tabOrder": ["devices", "gone", "home"], "hiddenTabs": ["home", "shelf", "clipboard", "notes", "agents", "devices", "system"] }""");
 
-        Assert.Equal(["devices", "home", "shelf", "clipboard", "agents"], settings.TabOrder);
+        Assert.Equal(["devices", "home", "shelf", "clipboard", "notes", "agents", "system"], settings.TabOrder);
         Assert.Empty(settings.HiddenTabs);
     }
 

@@ -723,4 +723,144 @@
   <data name="Settings_NotConnected" xml:space="preserve">
     <value>Not connected</value>
   </data>
+  <data name="Tab_Notes" xml:space="preserve">
+    <value>Notes</value>
+    <comment>mac: Notlar</comment>
+  </data>
+  <data name="Tab_System" xml:space="preserve">
+    <value>System</value>
+    <comment>mac: Sistem</comment>
+  </data>
+  <data name="Notes_Empty" xml:space="preserve">
+    <value>No notes yet. Type above and press Enter to add one; click a note to copy it.</value>
+  </data>
+  <data name="Notes_Placeholder" xml:space="preserve">
+    <value>Write a note, press Enter to add</value>
+  </data>
+  <data name="Notes_EditPlaceholder" xml:space="preserve">
+    <value>Edit the note</value>
+    <comment>mac: Notu düzenle</comment>
+  </data>
+  <data name="Notes_Cancel" xml:space="preserve">
+    <value>Cancel</value>
+    <comment>mac: Vazgeç</comment>
+  </data>
+  <data name="Notes_Add" xml:space="preserve">
+    <value>Add</value>
+    <comment>mac: Ekle</comment>
+  </data>
+  <data name="Notes_Save" xml:space="preserve">
+    <value>Save</value>
+    <comment>mac: Kaydet</comment>
+  </data>
+  <data name="Notes_Copied" xml:space="preserve">
+    <value>Copied</value>
+    <comment>mac: Kopyalandı</comment>
+  </data>
+  <data name="Notes_Edit" xml:space="preserve">
+    <value>Edit</value>
+    <comment>mac: Düzenle</comment>
+  </data>
+  <data name="Notes_Delete" xml:space="preserve">
+    <value>Delete</value>
+    <comment>mac: Sil</comment>
+  </data>
+  <data name="Notes_ClickToCopy" xml:space="preserve">
+    <value>Click to copy</value>
+    <comment>mac: Kopyalamak için tıkla</comment>
+  </data>
+  <data name="Notes_Copy" xml:space="preserve">
+    <value>Copy</value>
+    <comment>mac: Kopyala</comment>
+  </data>
+  <data name="Ago_Now" xml:space="preserve">
+    <value>now</value>
+  </data>
+  <data name="Ago_Minute" xml:space="preserve">
+    <value>{0} minute ago</value>
+  </data>
+  <data name="Ago_Minutes" xml:space="preserve">
+    <value>{0} minutes ago</value>
+  </data>
+  <data name="Ago_Hour" xml:space="preserve">
+    <value>{0} hour ago</value>
+  </data>
+  <data name="Ago_Hours" xml:space="preserve">
+    <value>{0} hours ago</value>
+  </data>
+  <data name="Ago_Yesterday" xml:space="preserve">
+    <value>yesterday</value>
+  </data>
+  <data name="Ago_Days" xml:space="preserve">
+    <value>{0} days ago</value>
+  </data>
+  <data name="Ago_Week" xml:space="preserve">
+    <value>{0} week ago</value>
+  </data>
+  <data name="Ago_Weeks" xml:space="preserve">
+    <value>{0} weeks ago</value>
+  </data>
+  <data name="Ago_Month" xml:space="preserve">
+    <value>{0} month ago</value>
+  </data>
+  <data name="Ago_Months" xml:space="preserve">
+    <value>{0} months ago</value>
+  </data>
+  <data name="Ago_Year" xml:space="preserve">
+    <value>{0} year ago</value>
+  </data>
+  <data name="Ago_Years" xml:space="preserve">
+    <value>{0} years ago</value>
+  </data>
+  <data name="System_Cpu" xml:space="preserve">
+    <value>CPU</value>
+    <comment>mac: İşlemci</comment>
+  </data>
+  <data name="System_Cores" xml:space="preserve">
+    <value>{0} cores</value>
+    <comment>mac: %lld çekirdek</comment>
+  </data>
+  <data name="System_Memory" xml:space="preserve">
+    <value>Memory</value>
+    <comment>mac: Bellek</comment>
+  </data>
+  <data name="System_Disk" xml:space="preserve">
+    <value>Disk</value>
+    <comment>mac: Disk</comment>
+  </data>
+  <data name="System_Free" xml:space="preserve">
+    <value>{0} free</value>
+    <comment>mac: %@ boş</comment>
+  </data>
+  <data name="System_Rate" xml:space="preserve">
+    <value>{0}/s</value>
+    <comment>mac: %@/sn</comment>
+  </data>
+  <data name="System_Cellular" xml:space="preserve">
+    <value>Cellular</value>
+    <comment>mac: Hücresel</comment>
+  </data>
+  <data name="System_Network" xml:space="preserve">
+    <value>Network</value>
+    <comment>mac: Ağ</comment>
+  </data>
+  <data name="System_Offline" xml:space="preserve">
+    <value>Offline</value>
+    <comment>mac: Çevrimdışı</comment>
+  </data>
+  <data name="System_Wired" xml:space="preserve">
+    <value>Online through an Ethernet cable</value>
+    <comment>mac: İnternete kabloyla (Ethernet) bağlı</comment>
+  </data>
+  <data name="System_TopCpu" xml:space="preserve">
+    <value>Top CPU use</value>
+    <comment>mac: En çok işlemci kullananlar</comment>
+  </data>
+  <data name="System_OpenTaskManager" xml:space="preserve">
+    <value>Open Task Manager</value>
+  </data>
+  <data name="System_Measuring" xml:space="preserve">
+    <value>Measuring…</value>
+    <comment>mac: Ölçülüyor…</comment>
+  </data>
 </root>

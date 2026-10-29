@@ -3,6 +3,31 @@
 Her maddeyi işaretle; olmayan varsa günlükle birlikte not et (README › Günlük ve ayarlar). W1'in
 adımları en üstte, W0'ın listesi altta.
 
+## Notlar ve Sistem sekmeleri (2026-10-29)
+
+Debug (JIT). Dock'ta artık Mac'teki yedi sekme var: Home, Raf, Pano, Notlar, AI, Cihazlar, Sistem
+(kaydedilmiş sıraya yeni ikisi sona eklenir). Not deposu, göreli tarih ve sistem hesapları Core
+testlerinde (`NotesTests`, `SystemTests`; 213'ten 231'e). Görünüm maddeleri canlı denenecek (fare o
+sırada kullanılıyordu).
+
+**Notlar**
+- [ ] Yazma satırına tıklayınca yazılabiliyor (ada klavyeyi alıyor); Enter ekliyor, Esc vazgeçiyor.
+- [ ] Notlar kart olarak, genişliğe göre 2–4 sütun; karta tıklayınca kopyalanıyor ve 1,2 sn "Kopyalandı".
+- [ ] Üzerine gelince düzenle ve sil; sağ tık menüsünde Kopyala, Düzenle, Sil; düzenlenen kart vurgu çerçeveli.
+- [ ] Not boşaltılıp kaydedilince siliniyor; uygulama yeniden açılınca notlar duruyor.
+
+**Sistem**
+- [ ] İşlemci, bellek, disk halkaları (yeşil, %60'tan turuncu, %85'ten kırmızı), "8 çekirdek", "12 GB / 32 GB",
+      "200 GB boş"; ağ kartında LAN/Wi-Fi ve ↓/↑ hızları.
+- [ ] Sağda en çok işlemci kullanan 5 süreç (yüzde ve bellek); ↗ Görev Yöneticisi'ni açıyor.
+- [ ] Sekme kapalıyken örnekleme yok (ölçümle): boştaki CPU Sistem sekmesi açılıp kapandıktan sonra da < %0,1.
+
+**Ölçüm** (Release JIT, ada kapalı, `media-state.ps1` önce ve sonra)
+
+| Tarih | Yapı | Durum | CPU | Özel bellek | Çalışma kümesi |
+|---|---|---|---|---|---|
+| 2026-10-29 | Notlar ve Sistem, Release JIT x64 | Chrome'da medya **duraklatılmış**, 45 sn | %0,002 (hedef < %0,1) | 40,5 MB (hedef < 80 MB) | 147,8 MB |
+
 ## W1 · Zamanlayıcı, hava durumu ve takvim (2026-10-29)
 
 Debug (JIT). Kurallar Core testlerinde: `TimerTests` (geri sayım, duraklatma, Pomodoro turları,

@@ -8,14 +8,16 @@ public enum IslandTab
     Home,
     Shelf,
     Clipboard,
+    Notes,
     Agents,
     Devices,
+    System,
 }
 
 public static class IslandTabs
 {
     /// <summary>The ids are the Mac's (SettingsStore.swift, allTabs), in the default order.</summary>
-    private static readonly string[] Ids = ["home", "shelf", "clipboard", "agents", "devices"];
+    private static readonly string[] Ids = ["home", "shelf", "clipboard", "notes", "agents", "devices", "system"];
 
     public static IReadOnlyList<string> AllIds => Ids;
 

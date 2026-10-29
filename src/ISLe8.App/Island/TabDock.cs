@@ -52,6 +52,8 @@ internal sealed class TabDock
     {
         IslandTab.Shelf => "Tab_Shelf",
         IslandTab.Clipboard => "Tab_Clipboard",
+        IslandTab.Notes => "Tab_Notes",
+        IslandTab.System => "Tab_System",
         IslandTab.Agents => "Tab_Agents",
         IslandTab.Devices => "Tab_Devices",
         _ => "Tab_Home",
@@ -61,6 +63,8 @@ internal sealed class TabDock
     {
         IslandTab.Shelf => Glyphs.Shelf,
         IslandTab.Clipboard => Glyphs.Clipboard,
+        IslandTab.Notes => Glyphs.Notes,
+        IslandTab.System => Glyphs.System,
         IslandTab.Agents => Glyphs.Agents,
         IslandTab.Devices => Glyphs.Devices,
         _ => Glyphs.Home,

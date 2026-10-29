@@ -5,7 +5,10 @@ using ISLe8.Core.Theming;
 using ISLe8.Localization;
 using ISLe8.Calendar;
 using ISLe8.Core.Calendar;
+using ISLe8.Core.Notes;
 using ISLe8.Core.Timer;
+using ISLe8.Notes;
+using ISLe8.SystemTab;
 using ISLe8.Core.Weather;
 using ISLe8.Media;
 using ISLe8.Timer;
@@ -43,7 +46,7 @@ internal sealed class IslandView
 
     public IslandView(
         IslandTheme theme, AppSettings settings, MediaService media, IslandTimer timer, WeatherService weather, CalendarService calendar,
-        DispatcherQueue queue, Action takeKeyboard, Action dismissAlert)
+        NotesStore notes, SystemSampler system, DispatcherQueue queue, Action takeKeyboard, Action dismissAlert)
     {
         BackgroundHost = new Grid { IsHitTestVisible = false };
 
@@ -85,6 +88,10 @@ internal sealed class IslandView
 
         Home = new HomeView(media, timer, weather, calendar, settings, theme, queue, takeKeyboard);
         _tabs[IslandTab.Home] = Home.Root;
+        Notes = new NotesTab(notes, theme, queue, takeKeyboard);
+        _tabs[IslandTab.Notes] = Notes.Root;
+        System = new SystemTabView(system, settings, theme);
+        _tabs[IslandTab.System] = System.Root;
         foreach (var tab in new[] { IslandTab.Shelf, IslandTab.Clipboard, IslandTab.Agents, IslandTab.Devices })
         {
             _tabs[tab] = Placeholder(tab);
@@ -165,6 +172,8 @@ internal sealed class IslandView
     public HeaderBar Header { get; }
     public TabDock Dock { get; }
     public HomeView Home { get; }
+    public NotesTab Notes { get; }
+    public SystemTabView System { get; }
     public MediaBanner Banner { get; }
     public TimerBanner TimerBanner { get; }
     public MeetingBanner MeetingBanner { get; }

@@ -428,6 +428,8 @@ Her modülde: Mac dosyaları → Windows karşılığı → önemli davranışla
   - Kayıt: tek JSON dosyası, yalnızca kullanıcı okuyabilir (Mac'te 0600). Arka planda iş yok.
   - Yazma satırına tıklamak adaya klavye verir; ada kapanınca klavye önceki uygulamaya döner. Windows: ada penceresi `WS_EX_NOACTIVATE`; satıra tıklayınca etkinleştir, kapanınca önceki pencereye geri ver.
 - **Kabul:** Not ekleme, kopyalama, düzenleme, silme; uygulama yeniden açılınca notlar duruyor.
+- **Windows'ta yapılan:** `%LOCALAPPDATA%\LRXe8\ISLe8\notes.json`; klasörün ACL'i zaten yalnızca kullanıcıya (ve
+  SYSTEM/Yöneticiler'e) açık, dosyaya ayrıca izin verilmiyor. İngilizce metinlerde Mac'in "Return"ü "Enter" oldu.
 
 ### 3.20 Sistem sekmesi ve LAN (plana eklenmeli: W3)
 
@@ -439,6 +441,8 @@ Her modülde: Mac dosyaları → Windows karşılığı → önemli davranışla
   - Göstergeler kullanım arttıkça yeşil → turuncu (%60) → kırmızı (%85).
 - **LAN:** Bağlantı türü olay tabanlı izlenir (Mac `NWPathMonitor`; Windows `NetworkInformation.NetworkStatusChanged` + `GetInternetConnectionProfile().NetworkAdapter.IanaInterfaceType == 6`). Ethernet'teyken başlıkta yeşil **LAN** çipi; dar ekranda düşmez. Kablo takılınca/çıkarılınca §2'deki durum kulakları. Uygulama açılırken zaten kabloluysa bildirim yok. Ayar: Görünüm > Başlık çubuğu > "Kablolu bağlantı (LAN)".
 - **Kabul:** Kabloyu takıp çıkarınca kulaklar ve çip doğru; sekme kapalıyken örnekleme yok (ölçümle).
+- **Windows'ta yapılan:** Sistem sekmesi. Süreç belleği çalışma kümesi (Mac'te phys_footprint); "Etkinlik
+  Monitörü'nü aç" yerine "Görev Yöneticisi'ni aç". LAN çipi ve kablo kulakları durum kulaklarıyla birlikte (pil adımı).
 
 ### 3.21 Klavye temizliği (plana eklenmeli: W3)
 

@@ -3,6 +3,8 @@ using ISLe8.Core.Geometry;
 using ISLe8.Core.Island;
 using ISLe8.Core.Media;
 using ISLe8.Core.Calendar;
+using ISLe8.Core.Notes;
+using ISLe8.SystemTab;
 using ISLe8.Core.Timer;
 using ISLe8.Core.Weather;
 using ISLe8.Interop;
@@ -47,6 +49,8 @@ internal sealed class IslandController : IDisposable
     private readonly IslandTimer _timer;
     private readonly WeatherService _weather;
     private readonly CalendarService _calendar;
+    private readonly NotesStore _notes;
+    private readonly SystemSampler _system;
     private nint _foregroundBeforeKeyboard;
 
     /// <summary>One client for the app's few requests (weather now; more later), as .NET recommends.</summary>
@@ -69,6 +73,8 @@ internal sealed class IslandController : IDisposable
         _timer = new IslandTimer(_settings, clock);
         _weather = new WeatherService(_settings, Http, () => DateTimeOffset.Now, TimeZoneInfo.Local.Id);
         _calendar = new CalendarService(_settings, Http, clock);
+        _notes = new NotesStore(AppPaths.DataFolder, () => DateTimeOffset.Now);
+        _system = new SystemSampler(_queue);
         _outsideClicks = new OutsideClickWatcher(_queue, OnClickedOutside);
     }
 
@@ -155,7 +161,7 @@ internal sealed class IslandController : IDisposable
         if (_view is not null) StopView();
 
         _view = new IslandView(
-            theme, _settings, _media, _timer, _weather, _calendar, _queue,
+            theme, _settings, _media, _timer, _weather, _calendar, _notes, _system, _queue,
             takeKeyboard: TakeKeyboard,
             dismissAlert: _model.DismissAlert);
         _view.Area.PointerEntered += (_, e) => UpdateHover(e, touchInside: true);
@@ -194,6 +200,8 @@ internal sealed class IslandController : IDisposable
     private void StopView()
     {
         _view.Home.Detach();
+        _view.Notes.Detach();
+        _view.System.Detach();
         _view.Bars.Stop();
         _view.Banner.Bars.Stop();
         _view.TimerEar.Stop();
@@ -236,7 +244,12 @@ internal sealed class IslandController : IDisposable
     /// <summary>Home only draws, and its clock only ticks, while it can be seen: open, on Home.</summary>
     private bool HomeShown => _model.State == IslandState.Expanded && _model.Tab == IslandTab.Home;
 
-    private void UpdatePlayer() => _view.Home.SetActive(HomeShown);
+    /// <summary>What is on screen is live: Home's columns, and the System tab's sampling.</summary>
+    private void UpdatePlayer()
+    {
+        _view.Home.SetActive(HomeShown);
+        _view.System.SetActive(_model.State == IslandState.Expanded && _model.Tab == IslandTab.System);
+    }
 
     /// <summary>
     /// XAML draws at the window's DPI, the layout uses the monitor's. They should agree after every

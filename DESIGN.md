@@ -173,6 +173,17 @@ PORTING.md §2 › Boyutlar; değerler `IslandSizes`'ta, Core testleriyle.
 - **Banner:** 340 × 78; üst satır (pill kadar) boş, içerik altında; köşe 20 (Mac'in alt köşesi). Şarkı
   banner'ı: kapak 30, başlık, sanatçı, sağda çubuklar (çubuk ayarından bağımsız, Mac'teki gibi).
 
+### Notlar ve Sistem sekmeleri
+
+- **Sekmeler:** Mac'teki yedisi, aynı sırayla: Home, Raf, Pano, Notlar, AI, Cihazlar, Sistem.
+- **Notlar** (`NotesStore`, Mac: NotesModule.swift): üstte yazma satırı, altında kartlar (en az 200 genişlikte,
+  2–4 sütun). `%LOCALAPPDATA%\LRXe8\ISLe8\notes.json`, yalnızca kullanıcının okuyabildiği klasörde (Mac'te
+  0600). Satıra tıklayınca ada klavyeyi alıyor, kapanınca geri veriyor. Arada iş yok.
+- **Sistem** (`SystemSampler`, Mac: SystemStats.swift): yalnızca sekme ekrandayken, iki saniyede bir, arka
+  planda bir iş parçacığında ölçülüyor; değerler animasyonsuz değişiyor. İşlemci `GetSystemTimes`, bellek
+  `GlobalMemoryStatusEx` (kullanılan = toplam − boş), disk sistem sürücüsü, ağ Ethernet ve Wi-Fi bağdaştırıcıları
+  (sanal olanlar hariç), süreçler kullanıcının oturumundakiler; bellekleri çalışma kümesi. ↗ Görev Yöneticisi.
+
 ### Zamanlayıcı, hava ve takvim (W1)
 
 - **Zamanlayıcı** (`IslandTimer`, Mac: TimerModule.swift): geri sayım, Pomodoro (25/5, Ayarlar › Widget'lar)
