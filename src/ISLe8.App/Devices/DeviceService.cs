@@ -81,6 +81,23 @@ internal sealed class DeviceService : IDisposable
         PowerManager.RemainingChargePercentChanged += OnPowerChanged;
         PowerManager.BatteryStatusChanged += OnPowerChanged;
         PowerManager.PowerSupplyStatusChanged += OnPowerChanged;
+        try
+        {
+            // A receiver plugged in or out: no Bluetooth event says so.
+            var receivers = DeviceInformation.CreateWatcher(HidBatteries.WatchSelector);
+            receivers.Added += (_, _) => _queue.TryEnqueue(() =>
+            {
+                if (_enumerated >= _watchers.Count) SomethingConnected();
+            });
+            receivers.Removed += (_, _) => _queue.TryEnqueue(SomethingConnected);
+            receivers.EnumerationCompleted += (_, _) => _queue.TryEnqueue(EnumerationCompleted);
+            _watchers.Add(receivers);
+            receivers.Start();
+        }
+        catch (Exception e)
+        {
+            Log.Error(e, "receiver watcher");
+        }
         foreach (var selector in new[] { BluetoothDevice.GetDeviceSelectorFromPairingState(true), BluetoothLEDevice.GetDeviceSelectorFromPairingState(true) })
         {
             try
@@ -238,7 +255,7 @@ internal sealed class DeviceService : IDisposable
     // MARK: Reading
 
     /// <summary>One connected device as read: its battery and what Apple model it is, if any.</summary>
-    private sealed record Reading(string Id, string Name, DeviceKind Kind, int? Level, int? AppleModel);
+    private sealed record Reading(string Id, string Name, DeviceKind Kind, int? Level, int? AppleModel, bool IsCharging = false, int? Spare = null);
 
     private async Task RefreshAsync()
     {
@@ -264,6 +281,8 @@ internal sealed class DeviceService : IDisposable
                         readings.Add(reading);
                     }
                 }
+                // Receivers of Razer and SteelSeries devices: their makers' own protocols.
+                readings.AddRange(HidBatteries.Read().Select(hid => new Reading(hid.Id, hid.Name, hid.Kind, hid.Level, null, hid.IsCharging, hid.Spare)));
                 return (IReadOnlyList<Reading>)readings;
             });
         }
@@ -368,7 +387,7 @@ internal sealed class DeviceService : IDisposable
                     continue;
                 }
             }
-            if (reading.Level is { } level) devices.Add(new WirelessDevice(reading.Id, reading.Name, reading.Kind, level));
+            if (reading.Level is { } level) devices.Add(new WirelessDevice(reading.Id, reading.Name, reading.Kind, level, IsCharging: reading.IsCharging, Spare: reading.Spare));
         }
         var merged = DeviceRules.Merge(devices);
         var changed = !merged.SequenceEqual(Devices);

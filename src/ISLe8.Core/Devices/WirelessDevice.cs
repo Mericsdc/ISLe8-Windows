@@ -20,11 +20,14 @@ public enum DeviceKind
 /// <summary>
 /// A connected wireless device that reports its battery: AirPods (each bud and the case), Beats,
 /// headphones, keyboards, mice, game controllers (DevicesModule.swift, WirelessDevice). Levels are
-/// 0–100; a missing one is a part the device doesn't report.
+/// 0–100; a missing one is a part the device doesn't report. <paramref name="Spare"/> is a second
+/// battery charging in a base station (SteelSeries Arctis Nova Pro); like the case, it never runs out first.
 /// </summary>
 public sealed record WirelessDevice(
-    string Id, string Name, DeviceKind Kind, int? Main, int? Left = null, int? Right = null, int? Case = null, bool IsCharging = false)
+    string Id, string Name, DeviceKind Kind, int? Main, int? Left = null, int? Right = null, int? Case = null, bool IsCharging = false,
+    int? Spare = null)
 {
+
     /// <summary>"AirPods Pro 3" out of "Deniz (AirPods Pro 3)", "AirPods Pro" out of "Deniz's AirPods Pro".</summary>
     public string ShortName
     {
@@ -176,6 +179,7 @@ public static class DeviceRules
                 Left = kept.Left ?? device.Left,
                 Right = kept.Right ?? device.Right,
                 Case = kept.Case ?? device.Case,
+                Spare = kept.Spare ?? device.Spare,
             };
         }
         return result.OrderBy(device => device.Name, StringComparer.Ordinal).ToList();

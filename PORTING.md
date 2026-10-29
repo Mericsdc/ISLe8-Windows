@@ -407,6 +407,19 @@ Her modülde: Mac dosyaları → Windows karşılığı → önemli davranışla
   - Başlıkta yalnızca pili en az olan cihazın çipi.
 - **Kabul:** Bir BLE fare, klasik bir kulaklık ve AirPods'la değerler Windows Ayarları'ndakiyle aynı; çift kayıt yok.
 - **Windows'ta yapılan:**
+  - **Kendi alıcısıyla bağlanan cihazlar (Mac'te yok, Windows'ta asıl durum):** oyun kulaklıkları ve fareleri çoğunlukla
+    Bluetooth değil 2.4 GHz alıcıyla bağlanır ve pilini Windows'a bildirmez. Üreticinin kendi HID protokolüyle, yalnızca
+    soru sorarak okunur (hiçbir ayar gönderilmez):
+    - **Razer** (1532): ilk arayüzdeki 90 baytlık feature report; komut sınıfı 0x07, 0x80 pil (0–255), 0x84 şarj.
+      İşlem kimliği 0x1F, 0x3F, 0xFF sırayla denenir. Fare/klavye arayüzü erişimsiz açılır; feature report yine geçer.
+      Uyuyan fare ya da kablolu cihaz yanıt vermez. Razer Viper V3 Pro (1532:00C1) ile doğrulandı.
+    - **SteelSeries Arctis Nova Pro Omni** (1038:2290): 0xFFC0 satıcı koleksiyonunda rapor kimliği + 0xB0 durum sorusu;
+      yanıtta [6] kulaklık %, [7] baz istasyonundaki yedek pil %, [15] durum (0x01 kapalı, 0x02 kabloyla şarj, 0x08 bağlı).
+      Yedek pil kartta ikinci halka ("Yedek pil"). Diğer SteelSeries modelleri (Nova 7, Arctis 7 …) başka komutlar kullanıyor;
+      elde cihaz olmadan eklenmedi.
+    - Alıcı takılıp çıkarılınca HID arayüzü izleyicisi (`DeviceWatcher`, VendorId 0x1532/0x1038) tetikler; kulaklık ya da
+      fare açılıp kapanınca olay yok, 10 dk'lık okuma ve ada açılışı bunu yakalar.
+  - Mac'in boş durum metni ("AirPods, Magic Mouse ya da …") Windows'ta "Kablosuz kulaklık, fare, klavye ya da …" oldu.
   - Yüzde önce Windows'un kendi tuttuğu PnP özelliğinden okunuyor (BLE cihazlar için de); GATT okuması yalnızca o yoksa.
     Böylece sayılar Windows Ayarları'ndakiyle aynı ve HID cihazlarına ayrıca bağlanılmıyor.
   - AirPods'un ayrı kulaklık/kutu yüzdeleri yalnızca sekme açıkken geliyor (yukarıdaki kural). Sekme kapalıyken ve

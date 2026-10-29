@@ -20,6 +20,8 @@ internal enum BatteryPart
     Left,
     Right,
     Case,
+    /// <summary>A second battery charging in a base station.</summary>
+    Spare,
 }
 
 /// <summary>
@@ -41,6 +43,7 @@ internal static class DeviceIcon
     };
 
     public const string Laptop = "";
+    public const string Battery = "";
     public const string Bolt = "";
 
     /// <summary>The device, or one part of it, at <paramref name="size"/> DIPs.</summary>
@@ -53,6 +56,7 @@ internal static class DeviceIcon
             BatteryPart.Left => Drawing(size, brush, Bud(pro, mirrored: false)),
             BatteryPart.Right => Drawing(size, brush, Bud(pro, mirrored: true)),
             BatteryPart.Case => CaseDrawing(size, brush),
+            BatteryPart.Spare => new FontIcon { Glyph = Battery, FontSize = size, Foreground = brush },
             _ when pods => Drawing(size, brush, Bud(pro, mirrored: false, x: -3.5), Bud(pro, mirrored: true, x: 3.5)),
             _ => new FontIcon { Glyph = Glyph(kind), FontSize = size, Foreground = brush },
         };
@@ -114,6 +118,7 @@ internal static class BatteryColors
         if (device.Left is { } left) parts.Add(L.Format("Devices_LeftLevel", left));
         if (device.Right is { } right) parts.Add(L.Format("Devices_RightLevel", right));
         if (device.Case is { } caseLevel) parts.Add(L.Format("Devices_CaseLevel", caseLevel));
+        if (device.Spare is { } spare) parts.Add(L.Format("Devices_SpareLevel", spare));
         return string.Join(" · ", parts);
     }
 }
@@ -175,7 +180,7 @@ internal static class BatteryBadge
         FrameworkElement? label = part switch
         {
             BatteryPart.Left or BatteryPart.Right => Letter(part == BatteryPart.Left ? "L" : "R", size),
-            BatteryPart.Case => DeviceIcon.Create(kind, BatteryPart.Case, size * 0.62, Ui.White(0xCC)),
+            BatteryPart.Case or BatteryPart.Spare => DeviceIcon.Create(kind, part, size * 0.62, Ui.White(0xCC)),
             _ => null,
         };
         var percent = Ui.Text(11, alpha: 0xBF);
@@ -202,6 +207,7 @@ internal static class BatteryBadge
         if (device.Left is { } left) row.Children.Add(Create(device.Kind, BatteryPart.Left, left, size));
         if (device.Right is { } right) row.Children.Add(Create(device.Kind, BatteryPart.Right, right, size));
         if (device.Case is { } caseLevel) row.Children.Add(Create(device.Kind, BatteryPart.Case, caseLevel, size));
+        if (device.Spare is { } spare) row.Children.Add(Create(device.Kind, BatteryPart.Spare, spare, size));
         return row;
     }
 
@@ -210,6 +216,7 @@ internal static class BatteryBadge
         BatteryPart.Left => L.Get("Devices_Left"),
         BatteryPart.Right => L.Get("Devices_Right"),
         BatteryPart.Case => L.Get("Devices_Case"),
+        BatteryPart.Spare => L.Get("Devices_Spare"),
         _ => "",
     };
 
@@ -316,6 +323,7 @@ internal sealed class DevicesTabView
             if (device.Left is { } left) cells.Add(new Cell(device.Kind, BatteryPart.Left, "", left, false, L.Get("Devices_Left")));
             if (device.Right is { } right) cells.Add(new Cell(device.Kind, BatteryPart.Right, "", right, false, L.Get("Devices_Right")));
             if (device.Case is { } caseLevel) cells.Add(new Cell(device.Kind, BatteryPart.Case, "", caseLevel, false, L.Get("Devices_Case")));
+            if (device.Spare is { } spare) cells.Add(new Cell(device.Kind, BatteryPart.Spare, "", spare, false, L.Get("Devices_Spare")));
             cards.Add(new Card(device.ShortName, device.IsCharging ? L.Get("Devices_Charging") : null, cells));
         }
         return cards;

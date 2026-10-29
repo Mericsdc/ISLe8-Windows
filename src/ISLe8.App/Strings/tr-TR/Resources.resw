@@ -1159,8 +1159,7 @@
     <comment>mac: Bağlandı</comment>
   </data>
   <data name="Devices_Empty" xml:space="preserve">
-    <value>AirPods, Magic Mouse ya da pilini bildiren başka bir Bluetooth cihazı bağlanınca burada görünür.</value>
-    <comment>mac: AirPods, Magic Mouse ya da pilini bildiren başka bir Bluetooth cihazı bağlanınca burada görünür.</comment>
+    <value>Kablosuz kulaklık, fare, klavye ya da pilini bildiren başka bir cihaz bağlanınca burada görünür.</value>
   </data>
   <data name="Settings_System" xml:space="preserve">
     <value>Sistem</value>
@@ -1183,7 +1182,7 @@
     <comment>mac: Başlıkta cihaz pilleri</comment>
   </data>
   <data name="Settings_WirelessNote" xml:space="preserve">
-    <value>AirPods (iki kulaklık ve kutu), Beats, Bluetooth kulaklık ve hoparlörler, klavyeler, fareler, oyun kumandaları: pilini Windows'a bildiren her cihaz. Pil bilgisi Windows Ayarları'nın gösterdiği yerden, cihaz bağlanınca, ada açılınca ve bağlıyken 10 dakikada bir okunur. AirPods'un iki kulaklığı ve kutusu ayrı ayrı yalnızca Cihazlar sekmesi açıkken, AirPods'un yayınından okunur.</value>
+    <value>Kendi alıcısıyla bağlanan Razer fareler ve klavyeler ile SteelSeries Arctis Nova Pro kulaklıklar (pil bilgisi Synapse ve GG'nin sorduğu yolla, yalnızca okunarak); Bluetooth kulaklık ve hoparlörler, klavyeler, fareler, oyun kumandaları; AirPods (iki kulaklık ve kutu). Pil bilgisi cihaz takılınca ya da bağlanınca, ada açılınca ve bağlıyken 10 dakikada bir okunur. AirPods'un iki kulaklığı ve kutusu ayrı ayrı yalnızca Cihazlar sekmesi açıkken okunur.</value>
   </data>
   <data name="Settings_Agents" xml:space="preserve">
     <value>Ajanlar</value>
@@ -1363,5 +1362,11 @@
   </data>
   <data name="Agents_CommandLineNoteZip" xml:space="preserve">
     <value>Herhangi bir betik adaya canlı aktivite koyabilir. Zip sürümünde komut, ISLe8 klasöründeki isle8-cli.exe.</value>
+  </data>
+  <data name="Devices_Spare" xml:space="preserve">
+    <value>Yedek pil</value>
+  </data>
+  <data name="Devices_SpareLevel" xml:space="preserve">
+    <value>Yedek pil %{0}</value>
   </data>
 </root>

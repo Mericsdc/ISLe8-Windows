@@ -35,6 +35,22 @@ aktivitesi, kulak önceliği, açılış sekmesi ve hook kurulumu Core testlerin
 
 - [ ] İkinci satır: kullanımdan sonra bellek yine 80 MB'ın üstünde (Raf ölçümündeki açık madde). W6'nın ölçüm turunda bakılacak.
 
+## Cihazlar: alıcıyla bağlanan cihazlar (2026-10-29)
+
+Canlı geri bildirim: "takılı ekipmanlarımın şarjı görünmüyor (SteelSeries kulaklık, Razer fare)". İkisi de Bluetooth değil,
+kendi alıcısıyla bağlı; Windows pillerini bilmiyor. Paket protokolleri Core testlerinde, cihazların verdiği gerçek yanıtlarla
+(`VendorProtocolTests`; 289'dan 293'e).
+
+- [x] Razer Viper V3 Pro (1532:00C1, Synapse açık): pil sorgusu durum 0x02, 0x2C/255 → %17, şarj olmuyor.
+- [x] SteelSeries Arctis Nova Pro Omni (1038:2290): `01 B0` sorusuna `01 B0 00 00 01 00 5E 64 08 … 08`: kulaklık %94,
+      yedek pil %100, bağlı.
+- [x] Cihazlar sekmesi: Bu bilgisayar %80 · Arctis Nova Pro Omni (kulaklık %94, Yedek pil %100) · Razer Viper V3 Pro %17
+      (turuncu). Başlıkta fare %17. `isle8 devices` aynı satırları veriyor.
+- [ ] Yüzdeler Synapse'te ve baz istasyonunun ekranında / GG'de gösterilenle aynı (hangisinin yedek pil olduğu dahil).
+- [ ] Fare kapatılıp açılınca (alıcı takılıyken) 10 dk içinde ya da ada açılınca kart gidiyor / geliyor.
+- [ ] Kulaklık şarja takılınca ⚡ ve "Şarj oluyor"; fare kablosuyla şarj olurken ⚡.
+- [ ] Alıcı çıkarılıp takılınca 2–10 sn içinde kart gidiyor / geliyor.
+
 ## Cihazlar sekmesi (2026-10-29)
 
 Paketli Release JIT (`install.ps1 -NoAot`). Kısa ad, tür (ad, Apple ürün kimliği, Class of Device, LE görünümü),

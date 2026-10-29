@@ -1159,8 +1159,7 @@
     <comment>mac: Bağlandı</comment>
   </data>
   <data name="Devices_Empty" xml:space="preserve">
-    <value>AirPods, a Magic Mouse or another Bluetooth device that reports its battery shows up here when it connects.</value>
-    <comment>mac: AirPods, Magic Mouse ya da pilini bildiren başka bir Bluetooth cihazı bağlanınca burada görünür.</comment>
+    <value>Wireless headphones, a mouse, a keyboard or any other device that reports its battery shows up here once connected.</value>
   </data>
   <data name="Settings_System" xml:space="preserve">
     <value>System</value>
@@ -1183,7 +1182,7 @@
     <comment>mac: Başlıkta cihaz pilleri</comment>
   </data>
   <data name="Settings_WirelessNote" xml:space="preserve">
-    <value>AirPods (both buds and the case), Beats, Bluetooth headphones and speakers, keyboards, mice, game controllers: any device that tells Windows its battery. Levels are read where Windows Settings gets them, when a device connects, when the island opens and every 10 minutes while one is connected. AirPods' buds and case are read one by one only while the Devices tab is open, from what the AirPods broadcast.</value>
+    <value>Razer mice and keyboards and SteelSeries Arctis Nova Pro headsets on their own receivers (asked the way Synapse and GG ask, read only); Bluetooth headphones and speakers, keyboards, mice, game controllers; AirPods (both buds and the case). Levels are read when a device is plugged in or connects, when the island opens and every 10 minutes while one is connected. AirPods' buds and case are read one by one only while the Devices tab is open.</value>
   </data>
   <data name="Settings_Agents" xml:space="preserve">
     <value>Agents</value>
@@ -1363,5 +1362,11 @@
   </data>
   <data name="Agents_CommandLineNoteZip" xml:space="preserve">
     <value>Any script can put a live activity on the island. In the zip, the command is isle8-cli.exe in the ISLe8 folder.</value>
+  </data>
+  <data name="Devices_Spare" xml:space="preserve">
+    <value>Spare battery</value>
+  </data>
+  <data name="Devices_SpareLevel" xml:space="preserve">
+    <value>Spare {0}%</value>
   </data>
 </root>
