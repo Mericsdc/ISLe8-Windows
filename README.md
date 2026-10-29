@@ -20,6 +20,11 @@ medya (SMTC), 7 tema, Türkçe/İngilizce. İlk kez Windows 11'de çalıştırı
 
 Gereken: Windows 10 2004+ ya da Windows 11.
 
+**Güncelleme:** ISLe8 yeni sürümü kendisi bulur (günde bir kez GitHub'a sorar). **Ayarlar › Genel › Güncellemeler**'de
+ya da bildirim alanı simgesinin menüsünde **Güncelle**'ye basınca dosya indirilir, SHA-256'sı denetlenir, ISLe8 kapanır,
+yeni sürüm aynı klasöre konur ve ISLe8 yeniden açılır; ayarlar ve geçmiş kalır. Zip'ten açılan ISLe8 klasörünü, kurulu
+(paketli) ISLe8 paketini günceller (`*-package.zip`; Geliştirici Modu açık olmalı, kurulumdaki gibi).
+
 ### Kullanım
 
 - İmleci üstteki pill'in üstünde bir an tut ya da pill'e tıkla: ada açılır. Üstünden geçip giden imleç
@@ -102,7 +107,8 @@ bildirimleriyle gelir.
 powershell -ExecutionPolicy Bypass -File scripts\publish.ps1
 ```
 
-`artifacts\ISLe8-<sürüm>-win-x64.zip` üretir; Releases'teki dosyanın aynısı. `-Platform ARM64` ARM için,
+`artifacts\ISLe8-<sürüm>-win-x64.zip` üretir; Releases'teki dosyanın aynısı. `scripts\package.ps1` kurulu ISLe8'in
+güncelleme dosyasını (`ISLe8-<sürüm>-win-x64-package.zip`: paket klasörü, AppxManifest.xml'iyle) üretir. `-Platform ARM64` ARM için,
 `-NoAot` C++ araçları olmayan bir bilgisayarda (JIT, kendi .NET'iyle; ~65 MB).
 
 ### Sürüm yayınlama
@@ -115,8 +121,9 @@ git tag v0.1.0
 git push origin v0.1.0
 ```
 
-`.github/workflows/release.yml` testleri çalıştırır, x64 ve ARM64 için Native AOT ile derler ve zip'leri
-o etiketin GitHub Release'ine koyar. `windows.yml` yalnızca elle çalışan bir derleme denetimi; ikisi de
+`.github/workflows/release.yml` testleri çalıştırır, x64 ve ARM64 için Native AOT ile derler; zip'leri ve paket
+zip'lerini o etiketin GitHub Release'ine koyar. Uygulamadaki Güncelle düğmesi bunları "latest" sürümden alır; taslak
+ve ön sürümler güncelleme sayılmaz. `windows.yml` yalnızca elle çalışan bir derleme denetimi; ikisi de
 her push'ta çalışmaz, çünkü özel repolarda Windows dakikaları iki kat sayılır.
 
 ### Ölçüm

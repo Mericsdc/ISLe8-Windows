@@ -35,6 +35,16 @@ aktivitesi, kulak önceliği, açılış sekmesi ve hook kurulumu Core testlerin
 
 - [ ] İkinci satır: kullanımdan sonra bellek yine 80 MB'ın üstünde (Raf ölçümündeki açık madde). W6'nın ölçüm turunda bakılacak.
 
+## Güncellemeler (2026-10-30)
+
+Sürüm 0.2.0. Release okuma, sürüm karşılaştırma, dosya seçimi, güvenilen adresler ve günlük denetim Core testlerinde
+(`UpdateTests`; 338'den 344'e).
+
+- [ ] Ayarlar › Genel › Güncellemeler: "Güncellemeleri denetle" → "ISLe8 güncel" ya da "0.2.0 sürümüne güncelle".
+- [ ] Kurulu ISLe8 (0.1.x) → 0.2.0: indirme yüzdesi, ISLe8 kapanıp açılıyor, sürüm 0.2.0; bildirim izni ve ayarlar duruyor.
+- [ ] Zip'ten açılan ISLe8 → 0.2.0: klasör yerinde güncelleniyor.
+- [ ] Bildirim alanı menüsünde "Güncelle" öğesi yalnızca yeni sürüm varken.
+
 ## Bellek, raf, ses tuşları ve ada seçenekleri (2026-10-30)
 
 Paketli Release JIT. Konumlar, üste bitişik yerleşim, ses adımları ve rafa kopyalanan dosyalar Core testlerinde

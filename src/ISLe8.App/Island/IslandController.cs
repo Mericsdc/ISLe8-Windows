@@ -72,6 +72,7 @@ internal sealed class IslandController : IDisposable
     private readonly Usage.UsageService _usage;
     private readonly SystemStatus _status;
     private readonly MemoryTrim _trim;
+    private readonly Updater _updater;
     private HotKey? _clipboardKey;
     private nint _foregroundBeforeKeyboard;
 
@@ -103,6 +104,7 @@ internal sealed class IslandController : IDisposable
         _devices = new DeviceService(_queue, clock);
         _status = new SystemStatus(_settings, _devices, _queue);
         _trim = new MemoryTrim(_queue);
+        _updater = new Updater(_settings, () => _store.Save(_settings), _queue, () => ((App)Application.Current).Quit());
         _agents = new AgentHub(_settings, clock);
         _agentServer = new AgentServer(_agents, _queue);
         _usage = new Usage.UsageService(_settings, _queue, clock, AppPaths.DataFolder);
@@ -114,6 +116,9 @@ internal sealed class IslandController : IDisposable
 
     /// <summary>The calendars, for Settings › Widgets.</summary>
     public CalendarService Calendar => _calendar;
+
+    /// <summary>Updates from GitHub, for Settings › General and the tray menu.</summary>
+    public Updater Updater => _updater;
 
     /// <summary>The notification mirror, for Settings › Notifications.</summary>
     public NotificationService Notifications => _notifications;
@@ -277,6 +282,7 @@ internal sealed class IslandController : IDisposable
         _window.Show();
         // Once starting up (the usage CLIs, the first layout) is over.
         _trim.Schedule();
+        _updater.Start();
 
         _media.Changed += OnMediaChanged;
         _ = _media.StartAsync();

@@ -40,6 +40,16 @@ jobs:
         shell: pwsh
         run: ./scripts/publish.ps1 -Platform ARM64
 
+      # Kurulu ISLe8'in Güncelle düğmesinin indirdiği dosya: paket klasörü, AppxManifest.xml'iyle.
+      - name: x64 paketi (Native AOT)
+        shell: pwsh
+        run: ./scripts/package.ps1 -Platform x64
+
+      - name: ARM64 paketi (Native AOT)
+        continue-on-error: true
+        shell: pwsh
+        run: ./scripts/package.ps1 -Platform ARM64
+
       - uses: actions/upload-artifact@v7
         with:
           name: ISLe8-${{ env.TAG }}
@@ -60,6 +70,12 @@ jobs:
 
           Ada ekranın üst ortasında durur; üzerine gelince açılır. Kapatmak için adaya sağ tıkla › **ISLe8'den çık**.
           Gereken: Windows 10 2004+ ya da Windows 11.
+
+          ## Güncelleme
+
+          ISLe8 yeni sürümü kendisi bulur: **Ayarlar › Genel › Güncellemeler** ya da bildirim alanı simgesinin menüsü ›
+          **Güncelle**. Zip'ten açılan ISLe8 kendi klasörünü, kurulu (paketli) ISLe8 paketini günceller
+          (`*-package.zip`; bunu elle indirmen gerekmez). Ayarlar ve geçmiş kalır.
           '@
           gh release view $env:TAG *> $null
           if ($LASTEXITCODE -eq 0) {

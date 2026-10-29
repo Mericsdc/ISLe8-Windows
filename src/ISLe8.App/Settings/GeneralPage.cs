@@ -67,11 +67,73 @@ internal static class GeneralPage
         page.Children.Add(SettingsUi.Gap());
         page.Children.Add(BackupCard(context));
 
-        page.Children.Add(SettingsUi.Gap());
-        var version = typeof(App).Assembly.GetName().Version is { } v ? $"{v.Major}.{v.Minor}.{v.Build}" : "";
-        page.Children.Add(SettingsUi.Card(palette, L.Get("Settings_Version"), new TextBlock { Text = version, IsTextSelectionEnabled = true }));
+        page.Children.Add(UpdatesSection(context));
         page.Children.Add(SettingsUi.Card(palette, L.Get("Settings_Developer"), new TextBlock { Text = "LRXe8" }));
         return page;
+    }
+
+    // MARK: Updates
+
+    /// <summary>
+    /// Settings › General › Updates (Windows only): the version, a button that checks GitHub or, once
+    /// a newer ISLe8 is out, updates to it, where it stands, and the daily check.
+    /// </summary>
+    private static StackPanel UpdatesSection(SettingsContext context)
+    {
+        var settings = context.Settings;
+        var palette = context.Palette;
+        var updater = context.Island.Updater;
+        var section = new StackPanel();
+        section.Children.Add(SettingsUi.SectionHeader(L.Get("Settings_Updates")));
+
+        var status = SettingsUi.Description(palette, "");
+        var button = new Button();
+        var notes = new HyperlinkButton { Content = L.Get("Update_Notes"), Padding = new Thickness(6, 4, 6, 4) };
+        var progress = new ProgressBar { Width = 120, Minimum = 0, Maximum = 1, VerticalAlignment = VerticalAlignment.Center };
+        var controls = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, VerticalAlignment = VerticalAlignment.Center, Children = { notes, progress, button } };
+        button.Click += (_, _) =>
+        {
+            if (updater.State == UpdateState.Available) _ = updater.InstallAsync();
+            else _ = updater.CheckAsync();
+        };
+        void Show()
+        {
+            var release = updater.Release;
+            var busy = updater.State is UpdateState.Checking or UpdateState.Downloading or UpdateState.Installing;
+            button.Content = updater.State == UpdateState.Available && release is not null
+                ? L.Format("Update_Install", release.Version.ToString(3))
+                : L.Get("Update_Check");
+            button.IsEnabled = !busy;
+            if (updater.State == UpdateState.Available) button.Style = (Style)Application.Current.Resources["AccentButtonStyle"];
+            notes.Visibility = release is not null ? Visibility.Visible : Visibility.Collapsed;
+            if (release is not null) notes.NavigateUri = release.Page;
+            progress.Visibility = updater.State == UpdateState.Downloading ? Visibility.Visible : Visibility.Collapsed;
+            progress.Value = updater.Progress;
+            status.Text = updater.State switch
+            {
+                UpdateState.Checking => L.Get("Update_Checking"),
+                UpdateState.UpToDate => L.Get("Update_UpToDate"),
+                UpdateState.Available when release is not null => L.Format("Update_Available", release.Version.ToString(3)),
+                UpdateState.Downloading => L.Format("Update_Downloading", (int)Math.Round(updater.Progress * 100)),
+                UpdateState.Installing => L.Get("Update_Installing"),
+                UpdateState.Failed => L.Format("Update_Failed", updater.Problem ?? ""),
+                _ => "",
+            };
+            status.Visibility = status.Text.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
+        }
+        updater.Changed += Show;
+        // The page is built again each time it is shown; the old one lets go when it leaves the tree.
+        section.Unloaded += (_, _) => updater.Changed -= Show;
+        Show();
+
+        var heading = new TextBlock { Text = $"{L.Get("Settings_Version")} {Updater.Current.ToString(3)}", IsTextSelectionEnabled = true, VerticalAlignment = VerticalAlignment.Center };
+        section.Children.Add(SettingsUi.Card(palette, heading, controls, status));
+        section.Children.Add(SettingsUi.Card(palette, L.Get("Update_Auto"), SettingsUi.Switch(settings.CheckForUpdates, on =>
+        {
+            settings.CheckForUpdates = on;
+            context.Save();
+        }), L.Get("Update_AutoNote")));
+        return section;
     }
 
     // MARK: Screen

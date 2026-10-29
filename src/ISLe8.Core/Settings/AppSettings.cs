@@ -213,6 +213,12 @@ public sealed class AppSettings
     /// its own, so maximised windows (a browser's tabs) start below the pill instead of under it.
     /// </summary>
     public bool ReserveTopStrip { get; set; } = true;
+
+    /// <summary>Settings › General › Updates: GitHub is asked once a day whether a newer ISLe8 is out.</summary>
+    public bool CheckForUpdates { get; set; } = true;
+
+    /// <summary>When it was last asked.</summary>
+    public DateTimeOffset? LastUpdateCheck { get; set; }
     public bool AudioBars { get; set; } = true;
     public MonitorChoice Monitor { get; set; } = MonitorChoice.Primary;
 

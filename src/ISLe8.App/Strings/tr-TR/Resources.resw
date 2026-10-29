@@ -1627,4 +1627,49 @@
   <data name="Settings_ReplaceSystemHudNote" xml:space="preserve">
     <value>Ses tuşlarını ISLe8 karşılar, Windows'un kendi ses göstergesi çıkmaz. Parlaklık tuşlarını Windows kendisi karşılıyor; onların göstergesi kapatılamıyor, ISLe8'inki onun yanında çıkar.</value>
   </data>
+  <data name="Settings_Updates" xml:space="preserve">
+    <value>Güncellemeler</value>
+  </data>
+  <data name="Update_Check" xml:space="preserve">
+    <value>Güncellemeleri denetle</value>
+  </data>
+  <data name="Update_Install" xml:space="preserve">
+    <value>{0} sürümüne güncelle</value>
+  </data>
+  <data name="Update_Checking" xml:space="preserve">
+    <value>Denetleniyor…</value>
+  </data>
+  <data name="Update_UpToDate" xml:space="preserve">
+    <value>ISLe8 güncel.</value>
+  </data>
+  <data name="Update_Available" xml:space="preserve">
+    <value>ISLe8 {0} çıktı. Güncelleyince ISLe8 kapanır ve yeni sürümüyle yeniden açılır; ayarların ve geçmişin kalır.</value>
+  </data>
+  <data name="Update_Downloading" xml:space="preserve">
+    <value>İndiriliyor… %{0}</value>
+  </data>
+  <data name="Update_Installing" xml:space="preserve">
+    <value>Kuruluyor; ISLe8 birazdan yeniden açılacak.</value>
+  </data>
+  <data name="Update_Failed" xml:space="preserve">
+    <value>Güncellenemedi: {0}</value>
+  </data>
+  <data name="Update_NoFile" xml:space="preserve">
+    <value>{0} sürümünde bu bilgisayar için dosya yok.</value>
+  </data>
+  <data name="Update_BadFile" xml:space="preserve">
+    <value>İndirilen dosya doğrulanamadı.</value>
+  </data>
+  <data name="Update_Notes" xml:space="preserve">
+    <value>Yenilikler</value>
+  </data>
+  <data name="Update_Auto" xml:space="preserve">
+    <value>Güncellemeleri otomatik denetle</value>
+  </data>
+  <data name="Update_AutoNote" xml:space="preserve">
+    <value>Günde bir kez GitHub'a sorulur. Güncelleme yalnızca düğmeye basınca iner ve kurulur; bildirim alanı simgesinin menüsünde de çıkar.</value>
+  </data>
+  <data name="Tray_Update" xml:space="preserve">
+    <value>{0} sürümüne güncelle</value>
+  </data>
 </root>

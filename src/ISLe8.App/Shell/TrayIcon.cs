@@ -17,6 +17,7 @@ internal sealed unsafe class TrayIcon : IDisposable
     private const uint Id = 1;
     private const int SettingsCommand = 1;
     private const int QuitCommand = 2;
+    private const int UpdateCommand = 3;
 
     private static readonly uint CallbackMessage = Win32.RegisterWindowMessage("ISLe8.Tray");
     /// <summary>Sent to every top-level window when Explorer (re)starts; the icon must be added again.</summary>
@@ -37,6 +38,12 @@ internal sealed unsafe class TrayIcon : IDisposable
 
     public event Action? SettingsRequested;
     public event Action? QuitRequested;
+
+    /// <summary>The Update item, shown first in the menu while a newer ISLe8 is out.</summary>
+    public event Action? UpdateRequested;
+
+    /// <summary>The Update item's text, or null for none.</summary>
+    public string? UpdateLabel { get; set; }
 
     public void Show()
     {
@@ -149,6 +156,11 @@ internal sealed unsafe class TrayIcon : IDisposable
     private void ShowMenu(int x, int y)
     {
         var menu = Win32.CreatePopupMenu();
+        if (UpdateLabel is { } update)
+        {
+            Win32.AppendMenu(menu, Win32.MF_STRING, UpdateCommand, update);
+            Win32.AppendMenu(menu, Win32.MF_SEPARATOR, 0, null);
+        }
         Win32.AppendMenu(menu, Win32.MF_STRING, SettingsCommand, L.Get("Tray_Settings"));
         Win32.AppendMenu(menu, Win32.MF_SEPARATOR, 0, null);
         Win32.AppendMenu(menu, Win32.MF_STRING, QuitCommand, L.Get("Menu_Quit"));
@@ -161,5 +173,6 @@ internal sealed unsafe class TrayIcon : IDisposable
 
         if (command == SettingsCommand) SettingsRequested?.Invoke();
         else if (command == QuitCommand) QuitRequested?.Invoke();
+        else if (command == UpdateCommand) UpdateRequested?.Invoke();
     }
 }

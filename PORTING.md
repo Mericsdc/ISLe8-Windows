@@ -613,6 +613,18 @@ Her modülde: Mac dosyaları → Windows karşılığı → önemli davranışla
 
 ---
 
+### Windows'a özgü: güncellemeler (2026-10-30)
+
+Mac sürümünde güncelleyici yok. Windows'ta kullanıcı isteğiyle: **Ayarlar › Genel › Güncellemeler** ve bildirim alanı
+menüsü. Günde bir kez (açılıştan 30 sn sonra, sonra saatte bir "vakti geldi mi" bakılarak) `api.github.com/repos/Mericsdc/ISLe8-Windows/releases/latest`
+sorulur; taslak ve ön sürümler sayılmaz. İndirme yalnızca düğmeyle, yalnızca projenin kendi Release adreslerinden; GitHub'ın
+verdiği SHA-256 denetlenir. Sonra küçük bir PowerShell betiği ISLe8'in kapanmasını bekler, eski klasörü `-old` adıyla
+kenara alır, yenisini koyar, kurulu ISLe8'de paketi aynı klasörden yeniden kaydeder (yerinde güncelleme: ayarlar, bildirim izni
+ve başlangıç görevi kalır) ve ISLe8'i açar. Bir şey ters giderse eski klasör geri konur, neden `update.log`'a yazılır ve ISLe8
+açılınca ayarlarda gösterilir. Kurulu ISLe8'in alt süreçleri paketin içinde çalıştığı için betik paketin dışında başlatılır
+(`PROC_THREAD_ATTRIBUTE_DESKTOP_APP_POLICY`); yoksa paket yeniden kaydedilirken betik de kapanırdı. Kurulu ISLe8 için
+Release'te `ISLe8-<sürüm>-<rid>-package.zip` (scripts/package.ps1). İmzalı .msix ve App Installer W6'da.
+
 ## 4. DESIGN.md §4 ile farklar
 
 - **Plana eklenmesi gerekenler:** ses/parlaklık göstergesi (§3.2, yapıldı), kamera/mikrofon göstergesi ve uyanık tut (§3.4), komut paleti (§3.16), ayarlar penceresi (§3.17), takvim hızlı ekleme (§3.6), `isle8.exe` konsol yardımcısı (§1), Notlar (§3.19), Sistem sekmesi ve LAN (§3.20, yapıldı), klavye temizliği (§3.21), özel günler (§3.22), iPhone/iPad pilleri (§3.14), durum kulakları (§2, yapıldı).

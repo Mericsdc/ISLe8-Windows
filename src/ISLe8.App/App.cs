@@ -2,6 +2,7 @@ using System.Diagnostics;
 using ISLe8.Core.Diagnostics;
 using ISLe8.Core.Settings;
 using ISLe8.Island;
+using ISLe8.Localization;
 using ISLe8.Settings;
 using ISLe8.Shell;
 using Microsoft.UI.Dispatching;
@@ -48,6 +49,12 @@ public partial class App : Application, IXamlMetadataProvider
         _island.AddWindowMessageHandler(_tray.HandleMessage);
         _tray.SettingsRequested += OpenSettings;
         _tray.QuitRequested += Quit;
+        var updater = _island.Updater;
+        updater.Changed += () =>
+        {
+            if (_tray is not null) _tray.UpdateLabel = updater.State == UpdateState.Available && updater.Release is { } release ? L.Format("Tray_Update", release.Version.ToString(3)) : null;
+        };
+        _tray.UpdateRequested += () => _ = updater.InstallAsync();
         _tray.Show();
 
         StartAtLogin.Repair();

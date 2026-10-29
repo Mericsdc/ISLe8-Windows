@@ -1627,4 +1627,49 @@
   <data name="Settings_ReplaceSystemHudNote" xml:space="preserve">
     <value>ISLe8 takes the volume keys, so Windows' own volume HUD doesn't appear. Windows handles the brightness keys itself; their HUD can't be turned off, and ISLe8's shows beside it.</value>
   </data>
+  <data name="Settings_Updates" xml:space="preserve">
+    <value>Updates</value>
+  </data>
+  <data name="Update_Check" xml:space="preserve">
+    <value>Check for updates</value>
+  </data>
+  <data name="Update_Install" xml:space="preserve">
+    <value>Update to {0}</value>
+  </data>
+  <data name="Update_Checking" xml:space="preserve">
+    <value>Checking…</value>
+  </data>
+  <data name="Update_UpToDate" xml:space="preserve">
+    <value>ISLe8 is up to date.</value>
+  </data>
+  <data name="Update_Available" xml:space="preserve">
+    <value>ISLe8 {0} is out. Updating closes ISLe8 and opens the new version; your settings and history stay.</value>
+  </data>
+  <data name="Update_Downloading" xml:space="preserve">
+    <value>Downloading… {0}%</value>
+  </data>
+  <data name="Update_Installing" xml:space="preserve">
+    <value>Installing; ISLe8 will open again in a moment.</value>
+  </data>
+  <data name="Update_Failed" xml:space="preserve">
+    <value>Couldn't update: {0}</value>
+  </data>
+  <data name="Update_NoFile" xml:space="preserve">
+    <value>Release {0} has no file for this computer.</value>
+  </data>
+  <data name="Update_BadFile" xml:space="preserve">
+    <value>The downloaded file couldn't be verified.</value>
+  </data>
+  <data name="Update_Notes" xml:space="preserve">
+    <value>What's new</value>
+  </data>
+  <data name="Update_Auto" xml:space="preserve">
+    <value>Check for updates automatically</value>
+  </data>
+  <data name="Update_AutoNote" xml:space="preserve">
+    <value>GitHub is asked once a day. An update is downloaded and installed only when you press the button; it also shows in the tray icon's menu.</value>
+  </data>
+  <data name="Tray_Update" xml:space="preserve">
+    <value>Update to {0}</value>
+  </data>
 </root>
