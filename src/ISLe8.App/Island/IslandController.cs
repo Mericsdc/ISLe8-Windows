@@ -16,6 +16,8 @@ using ISLe8.Core.Motion;
 using ISLe8.Core.Settings;
 using ISLe8.Core.Theming;
 using ISLe8.Localization;
+using ISLe8.Devices;
+using ISLe8.Core.Devices;
 using ISLe8.Media;
 using ISLe8.Notifications;
 using ISLe8.Shell;
@@ -59,6 +61,7 @@ internal sealed class IslandController : IDisposable
     private readonly ClipboardService _clipboard;
     private readonly ShelfStore _shelf;
     private readonly NotificationService _notifications;
+    private readonly DeviceService _devices;
     private HotKey? _clipboardKey;
     private nint _foregroundBeforeKeyboard;
 
@@ -87,6 +90,7 @@ internal sealed class IslandController : IDisposable
         _clipboard = new ClipboardService(_settings, new ClipboardHistory(AppPaths.DataFolder), _window.Hwnd, _queue);
         _shelf = new ShelfStore(AppPaths.DataFolder, new NtfsFileLocator(), () => DateTimeOffset.Now);
         _notifications = new NotificationService(_settings, _queue, () => _store.Save(_settings));
+        _devices = new DeviceService(_queue, clock);
         _outsideClicks = new OutsideClickWatcher(_queue, OnClickedOutside);
     }
 
@@ -98,6 +102,9 @@ internal sealed class IslandController : IDisposable
 
     /// <summary>The notification mirror, for Settings › Notifications.</summary>
     public NotificationService Notifications => _notifications;
+
+    /// <summary>Settings › System › Wireless devices: the header's chip shows at once.</summary>
+    public void ApplyDeviceSettings() => _view.DevicesChip.Refresh();
 
     /// <summary>The clipboard history, for Settings › Clipboard.</summary>
     public ClipboardService Clipboard => _clipboard;
@@ -164,6 +171,12 @@ internal sealed class IslandController : IDisposable
             if (!_window.IsHiddenForFullscreen) _model.ShowNotification(notification);
         };
         _notifications.ApplySettings();
+        _devices.Alert += (device, isLow) =>
+        {
+            if (_window.IsHiddenForFullscreen || !(isLow ? _settings.ShowDeviceLowBatteryAlert : _settings.ShowDeviceConnectedAlert)) return;
+            _model.ShowAlert(new DeviceAlert(device, isLow), isLow ? DeviceAlertDurations.Low : DeviceAlertDurations.Connected);
+        };
+        _devices.Start();
         // Windows asks once, the first time the installed ISLe8 starts with the mirror on.
         if (_notifications.Access == NotificationAccess.NotAsked) _ = _notifications.RequestAccessAsync();
         // A locked session shows no banners and keeps none for later (IslandModel.swift, setLocked).
@@ -199,6 +212,7 @@ internal sealed class IslandController : IDisposable
         _outsideClicks.Dispose();
         _clipboardKey?.Dispose();
         _notifications.Dispose();
+        _devices.Dispose();
         Win32.WTSUnRegisterSessionNotification(_window.Hwnd);
         StopView();
         _media.Dispose();
@@ -217,7 +231,7 @@ internal sealed class IslandController : IDisposable
         if (_view is not null) StopView();
 
         _view = new IslandView(
-            theme, _settings, _media, _timer, _weather, _calendar, _notes, _system, _clipboard, _shelf, _notifications, _window.Hwnd, _queue,
+            theme, _settings, _media, _timer, _weather, _calendar, _notes, _system, _clipboard, _shelf, _notifications, _devices, _window.Hwnd, _queue,
             takeKeyboard: TakeKeyboard,
             dismissAlert: _model.DismissAlert,
             close: _model.Close,
@@ -288,6 +302,8 @@ internal sealed class IslandController : IDisposable
         _view.System.Detach();
         _view.Clipboard.Detach();
         _view.Shelf.Detach();
+        _view.Devices.Detach();
+        _view.DevicesChip.Detach();
         _view.Bars.Stop();
         _view.Banner.Bars.Stop();
         _view.TimerEar.Stop();
@@ -339,6 +355,11 @@ internal sealed class IslandController : IDisposable
     {
         _view.Home.SetActive(HomeShown);
         _view.System.SetActive(_model.State == IslandState.Expanded && _model.Tab == IslandTab.System);
+        var expanded = _model.State == IslandState.Expanded;
+        var devices = expanded && _model.Tab == IslandTab.Devices;
+        _view.Devices.SetActive(devices);
+        _devices.SetVisible(expanded);
+        _devices.SetTabShown(devices);
     }
 
     /// <summary>

@@ -20,6 +20,9 @@ public sealed record MeetingAlert(Calendar.CalendarEntry Entry) : IslandAlert;
 /// <summary>Another app's notification (PORTING.md §3.11). Its time comes from Settings › Notifications.</summary>
 public sealed record NotificationAlert(Notifications.AppNotification Notification) : IslandAlert;
 
+/// <summary>A wireless device connected, or its battery ran low (PORTING.md §3.14).</summary>
+public sealed record DeviceAlert(Devices.WirelessDevice Device, bool IsLow) : IslandAlert;
+
 /// <summary>How long each banner stays, from the Mac (AppDelegate.swift; PORTING.md §2).</summary>
 public static class AlertDurations
 {

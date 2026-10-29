@@ -13,6 +13,7 @@ using ISLe8.Core.Shelf;
 using ISLe8.ShelfTab;
 using ISLe8.SystemTab;
 using ISLe8.Core.Weather;
+using ISLe8.Devices;
 using ISLe8.Media;
 using ISLe8.Notifications;
 using ISLe8.Timer;
@@ -50,7 +51,7 @@ internal sealed class IslandView
 
     public IslandView(
         IslandTheme theme, AppSettings settings, MediaService media, IslandTimer timer, WeatherService weather, CalendarService calendar,
-        NotesStore notes, SystemSampler system, ClipboardService clipboard, ShelfStore shelf, NotificationService notifications,
+        NotesStore notes, SystemSampler system, ClipboardService clipboard, ShelfStore shelf, NotificationService notifications, DeviceService devices,
         nint window, DispatcherQueue queue,
         Action takeKeyboard, Action dismissAlert, Action close,
         Action<IReadOnlyList<string>> dropToShelf, Action<IReadOnlyList<string>> dropToShare)
@@ -104,10 +105,9 @@ internal sealed class IslandView
         Shelf = new ShelfTabView(shelf, () => settings.CopyFilesToShelf, window);
         _tabs[IslandTab.Shelf] = Shelf.Root;
         DropTarget = new DropTargetView(dropToShelf, dropToShare);
-        foreach (var tab in new[] { IslandTab.Agents, IslandTab.Devices })
-        {
-            _tabs[tab] = Placeholder(tab);
-        }
+        Devices = new DevicesTabView(devices, theme);
+        _tabs[IslandTab.Devices] = Devices.Root;
+        _tabs[IslandTab.Agents] = Placeholder(IslandTab.Agents);
 
         var content = new Grid { Padding = new Thickness(IslandSizes.ContentInset, IslandSizes.ContentTop, IslandSizes.ContentInset, 0) };
         foreach (var view in _tabs.Values)
@@ -117,6 +117,8 @@ internal sealed class IslandView
         }
 
         Header = new HeaderBar();
+        DevicesChip = new DevicesChip(devices, () => settings.ShowDevicesChip);
+        Header.Chips.Children.Add(DevicesChip.Root);
         Dock = new TabDock(theme);
         Dock.Root.Margin = new Thickness(0, IslandSizes.DockTop, 0, IslandSizes.DockBottom);
         Dock.Root.VerticalAlignment = VerticalAlignment.Top;
@@ -155,6 +157,9 @@ internal sealed class IslandView
         NotificationBanner = new NotificationBanner(notifications);
         NotificationBanner.Root.Margin = new Thickness(14, 0, 14, 4);
         Grid.SetRow(NotificationBanner.Root, 1);
+        DeviceBanner = new DeviceBanner();
+        DeviceBanner.Root.Margin = new Thickness(14, 0, 14, 4);
+        Grid.SetRow(DeviceBanner.Root, 1);
         AlertLayer = new Grid
         {
             HorizontalAlignment = HorizontalAlignment.Left,
@@ -162,7 +167,7 @@ internal sealed class IslandView
             Visibility = Visibility.Collapsed,
             IsHitTestVisible = false,
             RowDefinitions = { new RowDefinition { Height = new GridLength(IslandSizes.HeaderHeight) }, new RowDefinition() },
-            Children = { Banner.Root, TimerBanner.Root, MeetingBanner.Root, NotificationBanner.Root },
+            Children = { Banner.Root, TimerBanner.Root, MeetingBanner.Root, NotificationBanner.Root, DeviceBanner.Root },
         };
         Grid.SetRow(Banner.Root, 1);
 
@@ -197,6 +202,9 @@ internal sealed class IslandView
     public TimerBanner TimerBanner { get; }
     public MeetingBanner MeetingBanner { get; }
     public NotificationBanner NotificationBanner { get; }
+    public DeviceBanner DeviceBanner { get; }
+    public DevicesTabView Devices { get; }
+    public DevicesChip DevicesChip { get; }
     public TimerEar TimerEar { get; }
     public AudioBars Bars { get; }
 
@@ -221,9 +229,11 @@ internal sealed class IslandView
         TimerBanner.Root.Visibility = alert is TimerAlert ? Visibility.Visible : Visibility.Collapsed;
         MeetingBanner.Root.Visibility = alert is MeetingAlert ? Visibility.Visible : Visibility.Collapsed;
         NotificationBanner.Root.Visibility = alert is NotificationAlert ? Visibility.Visible : Visibility.Collapsed;
+        DeviceBanner.Root.Visibility = alert is DeviceAlert ? Visibility.Visible : Visibility.Collapsed;
         if (alert is TimerAlert timer) TimerBanner.Show(timer.Event);
         else if (alert is MeetingAlert meeting) MeetingBanner.Show(meeting.Entry);
         else if (alert is NotificationAlert notification) NotificationBanner.Show(notification.Notification, pendingNotifications);
+        else if (alert is DeviceAlert device) DeviceBanner.Show(device.Device, device.IsLow);
         else Banner.Refresh();
         // Only a banner with a button takes the pointer itself; otherwise a click opens the island.
         AlertLayer.IsHitTestVisible = alert is MeetingAlert && MeetingBanner.HasJoin;

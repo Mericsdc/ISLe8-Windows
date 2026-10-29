@@ -1107,4 +1107,82 @@
   <data name="Notifications_AccessNote" xml:space="preserve">
     <value>Windows, başka uygulamaların bildirimlerini okumak için bir kez izin ister; bu izin yalnızca kurulu (MSIX) ISLe8'e verilebilir, zip'ten açılan sürüme verilmez. İzni sonradan Windows Ayarları &gt; Gizlilik ve güvenlik &gt; Bildirimler'den değiştirebilirsin. Gmail gibi siteler tarayıcının bildirimleriyle gelir. Bildirimler iki kez görünmesin diye, Windows Ayarları &gt; Sistem &gt; Bildirimler'de ilgili uygulamaların başlıklarını kapatabilirsin.</value>
   </data>
+  <data name="Devices_ThisPc" xml:space="preserve">
+    <value>Bu bilgisayar</value>
+  </data>
+  <data name="Devices_Charging" xml:space="preserve">
+    <value>Şarj oluyor</value>
+    <comment>mac: Şarj oluyor</comment>
+  </data>
+  <data name="Devices_PluggedIn" xml:space="preserve">
+    <value>Prize takılı</value>
+    <comment>mac: Prize takılı</comment>
+  </data>
+  <data name="Devices_OnBattery" xml:space="preserve">
+    <value>Pilde</value>
+    <comment>mac: Pilde</comment>
+  </data>
+  <data name="Devices_Left" xml:space="preserve">
+    <value>Sol</value>
+    <comment>mac: Sol</comment>
+  </data>
+  <data name="Devices_Right" xml:space="preserve">
+    <value>Sağ</value>
+    <comment>mac: Sağ</comment>
+  </data>
+  <data name="Devices_Case" xml:space="preserve">
+    <value>Kutu</value>
+    <comment>mac: Kutu</comment>
+  </data>
+  <data name="Devices_Percent" xml:space="preserve">
+    <value>%{0}</value>
+    <comment>mac: %%%lld</comment>
+  </data>
+  <data name="Devices_LeftLevel" xml:space="preserve">
+    <value>Sol %{0}</value>
+    <comment>mac: Sol %%%lld</comment>
+  </data>
+  <data name="Devices_RightLevel" xml:space="preserve">
+    <value>Sağ %{0}</value>
+    <comment>mac: Sağ %%%lld</comment>
+  </data>
+  <data name="Devices_CaseLevel" xml:space="preserve">
+    <value>Kutu %{0}</value>
+    <comment>mac: Kutu %%%lld</comment>
+  </data>
+  <data name="Devices_Low" xml:space="preserve">
+    <value>Pil azaldı</value>
+    <comment>mac: Pil azaldı</comment>
+  </data>
+  <data name="Devices_Connected" xml:space="preserve">
+    <value>Bağlandı</value>
+    <comment>mac: Bağlandı</comment>
+  </data>
+  <data name="Devices_Empty" xml:space="preserve">
+    <value>AirPods, Magic Mouse ya da pilini bildiren başka bir Bluetooth cihazı bağlanınca burada görünür.</value>
+    <comment>mac: AirPods, Magic Mouse ya da pilini bildiren başka bir Bluetooth cihazı bağlanınca burada görünür.</comment>
+  </data>
+  <data name="Settings_System" xml:space="preserve">
+    <value>Sistem</value>
+    <comment>mac: Sistem</comment>
+  </data>
+  <data name="Settings_WirelessDevices" xml:space="preserve">
+    <value>Kablosuz cihazlar</value>
+    <comment>mac: Kablosuz cihazlar</comment>
+  </data>
+  <data name="Settings_DeviceConnectedAlert" xml:space="preserve">
+    <value>Cihaz bağlanınca pillerini göster</value>
+    <comment>mac: Cihaz bağlanınca pillerini göster</comment>
+  </data>
+  <data name="Settings_DeviceLowAlert" xml:space="preserve">
+    <value>Cihazın pili %15'e inince uyar</value>
+    <comment>mac: Cihazın pili %15'e inince uyar</comment>
+  </data>
+  <data name="Settings_DevicesChip" xml:space="preserve">
+    <value>Başlıkta cihaz pilleri</value>
+    <comment>mac: Başlıkta cihaz pilleri</comment>
+  </data>
+  <data name="Settings_WirelessNote" xml:space="preserve">
+    <value>AirPods (iki kulaklık ve kutu), Beats, Bluetooth kulaklık ve hoparlörler, klavyeler, fareler, oyun kumandaları: pilini Windows'a bildiren her cihaz. Pil bilgisi Windows Ayarları'nın gösterdiği yerden, cihaz bağlanınca, ada açılınca ve bağlıyken 10 dakikada bir okunur. AirPods'un iki kulaklığı ve kutusu ayrı ayrı yalnızca Cihazlar sekmesi açıkken, AirPods'un yayınından okunur.</value>
+  </data>
 </root>

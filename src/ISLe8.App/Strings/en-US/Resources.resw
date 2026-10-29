@@ -1107,4 +1107,82 @@
   <data name="Notifications_AccessNote" xml:space="preserve">
     <value>Windows asks once before ISLe8 can read other apps' notifications, and only the installed (MSIX) ISLe8 can be allowed, not the one opened from the zip. You can change it later in Windows Settings &gt; Privacy &amp; security &gt; Notifications. Sites such as Gmail come in through the browser's notifications. So that notifications don't show twice, you can turn off the banners of those apps in Windows Settings &gt; System &gt; Notifications.</value>
   </data>
+  <data name="Devices_ThisPc" xml:space="preserve">
+    <value>This PC</value>
+  </data>
+  <data name="Devices_Charging" xml:space="preserve">
+    <value>Charging</value>
+    <comment>mac: Şarj oluyor</comment>
+  </data>
+  <data name="Devices_PluggedIn" xml:space="preserve">
+    <value>Plugged in</value>
+    <comment>mac: Prize takılı</comment>
+  </data>
+  <data name="Devices_OnBattery" xml:space="preserve">
+    <value>On battery</value>
+    <comment>mac: Pilde</comment>
+  </data>
+  <data name="Devices_Left" xml:space="preserve">
+    <value>Left</value>
+    <comment>mac: Sol</comment>
+  </data>
+  <data name="Devices_Right" xml:space="preserve">
+    <value>Right</value>
+    <comment>mac: Sağ</comment>
+  </data>
+  <data name="Devices_Case" xml:space="preserve">
+    <value>Case</value>
+    <comment>mac: Kutu</comment>
+  </data>
+  <data name="Devices_Percent" xml:space="preserve">
+    <value>{0}%</value>
+    <comment>mac: %%%lld</comment>
+  </data>
+  <data name="Devices_LeftLevel" xml:space="preserve">
+    <value>Left {0}%</value>
+    <comment>mac: Sol %%%lld</comment>
+  </data>
+  <data name="Devices_RightLevel" xml:space="preserve">
+    <value>Right {0}%</value>
+    <comment>mac: Sağ %%%lld</comment>
+  </data>
+  <data name="Devices_CaseLevel" xml:space="preserve">
+    <value>Case {0}%</value>
+    <comment>mac: Kutu %%%lld</comment>
+  </data>
+  <data name="Devices_Low" xml:space="preserve">
+    <value>Battery low</value>
+    <comment>mac: Pil azaldı</comment>
+  </data>
+  <data name="Devices_Connected" xml:space="preserve">
+    <value>Connected</value>
+    <comment>mac: Bağlandı</comment>
+  </data>
+  <data name="Devices_Empty" xml:space="preserve">
+    <value>AirPods, a Magic Mouse or another Bluetooth device that reports its battery shows up here when it connects.</value>
+    <comment>mac: AirPods, Magic Mouse ya da pilini bildiren başka bir Bluetooth cihazı bağlanınca burada görünür.</comment>
+  </data>
+  <data name="Settings_System" xml:space="preserve">
+    <value>System</value>
+    <comment>mac: Sistem</comment>
+  </data>
+  <data name="Settings_WirelessDevices" xml:space="preserve">
+    <value>Wireless Devices</value>
+    <comment>mac: Kablosuz cihazlar</comment>
+  </data>
+  <data name="Settings_DeviceConnectedAlert" xml:space="preserve">
+    <value>Show batteries when a device connects</value>
+    <comment>mac: Cihaz bağlanınca pillerini göster</comment>
+  </data>
+  <data name="Settings_DeviceLowAlert" xml:space="preserve">
+    <value>Warn when a device drops to 15%</value>
+    <comment>mac: Cihazın pili %15'e inince uyar</comment>
+  </data>
+  <data name="Settings_DevicesChip" xml:space="preserve">
+    <value>Device batteries in the header</value>
+    <comment>mac: Başlıkta cihaz pilleri</comment>
+  </data>
+  <data name="Settings_WirelessNote" xml:space="preserve">
+    <value>AirPods (both buds and the case), Beats, Bluetooth headphones and speakers, keyboards, mice, game controllers: any device that tells Windows its battery. Levels are read where Windows Settings gets them, when a device connects, when the island opens and every 10 minutes while one is connected. AirPods' buds and case are read one by one only while the Devices tab is open, from what the AirPods broadcast.</value>
+  </data>
 </root>

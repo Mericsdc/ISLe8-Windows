@@ -130,6 +130,15 @@ public sealed class AppSettings
 
     /// <summary>Apps that recently sent notifications, newest first, for the mute list (<see cref="Notifications.NotificationRules.Remember"/>).</summary>
     public List<Notifications.NotificationApp> NotificationSeenApps { get; set; } = [];
+
+    /// <summary>Settings › System › Wireless devices: a banner with the batteries when one connects.</summary>
+    public bool ShowDeviceConnectedAlert { get; set; } = true;
+
+    /// <summary>A warning when a device's battery drops to 15 %.</summary>
+    public bool ShowDeviceLowBatteryAlert { get; set; } = true;
+
+    /// <summary>The open island's header shows the device whose battery runs out first.</summary>
+    public bool ShowDevicesChip { get; set; } = true;
     public bool SwipeToChangeTabs { get; set; } = true;
 
     /// <summary>Kept out of screenshots, recordings and shared screens.</summary>

@@ -27,9 +27,9 @@ Gereken: Windows 10 2004+ ya da Windows 11.
 - Müzik çalarken (Spotify, tarayıcı, Medya Oynatıcı, Apple Music…) pill genişler; şarkı değişince kısa
   bir banner çıkar (**Ayarlar › Medya**). Açık adanın Home'unda sütunlar var: takvim, çalan şarkı, hava
   durumu, zamanlayıcı; hangileri ve hangi sırayla **Ayarlar › Düzen › Home sütunları**'nda.
-- Açık adanın altındaki dock'ta sekmeler var (Home, Raf, Pano, AI, Cihazlar; şimdilik yalnızca Home
-  dolu). Dokunmatik yüzeyde iki parmakla yana kaydırmak da sekme değiştirir. Sağ üstte sabitle ve
-  ayarlar düğmeleri.
+- Açık adanın altındaki dock'ta sekmeler var: Home, Raf, Pano, AI (henüz boş), Cihazlar, Notlar, Sistem.
+  Cihazlar'da bu bilgisayarın ve bağlı Bluetooth cihazlarının pilleri (AirPods'ta iki kulaklık ve kutu ayrı).
+  Dokunmatik yüzeyde iki parmakla yana kaydırmak da sekme değiştirir. Sağ üstte sabitle ve ayarlar düğmeleri.
 - Sağ tık: **Açık tut**, **Ayarlar…**, **Tema**, **Ekran**, **Dil**, **ISLe8'den çık**.
 - Bildirim alanındaki kapsül simgesi: tıklayınca Ayarlar açılır, sağ tıklayınca **Ayarlar…** ve
   **ISLe8'den çık**. Windows 11 yeni simgeleri görev çubuğundaki **^** okunun altına koyar; oradan

@@ -393,6 +393,19 @@ Her modülde: Mac dosyaları → Windows karşılığı → önemli davranışla
   - Okuma: bağlanma/kopma olayında 2 ve 10 sn sonra; ada açılınca 60 sn'den eskiyse; bağlıyken 10 dk'da bir. Cihaz yoksa hiçbir şey çalışmaz.
   - Başlıkta yalnızca pili en az olan cihazın çipi.
 - **Kabul:** Bir BLE fare, klasik bir kulaklık ve AirPods'la değerler Windows Ayarları'ndakiyle aynı; çift kayıt yok.
+- **Windows'ta yapılan:**
+  - Yüzde önce Windows'un kendi tuttuğu PnP özelliğinden okunuyor (BLE cihazlar için de); GATT okuması yalnızca o yoksa.
+    Böylece sayılar Windows Ayarları'ndakiyle aynı ve HID cihazlarına ayrıca bağlanılmıyor.
+  - AirPods'un ayrı kulaklık/kutu yüzdeleri yalnızca sekme açıkken geliyor (yukarıdaki kural). Sekme kapalıyken ve
+    bağlanma banner'ında AirPods tek yüzdeyle (Windows'un HFP'den aldığı) görünüyor; Mac'te banner'da kulaklıklar ve kutu var.
+    Sekme son 10 dk'da açıldıysa son kulaklık okuması kullanılıyor. Yakındaki başka birinin AirPods'u, bağlı cihazın ürün
+    kimliğiyle ve en güçlü sinyalle ayıklanıyor.
+  - "Bu Mac" kartı "Bu bilgisayar"; masaüstünde (pil yoksa) kart yok. Mac'teki "Şarj oluyor · 65 W" adaptör gücü
+    Windows'ta okunamadığı için yalnızca "Şarj oluyor".
+  - Mac'te Kompakt/Minimal düzende (196) iki satır kart sığmıyor; Windows'ta satırlar yüksekliği paylaşıyor, halkalar küçülüyor.
+  - Simgeler Segoe Fluent'ten; AirPods kulaklıkları ve kutusu için Segoe'de simge olmadığından birkaç şekilden çiziliyor.
+  - Ayarlar › Sistem'de şimdilik yalnızca "Kablosuz cihazlar" bölümü var; "iPhone ve iPad pilleri" anahtarı ve okuması
+    (aşağıda) daha yapılmadı.
 
 - **Dock simgesi:** AirPods değil, Mac + iPhone (`macbook.and.iphone`).
 - **iPhone ve iPad pilleri (W5, varsayılan kapalı):** Bu bilgisayara güvenen cihazlar, Finder'ın (Windows'ta Apple Aygıtları / iTunes) onlara ulaştığı yolla salt okunur okunur. Mac: Apple'ın `MobileDevice` çerçevesi çalışma anında yüklenir, bağlanma/kopma bildirimleri, lockdown oturumu, `com.apple.mobile.battery` (`BatteryCurrentCapacity`, `BatteryIsCharging`). Windows: "Apple Mobile Device Service" (usbmuxd) `127.0.0.1:27015`'te dinler; `ReadPairRecord` + lockdown TLS oturumu (bkz. [araştırma][mac-batteries-doc]). Kart: cihaz simgeli halka, şarjdayken ⚡ ve "Şarj oluyor". %15 uyarısı var, "bağlandı" banner'ı yok (Wi-Fi'de cihaz uyudukça gelip gider). Mac: [AppleDeviceSource.swift][mac-appledevices].

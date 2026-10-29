@@ -182,6 +182,25 @@ PORTING.md §2 › Boyutlar; değerler `IslandSizes`'ta, Core testleriyle.
   üstüne açılıyor. Üstte başka bir çubuk (üstteki görev çubuğu) varsa şerit onun altına giriyor. Ayarlar › Genel
   › "Pencereler adanın altında başlasın" ile kapatılabiliyor.
 
+### Cihazlar sekmesi
+
+- **Okuma** (`DeviceService`, Mac: DevicesModule.swift): Mac macOS'un Bluetooth raporunu okuyor. Windows, Ayarlar'da
+  gösterdiği pil yüzdesini cihazın düğümlerinden birinde tutuyor (`{104EA319-6EE2-4701-BD47-8DDBF425BBE5} 2`); bağlı her
+  eşleşmiş cihaz için aynı kapsayıcıdaki (`System.Devices.ContainerId`) düğümler okunuyor. O sayı yoksa Bluetooth LE
+  cihazının GATT Battery Service'i (0x180F/0x2A19) okunuyor. Tür: ad, Apple ürün kimliği (donanım kimliğindeki
+  `_VID&0001004c_PID&…`), klasik Class of Device ya da LE görünümü.
+- **Tetikleyiciler:** iki `DeviceWatcher` (klasik ve LE eşleşmiş cihazlar, `IsConnected`) bağlanma ve kopmayı söylüyor;
+  2 ve 10 sn sonra okunuyor. Ada açılınca 60 sn'den eskiyse; bağlı cihaz varken 10 dk'da bir. Cihaz yoksa hiçbir şey çalışmıyor.
+- **AirPods:** iki kulaklık ve kutu yalnızca Apple'ın yakınlık yayınında (üretici 0x004C, tip 0x07). Pasif bir
+  `BluetoothLEAdvertisementWatcher` yalnızca Cihazlar sekmesi ekrandayken ve bağlı bir Apple cihazı varken açık. Yayın,
+  bağlı cihazın ürün kimliğiyle eşleşiyor; birkaç tane varsa en güçlü sinyal. Son okuma 10 dk geçerli.
+- **Görünüm:** iPhone'un piller widget'ı gibi kartlar: önce "Bu bilgisayar" (`PowerManager` olaylarıyla), sonra cihazlar;
+  satırda en fazla 5 halka, kartlar halka sayısıyla paylaşıyor, tek kart en fazla halka × 120 + 60. Satırlar sığmazsa
+  (Kompakt'ta iki satır) yüksekliği paylaşıyor, halkalar küçülüyor. Simgeler Segoe'den; AirPods kulaklıkları ve kutu
+  birkaç şekilden çiziliyor (Mac'te SF Symbols).
+- **Banner'lar:** bağlanınca 4 sn, %15'te 5 sn (bir kez, %30'u geçene kadar); 420 × (pill + 56). Başlıkta pili en az olan
+  cihazın çipi, ipucunda hepsi.
+
 ### Paket ve bildirim aynası
 
 - **Paket:** Tam MSIX (`com.lrxe8.isle8`). Bildirim aynası ve "Girişte başlat"ın başlangıç görevi paket kimliği
@@ -325,7 +344,7 @@ PORTING.md §2 › Boyutlar; değerler `IslandSizes`'ta, Core testleriyle.
 | Takvim | EventKit | `AppointmentManager.RequestStoreAsync(AllCalendarsReadOnly)` (`appointments` yeteneği) | W3 |
 | AI sekmesi | Unix soket + hook'lar | `\\.\pipe\isle8-agents`; hook'lar `isle8` komutunu çağırır (MSIX App Execution Alias). componest tarzı kart: mevcut adım, süre, "Adım 3/6", son adımlar, Onayla/Reddet | W4 |
 | Kullanım limitleri | LimitBar veri katmanı | `codex`, `claude -p /usage`, `agy` CLI'ları; tasarruf modu 15 dk. Token/şifre okunmaz | W4 |
-| Kablosuz cihaz pilleri | Bluetooth raporu | BLE: GATT Battery Service (0x180F/0x2A19). Klasik kulaklıklar: PnP özelliği `{104EA319-6EE2-4701-BD47-8DDBF425BBE5} 2`, `DeviceWatcher` ile (olay güdümlü) | W5 |
+| Kablosuz cihaz pilleri | Bluetooth raporu | Windows'un tuttuğu PnP özelliği `{104EA319-6EE2-4701-BD47-8DDBF425BBE5} 2` (kapsayıcıdaki düğümler), yoksa BLE GATT Battery Service (0x180F/0x2A19); `DeviceWatcher` ile (olay güdümlü); AirPods kulaklık/kutu yayından | **W5** ✅ (iPhone/iPad hariç) |
 | Tema sistemi | 7 tema, JSON | Aynı 7 tema ve JSON biçimi (Mac'te dışa aktarılan tema Windows'ta açılır). Glass → Mica/Acrylic | W0 (temalar) / W5 (cam, düzenleyici) |
 | Dil | String Catalog | `Strings/tr-TR`, `Strings/en-US` `.resw`; menüden uygulamaya özel dil | **W0** ✅ |
 

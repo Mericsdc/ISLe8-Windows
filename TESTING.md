@@ -3,6 +3,33 @@
 Her maddeyi işaretle; olmayan varsa günlükle birlikte not et (README › Günlük ve ayarlar). W1'in
 adımları en üstte, W0'ın listesi altta.
 
+## Cihazlar sekmesi (2026-10-29)
+
+Paketli Release JIT (`install.ps1 -NoAot`). Kısa ad, tür (ad, Apple ürün kimliği, Class of Device, LE görünümü),
+birleştirme, halka renkleri, satırlar ve sığdırma, bağlanma/düşük pil kuralı ve AirPods yayını Core testlerinde
+(`DeviceTests`; 257'den 270'e). Test bilgisayarında pil bildiren Bluetooth cihazı yok (eşleşmiş iki LG hoparlör
+pil bildirmiyor); banner'lar, çip ve kartlar geçici bir deneme listesiyle görüldü, deneme kodu silindi.
+
+- [x] Cihazlar sekmesi: "Bu bilgisayar" kartı, yeşil halkada dizüstü, %80, "Prize takılı"; altında boş durum metni.
+- [x] Deneme listesiyle: fare %12 (kırmızı yay), AirPods Pro'da Sol/Sağ/Kutu ayrı halkalar, kumanda; 5 halkadan sonra
+      ikinci satır. Kompakt düzende iki satır 196 DIP'e sığıyor (halkalar 30'a küçülüyor).
+- [x] Başlıkta pili en az olan cihazın çipi (fare, kırmızı %12).
+- [x] "Pil azaldı" banner'ı (kırmızı) ve "Bağlandı" banner'ı (Sol/Sağ/Kutu rozetleri), 420 × (pill + 56).
+- [x] Ayarlar › Sistem › Kablosuz cihazlar: üç anahtar ve açıklama.
+- [ ] Gerçek bir BLE fare/klavye: yüzde Windows Ayarları › Bluetooth ve cihazlar'dakiyle aynı.
+- [ ] Klasik bir kulaklık (HFP pil göstergesi olan): yüzde Windows Ayarları'ndakiyle aynı; bağlanınca 2 sn sonra banner.
+- [ ] AirPods: bağlanınca tek yüzde; Cihazlar sekmesi açıkken birkaç saniyede Sol, Sağ ve Kutu ayrı halkalara geçiyor;
+      yakındaki başka birinin AirPods'u karışmıyor.
+- [ ] Pil %15'e inince bir kez uyarı; %30'un üstüne şarj olana kadar tekrar yok.
+- [ ] Cihaz kopunca kart ve çip gidiyor.
+- [ ] Dizüstü şarja takılınca/çıkarılınca kartın alt satırı "Şarj oluyor" / "Pilde" oluyor (⚡ şarjdayken).
+
+**Ölçüm** (ada kapalı)
+
+| Tarih | Yapı | Durum | CPU | Özel bellek | Çalışma kümesi |
+|---|---|---|---|---|---|
+| 2026-10-29 | Cihazlar, paketli Release JIT x64 | Yeni açılmış, eşleşmiş cihaz izleyicileri açık, LG hoparlör bağlı (pilsiz), medya oturumu yok, 60 sn | %0,001 (hedef < %0,1) | 43,9 MB (hedef < 80 MB) | 159,1 MB |
+
 ## Paket (MSIX) ve bildirim aynası (2026-10-29)
 
 Paketli Debug, sonra `scripts\install.ps1 -NoAot` ile Release JIT. Bildirim kuyruğu, kilit, susturma listesi,
