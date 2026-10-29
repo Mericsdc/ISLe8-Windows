@@ -4,6 +4,15 @@ namespace ISLe8.Core.Tests;
 
 public class IslandLayoutTests
 {
+    [Fact]
+    public void TheStripKeptFreeHoldsThePillAndItsPeek()
+    {
+        Assert.Equal(IslandMetrics.TopMargin + IslandMetrics.PillHeight + IslandMetrics.PeekGrowth.Height, IslandMetrics.ReservedHeight);
+        Assert.Equal(66, IslandMetrics.ReservedPixels(1.5));
+        Assert.Equal(44, IslandMetrics.ReservedPixels(1));
+        Assert.True(new ISLe8.Core.Settings.AppSettings().ReserveTopStrip);
+    }
+
     /// <summary>W0's open island; the layout's arithmetic doesn't depend on which size it is given.</summary>
     private static readonly DipSize Expanded = new(560, 160);
 

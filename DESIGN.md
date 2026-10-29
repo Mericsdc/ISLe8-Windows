@@ -173,6 +173,15 @@ PORTING.md §2 › Boyutlar; değerler `IslandSizes`'ta, Core testleriyle.
 - **Banner:** 340 × 78; üst satır (pill kadar) boş, içerik altında; köşe 20 (Mac'in alt köşesi). Şarkı
   banner'ı: kapak 30, başlık, sanatçı, sağda çubuklar (çubuk ayarından bağımsız, Mac'teki gibi).
 
+### Üstte ayrılan şerit
+
+- Mac'te ada menü çubuğunun içinde, pencerelerin dışında. Windows'ta böyle bir yer yok; ada pencerelerin
+  (tam ekran tarayıcının sekmelerinin) üstüne biniyordu. Ada bu yüzden görev çubuğu gibi bir uygulama çubuğu
+  (`SHAppBarMessage`, `ABM_SETPOS`, üst kenar) olarak ekranın üstünde 44 DIP'lik bir şerit ayırıyor: pill'in kenar
+  boşluğu, yüksekliği ve peek büyümesi. Tam ekran pencereler şeridin altından başlıyor; açık ada yine pencerelerin
+  üstüne açılıyor. Üstte başka bir çubuk (üstteki görev çubuğu) varsa şerit onun altına giriyor. Ayarlar › Genel
+  › "Pencereler adanın altında başlasın" ile kapatılabiliyor.
+
 ### Raf sekmesi
 
 - **Bırakma hedefi:** Mac'te dosya sürüklemesi notch'a yaklaşınca algılanıyor; Windows'ta dosya pill'in üstüne

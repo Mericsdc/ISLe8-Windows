@@ -3,6 +3,12 @@
 Her maddeyi işaretle; olmayan varsa günlükle birlikte not et (README › Günlük ve ayarlar). W1'in
 adımları en üstte, W0'ın listesi altta.
 
+## Üstte ayrılan şerit (2026-10-29)
+
+- [x] Ada açılınca Windows'un çalışma alanı y=66'dan başlıyor (%150'de 44 DIP); masaüstü simgeleri şeridin altında.
+- [ ] Tam ekran tarayıcının sekmeleri pill'in altında kalmıyor (canlı).
+- [ ] Ayarlar › Genel › "Pencereler adanın altında başlasın" kapatılınca şerit kalkıyor; ISLe8 kapanınca da kalkıyor.
+
 ## Raf sekmesi (2026-10-29)
 
 Debug (JIT). Raf deposu (öne alma, kopya, taşınan dosyayı bulma, silinenin düşmesi), benzersiz adlar ve

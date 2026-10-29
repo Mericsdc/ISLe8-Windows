@@ -1038,4 +1038,10 @@
     <value>When off, the shelf points at the original file and still finds it if it moves.</value>
     <comment>mac: Kapalıyken raf orijinal dosyayı gösterir; dosya taşınsa da bulunur.</comment>
   </data>
+  <data name="Settings_ReserveStrip" xml:space="preserve">
+    <value>Start windows below the island</value>
+  </data>
+  <data name="Settings_ReserveStripNote" xml:space="preserve">
+    <value>A thin strip at the top of the screen is kept for the island, as for the taskbar. Maximised windows (a browser's tabs) stay clear of the pill; the open island still opens over windows.</value>
+  </data>
 </root>

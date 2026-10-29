@@ -24,6 +24,15 @@ public static class IslandMetrics
 {
     /// <summary>Gap between the top of the screen and the pill; the mouse target still reaches the edge.</summary>
     public const double TopMargin = 6;
+
+    /// <summary>
+    /// The strip reserved at the top of the screen, as an app bar, so maximised windows start below
+    /// the pill: the pill's margin and height and the peek's growth. On the Mac the menu bar is that strip.
+    /// </summary>
+    public const double ReservedHeight = TopMargin + PillHeight + 6;
+
+    /// <summary><see cref="ReservedHeight"/> on a screen at <paramref name="scale"/>.</summary>
+    public static int ReservedPixels(double scale) => (int)Math.Ceiling(ReservedHeight * (scale > 0 ? scale : 1));
     public const double PillHeight = 32;
     public const double IdlePillWidth = 200;
     public const double CompactPillWidth = 260;

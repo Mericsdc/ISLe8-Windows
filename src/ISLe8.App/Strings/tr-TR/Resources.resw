@@ -1038,4 +1038,10 @@
     <value>Kapalıyken raf orijinal dosyayı gösterir; dosya taşınsa da bulunur.</value>
     <comment>mac: Kapalıyken raf orijinal dosyayı gösterir; dosya taşınsa da bulunur.</comment>
   </data>
+  <data name="Settings_ReserveStrip" xml:space="preserve">
+    <value>Pencereler adanın altında başlasın</value>
+  </data>
+  <data name="Settings_ReserveStripNote" xml:space="preserve">
+    <value>Ekranın üstünde ada için ince bir şerit ayrılır, görev çubuğu gibi. Tam ekran açılan pencereler (tarayıcı sekmeleri) pill'in altında kalmaz; açık ada yine pencerelerin üstüne açılır.</value>
+  </data>
 </root>

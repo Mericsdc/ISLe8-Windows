@@ -96,7 +96,9 @@ internal sealed unsafe class IslandWindow : IDisposable
         _placePending = false;
         FollowForeground(_settings.Monitor == MonitorChoice.Active);
         Monitor = Monitors.Pick(_settings, _activeMonitor);
-        var layout = IslandLayout.Compute(Monitor.Bounds, Monitor.WorkArea, Monitor.Scale, _expandedSize());
+        // The work area no longer counts the island's own strip: the island sits at the strip's top.
+        var workArea = Reserve(Monitor);
+        var layout = IslandLayout.Compute(Monitor.Bounds, workArea, Monitor.Scale, _expandedSize());
         Win32.SetWindowPos(
             Hwnd, Win32.HWND_TOPMOST,
             layout.Window.X, layout.Window.Y, layout.Window.Width, layout.Window.Height,
@@ -216,8 +218,34 @@ internal sealed unsafe class IslandWindow : IDisposable
     }
 
     /// <summary>
-    /// An app bar that reserves no space: the shell then tells the window when a full-screen app
-    /// (a game, a video, a presentation) comes and goes. No polling.
+    /// Keeps a strip at the top of the island's screen free (Settings › General), as the taskbar does,
+    /// so maximised windows start below the pill; or none. Returns the work area as it is without the
+    /// island's own strip, whose top the island is placed at. The shell puts the strip under any other
+    /// app bar on that edge (a taskbar at the top).
+    /// </summary>
+    private PixelRect Reserve(MonitorInfo monitor)
+    {
+        if (!_appBarRegistered) return monitor.WorkArea;
+        var bounds = monitor.Bounds;
+        var height = _settings.ReserveTopStrip ? IslandMetrics.ReservedPixels(monitor.Scale) : 0;
+        var data = new APPBARDATA
+        {
+            cbSize = (uint)sizeof(APPBARDATA),
+            hWnd = Hwnd,
+            uEdge = Win32.ABE_TOP,
+            rc = new RECT { Left = bounds.X, Top = bounds.Y, Right = bounds.Right, Bottom = bounds.Y + height },
+        };
+        Win32.SHAppBarMessage(Win32.ABM_QUERYPOS, ref data);
+        var top = data.rc.Top;
+        data.rc.Bottom = top + height;
+        Win32.SHAppBarMessage(Win32.ABM_SETPOS, ref data);
+        var work = monitor.WorkArea;
+        return PixelRect.FromEdges(work.X, Math.Min(top, work.Y), work.Right, work.Bottom);
+    }
+
+    /// <summary>
+    /// An app bar: the shell tells the window when a full-screen app (a game, a video, a presentation)
+    /// comes and goes, and it can keep the strip at the top free (<see cref="Reserve"/>). No polling.
     /// </summary>
     private void RegisterAppBar()
     {
@@ -247,6 +275,8 @@ internal sealed unsafe class IslandWindow : IDisposable
         if (message == AppBarCallback)
         {
             if (wParam == Win32.ABN_FULLSCREENAPP) OnFullscreenApp(lParam != 0);
+            // Another app bar on the edge moved or a screen changed: the strip is asked for again.
+            else if (wParam == Win32.ABN_POSCHANGED) RequestPlace();
             return 0;
         }
         foreach (var handler in _messageHandlers)

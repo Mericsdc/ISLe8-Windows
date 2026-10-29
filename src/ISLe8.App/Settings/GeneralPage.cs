@@ -24,6 +24,13 @@ internal static class GeneralPage
 
         page.Children.Add(SettingsUi.Card(palette, L.Get("Settings_OpenAtLogin"), SettingsUi.Switch(StartAtLogin.IsOn, StartAtLogin.Set)));
         page.Children.Add(ScreenCard(context));
+        // Windows has no menu bar for the island to sit in, as the Mac's notch does; this keeps one free.
+        page.Children.Add(SettingsUi.Card(palette, L.Get("Settings_ReserveStrip"), SettingsUi.Switch(settings.ReserveTopStrip, on =>
+        {
+            settings.ReserveTopStrip = on;
+            context.Save();
+            context.Island.PlaceIsland();
+        }), L.Get("Settings_ReserveStripNote")));
         page.Children.Add(LanguageCard(context));
 
         page.Children.Add(SettingsUi.SectionHeader(L.Get("Settings_Behavior")));

@@ -121,6 +121,12 @@ public sealed class AppSettings
     public bool HideFromScreenCapture { get; set; }
 
     public bool HideInFullscreen { get; set; } = true;
+
+    /// <summary>
+    /// Settings › General: a strip at the top of the island's screen is kept free, as the taskbar keeps
+    /// its own, so maximised windows (a browser's tabs) start below the pill instead of under it.
+    /// </summary>
+    public bool ReserveTopStrip { get; set; } = true;
     public bool AudioBars { get; set; } = true;
     public MonitorChoice Monitor { get; set; } = MonitorChoice.Primary;
 
