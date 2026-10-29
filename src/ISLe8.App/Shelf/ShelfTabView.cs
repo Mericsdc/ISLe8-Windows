@@ -243,7 +243,7 @@ internal sealed class DropTargetView
 {
     private static readonly Color Blue = Color.FromArgb(255, 0x0A, 0x84, 0xFF);
 
-    public DropTargetView(Action<IReadOnlyList<string>> toShelf, Action<IReadOnlyList<string>> toShare)
+    public DropTargetView(Func<IReadOnlyList<IStorageItem>, Task> toShelf, Func<IReadOnlyList<IStorageItem>, Task> toShare)
     {
         Shelf = new Zone(L.Get("Shelf_DropHere"), Glyphs.ShelfIn, Color.FromArgb(255, 255, 255, 255), toShelf);
         Share = new Zone(L.Get("Shelf_ShareZone"), Glyphs.Share, Blue, toShare);
@@ -274,7 +274,7 @@ internal sealed class DropTargetView
         private readonly FontIcon _icon;
         private readonly TextBlock _title = Ui.Text(12, semibold: true);
 
-        public Zone(string title, string glyph, Color tint, Action<IReadOnlyList<string>> dropped)
+        public Zone(string title, string glyph, Color tint, Func<IReadOnlyList<IStorageItem>, Task> dropped)
         {
             _tint = tint;
             _title.Text = title;
@@ -310,8 +310,9 @@ internal sealed class DropTargetView
                 var deferral = e.GetDeferral();
                 try
                 {
-                    var items = await e.DataView.GetStorageItemsAsync();
-                    dropped(items.Select(item => item.Path).Where(path => !string.IsNullOrEmpty(path)).ToList());
+                    // The items themselves, not only their paths: one from another app's own folder can
+                    // only be read through them, while the drop lasts.
+                    await dropped(await e.DataView.GetStorageItemsAsync());
                 }
                 finally
                 {

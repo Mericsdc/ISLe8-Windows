@@ -27,12 +27,14 @@ internal sealed class SystemStatus : IDisposable
         Network = new NetworkMonitor(queue);
         Watts = new ChargeWatts(queue);
         Brightness = new BrightnessMonitor(queue);
+        Keys = new VolumeKeys(queue, CanHandleKey, PressKey);
     }
 
     public VolumeMonitor Volume { get; }
     public NetworkMonitor Network { get; }
     public ChargeWatts Watts { get; }
     public BrightnessMonitor Brightness { get; }
+    public VolumeKeys Keys { get; }
 
     /// <summary>This computer's battery; null on a desktop.</summary>
     public PcBattery? Battery => _devices.Battery;
@@ -68,8 +70,12 @@ internal sealed class SystemStatus : IDisposable
         ApplySettings();
     }
 
-    /// <summary>Settings › System › HUDs: brightness is only followed while its HUD is on.</summary>
-    public void ApplySettings() => Brightness.SetEnabled(_settings.ShowBrightnessHud);
+    /// <summary>Settings › System › HUDs: brightness is only followed while its HUD is on; the volume keys taken over or not.</summary>
+    public void ApplySettings()
+    {
+        Brightness.SetEnabled(_settings.ShowBrightnessHud);
+        Keys.SetEnabled(_settings.ReplaceSystemHud);
+    }
 
     /// <summary>The island opened or closed: the charge rate is read only while it is open.</summary>
     public void SetVisible(bool open) => Watts.SetVisible(open);
@@ -88,6 +94,7 @@ internal sealed class SystemStatus : IDisposable
         _devices.BatteryChanged -= OnBatteryChanged;
         Network.Dispose();
         Watts.SetVisible(false);
+        Keys.Dispose();
         Volume.Dispose();
         Brightness.Dispose();
     }
@@ -121,6 +128,21 @@ internal sealed class SystemStatus : IDisposable
         OutputVolume = muted ? 0 : level;
         Changed?.Invoke();
         if (_settings.ShowVolumeHud) Hud?.Invoke(new HudValue(HudKind.Volume, level, muted));
+    }
+
+    /// <summary>On the hook's thread: mute needs a device, up and down one whose volume can change.</summary>
+    private bool CanHandleKey(int key) => key == VolumeKeys.Mute ? Volume.HasDevice : Volume.IsAdjustable;
+
+    /// <summary>A volume key ISLe8 took (HUDModule.swift, handleKey): up from mute also unmutes. The HUD follows from the change.</summary>
+    private void PressKey(int key)
+    {
+        if (key == VolumeKeys.Mute)
+        {
+            Volume.SetMuted(!Volume.IsMuted);
+            return;
+        }
+        if (Volume.Volume is not { } current || !Volume.SetVolume((float)VolumeSteps.Next(current, key == VolumeKeys.Up))) return;
+        if (key == VolumeKeys.Up && Volume.IsMuted) Volume.SetMuted(false);
     }
 
     private void OnBrightnessChanged(double level)

@@ -28,7 +28,7 @@ internal sealed unsafe partial class VolumeMonitor : IDisposable
     private GCHandle _self;
     private nint _enumerator;
     private nint _volume;
-    private bool _adjustable;
+    private volatile bool _adjustable;
     private Callback* _volumeCallback;
     private Callback* _deviceCallback;
     private int _attachQueued;
@@ -63,6 +63,12 @@ internal sealed unsafe partial class VolumeMonitor : IDisposable
             Log.Error(e, "volume");
         }
     }
+
+    /// <summary>There is an output device. Safe to ask from any thread.</summary>
+    public bool HasDevice => _volume != 0;
+
+    /// <summary>Its volume can be changed (<see cref="SetVolume"/>). Safe to ask from any thread.</summary>
+    public bool IsAdjustable => _volume != 0 && _adjustable;
 
     /// <summary>The default device's level, 0–1; null when there is no output device.</summary>
     public float? Volume

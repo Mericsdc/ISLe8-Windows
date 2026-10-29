@@ -91,15 +91,15 @@ internal sealed unsafe class IslandWindow : IDisposable
     /// <summary>Lets another part of ISLe8 (the tray icon) take messages sent to this window. Return null to pass one on.</summary>
     public void AddMessageHandler(Func<uint, nint, nint, nint?> handler) => _messageHandlers.Add(handler);
 
-    /// <summary>Puts the window at the top centre of the chosen monitor, sized for that monitor's DPI.</summary>
+    /// <summary>Puts the window where Settings › Appearance › Island says on the chosen monitor, sized for that monitor's DPI.</summary>
     public void Place()
     {
         _placePending = false;
         FollowForeground(_settings.Monitor == MonitorChoice.Active);
         Monitor = Monitors.Pick(_settings, _activeMonitor);
-        // The work area no longer counts the island's own strip: the island sits at the strip's top.
+        // The work area no longer counts the island's own strip: the island sits at the strip's outer edge.
         var workArea = Reserve(Monitor);
-        var layout = IslandLayout.Compute(Monitor.Bounds, workArea, Monitor.Scale, _expandedSize());
+        var layout = IslandLayout.Compute(Monitor.Bounds, workArea, Monitor.Scale, _expandedSize(), _settings.Placement, _settings.FlushTop);
         Win32.SetWindowPos(
             Hwnd, Win32.HWND_TOPMOST,
             layout.Window.X, layout.Window.Y, layout.Window.Width, layout.Window.Height,
@@ -219,28 +219,40 @@ internal sealed unsafe class IslandWindow : IDisposable
     }
 
     /// <summary>
-    /// Keeps a strip at the top of the island's screen free (Settings › General), as the taskbar does,
-    /// so maximised windows start below the pill; or none. Returns the work area as it is without the
-    /// island's own strip, whose top the island is placed at. The shell puts the strip under any other
-    /// app bar on that edge (a taskbar at the top).
+    /// Keeps a strip on the island's edge of its screen free (Settings › General), as the taskbar does,
+    /// so maximised windows end at the pill instead of running under it; or none. At the top the strip
+    /// is the pill's; on the taskbar it sits on top of the taskbar. Returns the work area as it is without
+    /// the island's own strip, whose outer edge the island is placed at. The shell stacks the strip
+    /// inside any other app bar on that edge (the taskbar).
     /// </summary>
     private PixelRect Reserve(MonitorInfo monitor)
     {
         if (!_appBarRegistered) return monitor.WorkArea;
         var bounds = monitor.Bounds;
-        var height = _settings.ReserveTopStrip ? IslandMetrics.ReservedPixels(monitor.Scale) : 0;
+        var bottom = _settings.Placement != IslandPlacement.Top;
+        var gap = !bottom && _settings.FlushTop ? 0 : IslandMetrics.TopMargin;
+        var height = _settings.ReserveTopStrip ? IslandMetrics.ReservedPixels(monitor.Scale, gap) : 0;
         var data = new APPBARDATA
         {
             cbSize = (uint)sizeof(APPBARDATA),
             hWnd = Hwnd,
-            uEdge = Win32.ABE_TOP,
-            rc = new RECT { Left = bounds.X, Top = bounds.Y, Right = bounds.Right, Bottom = bounds.Y + height },
+            uEdge = bottom ? Win32.ABE_BOTTOM : Win32.ABE_TOP,
+            rc = bottom
+                ? new RECT { Left = bounds.X, Top = bounds.Bottom - height, Right = bounds.Right, Bottom = bounds.Bottom }
+                : new RECT { Left = bounds.X, Top = bounds.Y, Right = bounds.Right, Bottom = bounds.Y + height },
         };
         Win32.SHAppBarMessage(Win32.ABM_QUERYPOS, ref data);
+        var work = monitor.WorkArea;
+        if (bottom)
+        {
+            var edge = data.rc.Bottom;
+            data.rc.Top = edge - height;
+            Win32.SHAppBarMessage(Win32.ABM_SETPOS, ref data);
+            return PixelRect.FromEdges(work.X, work.Y, work.Right, Math.Max(edge, work.Bottom));
+        }
         var top = data.rc.Top;
         data.rc.Bottom = top + height;
         Win32.SHAppBarMessage(Win32.ABM_SETPOS, ref data);
-        var work = monitor.WorkArea;
         return PixelRect.FromEdges(work.X, Math.Min(top, work.Y), work.Right, work.Bottom);
     }
 
@@ -331,6 +343,12 @@ internal sealed unsafe class IslandWindow : IDisposable
     /// <summary>Puts the island back at the top of the topmost windows, without moving or activating it.</summary>
     public void BringToTop() =>
         Win32.SetWindowPos(Hwnd, Win32.HWND_TOPMOST, 0, 0, 0, 0, Win32.SWP_NOMOVE | Win32.SWP_NOSIZE | Win32.SWP_NOACTIVATE);
+
+    /// <summary>Settings › General › Hide in full screen turned off while hidden: the island comes back now.</summary>
+    public void ApplyFullscreenSetting()
+    {
+        if (!_settings.HideInFullscreen && IsHiddenForFullscreen) OnFullscreenApp(false);
+    }
 
     private void OnFullscreenApp(bool opened)
     {

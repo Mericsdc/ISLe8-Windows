@@ -362,6 +362,7 @@ PORTING.md §2 › Boyutlar; değerler `IslandSizes`'ta, Core testleriyle.
 |---|---|---|---|
 | Medya | MediaRemote köprüsü | `GlobalSystemMediaTransportControlsSessionManager` (SMTC): kapak, ilerleme, oynat/duraklat/sonraki/önceki, karışık çal, tekrarla, sarma | **W0** ✅ |
 | Ses kaydırıcısı ve göstergesi | Core Audio | `IMMDeviceEnumerator` + `IAudioEndpointVolume` + `IAudioEndpointVolumeCallback` + `IMMNotificationClient` (elle COM, AOT uyumlu) | **W3** ✅ |
+| Ses tuşlarını devralma | CGEventTap (Erişilebilirlik izni) | `WH_KEYBOARD_LL` kendi iş parçacığında, yalnızca VK_VOLUME_*; parlaklık tuşları Windows'ta kalır | **W3** ✅ |
 | Parlaklık göstergesi | DisplayServices | WMI `WmiMonitorBrightnessEvent` (yarı eşzamanlı, tek iş parçacığı) + Raw Input parlaklık tuşları (0x6F/0x70) | **W3** ✅ |
 | Bu bilgisayarın pili, W, LAN | IOKit, NWPathMonitor | `PowerManager` olayları, `AggregateBattery` (yalnızca açıkken), `NetworkStatusChanged`; durum kulakları | **W1/W3** ✅ |
 | Hava | Open-Meteo, saat diliminden şehir | Aynısı; `TimeZoneInfo.TryConvertWindowsIdToIanaId` ile "Turkey Standard Time" → `Europe/Istanbul` | W1 |

@@ -7,9 +7,9 @@ namespace ISLe8.Settings;
 
 /// <summary>
 /// Settings › System, after the Mac's (SettingsView.swift, SystemSettings). The keyboard cleaning
-/// section arrives with the keyboard lock; the Mac's "use ISLe8's instead of the system's HUD" has no
-/// Windows counterpart (PORTING.md §3.2), and its "iPhone and iPad batteries" switch comes with
-/// reading them (§3.14).
+/// section arrives with the keyboard lock; "use ISLe8's instead of the system's HUD" takes the volume
+/// keys only, Windows keeps the brightness keys (PORTING.md §3.2), and the "iPhone and iPad
+/// batteries" switch comes with reading them (§3.14).
 /// </summary>
 internal static class SystemPage
 {
@@ -32,6 +32,12 @@ internal static class SystemPage
             context.Save();
             context.Island.ApplyStatusSettings();
         }), L.Get("Settings_BrightnessHudNote")));
+        page.Children.Add(SettingsUi.Card(palette, L.Get("Settings_ReplaceSystemHud"), SettingsUi.Switch(settings.ReplaceSystemHud, on =>
+        {
+            settings.ReplaceSystemHud = on;
+            context.Save();
+            context.Island.ApplyStatusSettings();
+        }), L.Get("Settings_ReplaceSystemHudNote")));
 
         page.Children.Add(SettingsUi.SectionHeader(L.Get("Settings_Battery")));
         page.Children.Add(SettingsUi.Card(palette, L.Get("Settings_BatteryAlerts"), SettingsUi.Switch(settings.ShowBatteryAlerts, on =>

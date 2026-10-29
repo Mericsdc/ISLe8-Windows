@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using ISLe8.Core.Diagnostics;
@@ -522,13 +523,15 @@ internal sealed class UsageService : IDisposable
 
     /// <summary>
     /// Codex writes <c>rate_limits</c> into its own session logs whenever it talks to the server
-    /// (UsageCodexLogs). Only the last 256 KiB of each of the eight newest logs of today and
-    /// yesterday (UTC) is read, and only its quota lines are parsed; conversation content is never kept.
+    /// (UsageCodexLogs). The first time, only the last 256 KiB of each of the eight newest logs of today
+    /// and yesterday (UTC) is read; after that only what was appended since, from the last whole line.
+    /// Only quota lines are parsed; conversation content is never kept.
     /// </summary>
     private sealed class CodexLogs(string root)
     {
         private readonly Lock _gate = new();
-        private readonly Dictionary<string, (DateTime Modified, long Size, UsageSnapshot? Snapshot)> _memo = new(StringComparer.OrdinalIgnoreCase);
+        private const int TailBytes = 262_144;
+        private readonly Dictionary<string, (DateTime Modified, long Size, long Offset, UsageSnapshot? Snapshot)> _memo = new(StringComparer.OrdinalIgnoreCase);
 
         public string Root { get; } = root;
 
@@ -548,9 +551,12 @@ internal sealed class UsageService : IDisposable
                     }
                     else
                     {
+                        // A log that grew is read from where the last read stopped; one that shrank or is new, its tail.
+                        var appended = known.Modified != default && file.Length >= known.Size;
+                        var (found, offset) = Read(file, appended ? known.Offset : -1, now);
                         // An append without a quota line keeps the file's last genuine measurement.
-                        candidate = Tail(file, now) ?? (known.Snapshot is not null && file.Length >= known.Size ? known.Snapshot : null);
-                        _memo[file.FullName] = (file.LastWriteTimeUtc, file.Length, candidate);
+                        candidate = found ?? (appended ? known.Snapshot : null);
+                        _memo[file.FullName] = (file.LastWriteTimeUtc, file.Length, offset, candidate);
                     }
                     if (candidate?.MeasuredAt is { } time && time <= now.AddMinutes(1) && time > (best?.MeasuredAt ?? DateTimeOffset.MinValue)) best = candidate;
                 }
@@ -567,20 +573,37 @@ internal sealed class UsageService : IDisposable
                 .Take(8)
                 .ToList();
 
-        private static UsageSnapshot? Tail(FileInfo file, DateTimeOffset now)
+        /// <summary>
+        /// The quota in the bytes from <paramref name="from"/> (or the last 256 KiB when it is -1) to
+        /// the end, and where the next read starts: after the last whole line, so a line still being
+        /// written is read whole next time.
+        /// </summary>
+        private static (UsageSnapshot? Snapshot, long Offset) Read(FileInfo file, long from, DateTimeOffset now)
         {
             try
             {
                 using var stream = new FileStream(file.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
-                var length = Math.Min(stream.Length, 262_144);
-                stream.Seek(-length, SeekOrigin.End);
-                var buffer = new byte[length];
-                stream.ReadExactly(buffer);
-                return UsageParse.CodexSessionTail(System.Text.Encoding.UTF8.GetString(buffer), now);
+                var end = stream.Length;
+                var start = Math.Max(Math.Max(from, 0), end - TailBytes);
+                var length = (int)(end - start);
+                if (length <= 0) return (null, Math.Max(from, 0));
+                var buffer = ArrayPool<byte>.Shared.Rent(length);
+                try
+                {
+                    stream.Seek(start, SeekOrigin.Begin);
+                    stream.ReadExactly(buffer, 0, length);
+                    var lastLine = Array.LastIndexOf(buffer, (byte)'\n', length - 1);
+                    var offset = lastLine >= 0 ? start + lastLine + 1 : start;
+                    return (UsageParse.CodexSessionTail(System.Text.Encoding.UTF8.GetString(buffer, 0, length), now), offset);
+                }
+                finally
+                {
+                    ArrayPool<byte>.Shared.Return(buffer);
+                }
             }
             catch (Exception e) when (e is IOException or UnauthorizedAccessException)
             {
-                return null;
+                return (null, Math.Max(from, 0));
             }
         }
     }

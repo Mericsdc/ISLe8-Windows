@@ -80,6 +80,24 @@ public sealed class ShelfStore
         Save();
     }
 
+    /// <summary>
+    /// Files the app already copied into a folder from <see cref="NewCopyFolder"/>, because ISLe8 could
+    /// not open their own place (another packaged app's private folder): kept, and deleted, as copies.
+    /// </summary>
+    public void AddCopies(IEnumerable<string> copies)
+    {
+        foreach (var path in copies) _items.Insert(0, new ShelfItem(Guid.NewGuid(), path, _now(), true, _locator.IdOf(path)));
+        Save();
+    }
+
+    /// <summary>A new, empty folder for one copy, as <see cref="Add"/> makes its own.</summary>
+    public string NewCopyFolder()
+    {
+        var folder = Path.Combine(FilesFolder, Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(folder);
+        return folder;
+    }
+
     public void Remove(Guid id)
     {
         var doomed = _items.Where(item => item.Id == id).ToList();

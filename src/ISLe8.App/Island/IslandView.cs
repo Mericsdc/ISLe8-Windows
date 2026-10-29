@@ -38,7 +38,8 @@ namespace ISLe8.Island;
 /// Root (the window)
 /// ├─ BackgroundHost   shape + shadow
 /// └─ Area             the island column: takes the hover, clipped to the shape
-///    ├─ PillLayer     artwork + bars, shown in the wide pill
+///    ├─ Clock         the time on the idle pill, if wanted
+///    ├─ PillLayer     artwork + bars (and the song's title, if wanted), shown in the wide pill
 ///    ├─ AlertLayer    a banner under an empty top row, or the HUD and status ears in it (IslandView.swift, AlertView)
 ///    └─ ExpandedLayer the open island (IslandView.swift, ExpandedView)
 ///       ├─ Header     chips · pin, settings
@@ -52,6 +53,7 @@ internal sealed class IslandView
     private readonly RowDefinition _contentRow = new();
     private readonly Dictionary<IslandTab, FrameworkElement> _tabs = [];
     private readonly FrameworkElement[] _mediaEar;
+    private readonly AppSettings _settings;
 
     public IslandView(
         IslandTheme theme, AppSettings settings, MediaService media, IslandTimer timer, WeatherService weather, CalendarService calendar,
@@ -59,8 +61,9 @@ internal sealed class IslandView
         AgentHub agents, Action<AgentApproval, bool?> decide, Action<int> goToSession, Usage.UsageService usage, SystemStatus status,
         nint window, DispatcherQueue queue,
         Action takeKeyboard, Action dismissAlert, Action close,
-        Action<IReadOnlyList<string>> dropToShelf, Action<IReadOnlyList<string>> dropToShare)
+        Func<IReadOnlyList<Windows.Storage.IStorageItem>, Task> dropToShelf, Func<IReadOnlyList<Windows.Storage.IStorageItem>, Task> dropToShare)
     {
+        _settings = settings;
         BackgroundHost = new Grid { IsHitTestVisible = false };
 
         _pillArtwork = new Image { Stretch = Stretch.UniformToFill };
@@ -102,6 +105,11 @@ internal sealed class IslandView
         AgentEar.Leading.HorizontalAlignment = HorizontalAlignment.Left;
         PillLayer.Children.Add(AgentEar.Leading);
         PillLayer.Children.Add(AgentEar.Trailing);
+        // Between the artwork and the bars, 8 from each.
+        PillTitle = new PillTitle();
+        PillTitle.Root.Margin = new Thickness(22 + 8, 0, AudioBars.Width + 8, 0);
+        PillLayer.Children.Add(PillTitle.Root);
+        Clock = new PillClock(queue);
 
         Home = new HomeView(media, status, timer, weather, calendar, settings, theme, queue, takeKeyboard);
         _tabs[IslandTab.Home] = Home.Root;
@@ -210,7 +218,7 @@ internal sealed class IslandView
             HorizontalAlignment = HorizontalAlignment.Left,
             VerticalAlignment = VerticalAlignment.Top,
             AllowDrop = true,
-            Children = { PillLayer, AlertLayer, ExpandedLayer, DropTarget.Root },
+            Children = { Clock.Root, PillLayer, AlertLayer, ExpandedLayer, DropTarget.Root },
         };
 
         Root = new Grid { Children = { BackgroundHost, Area } };
@@ -248,18 +256,31 @@ internal sealed class IslandView
     public DevicesChip DevicesChip { get; }
     public TimerEar TimerEar { get; }
     public AudioBars Bars { get; }
+    public PillTitle PillTitle { get; }
+    public PillClock Clock { get; }
 
     public void ApplyLayout(IslandLayout layout, DipRect open, HomeStyle style, IslandTab tab)
     {
         Place(Area, layout.Area);
         Place(PillLayer, layout.CompactPill);
+        Place(Clock.Root, layout.IdlePill);
         SetOpen(open, style, tab);
+        // On the taskbar a banner's empty pill row is at its bottom, where the pill was.
+        var bottom = layout.FromBottom;
+        AlertLayer.RowDefinitions[0].Height = bottom ? new GridLength(1, GridUnitType.Star) : new GridLength(IslandSizes.HeaderHeight);
+        AlertLayer.RowDefinitions[1].Height = bottom ? new GridLength(IslandSizes.HeaderHeight) : new GridLength(1, GridUnitType.Star);
+        foreach (var child in AlertLayer.Children)
+        {
+            var ear = child == HudEars.Root || child == StatusEars.Root;
+            Grid.SetRow((FrameworkElement)child, ear == bottom ? 1 : 0);
+        }
     }
 
     /// <summary>The ears show <paramref name="activity"/>: media's artwork and bars, or the timer, which ticks while <paramref name="seen"/>.</summary>
     public void ShowEar(PillActivity activity, bool seen)
     {
         foreach (var part in _mediaEar) part.Visibility = activity is PillActivity.Media or PillActivity.None ? Visibility.Visible : Visibility.Collapsed;
+        PillTitle.Root.Visibility = activity is PillActivity.Media or PillActivity.None && _settings.ShowPillTitle ? Visibility.Visible : Visibility.Collapsed;
         TimerEar.SetShown(activity == PillActivity.Timer, seen);
         AgentEar.SetShown(activity == PillActivity.Agent, seen);
     }

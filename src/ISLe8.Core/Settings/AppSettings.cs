@@ -14,6 +14,19 @@ public enum MonitorChoice
     Active,
 }
 
+/// <summary>
+/// Where the island sits (Settings › Appearance › Island; Windows only): hanging from the top of the
+/// screen as on the Mac, or standing on the taskbar at its left, centre or right, opening upwards.
+/// </summary>
+[JsonConverter(typeof(LenientEnumConverter<IslandPlacement>))]
+public enum IslandPlacement
+{
+    Top,
+    TaskbarLeft,
+    TaskbarCenter,
+    TaskbarRight,
+}
+
 /// <summary>How much Home shows; the Mac's names. Shown as Wide, Compact and Minimal ("Pano" is a tab).</summary>
 [JsonConverter(typeof(LenientEnumConverter<HomeStyle>))]
 public enum HomeStyle
@@ -164,6 +177,9 @@ public sealed class AppSettings
     /// <summary>The brightness in the ears, only when changed with the brightness keys.</summary>
     public bool ShowBrightnessHud { get; set; } = true;
 
+    /// <summary>ISLe8 takes the volume keys, so Windows' own volume HUD stays away (the Mac's replaceSystemHUD, off by default).</summary>
+    public bool ReplaceSystemHud { get; set; }
+
     /// <summary>Settings › System › Battery: plugged in, unplugged, and the battery at 20 % and 10 %.</summary>
     public bool ShowBatteryAlerts { get; set; } = true;
 
@@ -177,7 +193,20 @@ public sealed class AppSettings
     /// <summary>Kept out of screenshots, recordings and shared screens.</summary>
     public bool HideFromScreenCapture { get; set; }
 
+    /// <summary>Settings › General: a full-screen app (a game, a video, a presentation) hides the island.</summary>
     public bool HideInFullscreen { get; set; } = true;
+
+    /// <summary>Settings › Appearance › Island: where the island sits.</summary>
+    public IslandPlacement Placement { get; set; } = IslandPlacement.Top;
+
+    /// <summary>At the top: no gap above the pill, its top corners square, like the Mac's notch.</summary>
+    public bool FlushTop { get; set; }
+
+    /// <summary>The idle pill shows the time.</summary>
+    public bool ShowIdleClock { get; set; }
+
+    /// <summary>While music plays, the wide pill shows the song's title between the artwork and the bars, scrolling if it is long.</summary>
+    public bool ShowPillTitle { get; set; }
 
     /// <summary>
     /// Settings › General: a strip at the top of the island's screen is kept free, as the taskbar keeps

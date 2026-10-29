@@ -71,6 +71,7 @@ internal sealed class IslandController : IDisposable
     private readonly AgentServer _agentServer;
     private readonly Usage.UsageService _usage;
     private readonly SystemStatus _status;
+    private readonly MemoryTrim _trim;
     private HotKey? _clipboardKey;
     private nint _foregroundBeforeKeyboard;
 
@@ -101,6 +102,7 @@ internal sealed class IslandController : IDisposable
         _notifications = new NotificationService(_settings, _queue, () => _store.Save(_settings));
         _devices = new DeviceService(_queue, clock);
         _status = new SystemStatus(_settings, _devices, _queue);
+        _trim = new MemoryTrim(_queue);
         _agents = new AgentHub(_settings, clock);
         _agentServer = new AgentServer(_agents, _queue);
         _usage = new Usage.UsageService(_settings, _queue, clock, AppPaths.DataFolder);
@@ -169,6 +171,17 @@ internal sealed class IslandController : IDisposable
 
     /// <summary>Settings › Media.</summary>
     public void ApplyMediaSettings() => UpdateBars();
+
+    /// <summary>Settings › Appearance › Island and General: where the island sits, its strip, the clock and the title.</summary>
+    public void ApplyIslandSettings()
+    {
+        _window.Place();
+        UpdateClock(animate: false);
+        UpdateBars();
+    }
+
+    /// <summary>Settings › General › Hide in full screen.</summary>
+    public void ApplyFullscreenSetting() => _window.ApplyFullscreenSetting();
 
     /// <summary>Settings › Appearance › Hide in screenshots and screen sharing.</summary>
     public void ApplyCapture() => _window.SetExcludedFromCapture(_settings.HideFromScreenCapture);
@@ -262,6 +275,8 @@ internal sealed class IslandController : IDisposable
         _window.LayoutChanged += ApplyLayout;
         _window.FullscreenChanged += _ => UpdateBars();
         _window.Show();
+        // Once starting up (the usage CLIs, the first layout) is over.
+        _trim.Schedule();
 
         _media.Changed += OnMediaChanged;
         _ = _media.StartAsync();
@@ -300,15 +315,16 @@ internal sealed class IslandController : IDisposable
             takeKeyboard: TakeKeyboard,
             dismissAlert: _model.DismissAlert,
             close: _model.Close,
-            dropToShelf: paths =>
+            dropToShelf: async items =>
             {
-                _shelf.Add(paths, _settings.CopyFilesToShelf);
+                await ShelfActions.AddDropped(items, _shelf, _settings.CopyFilesToShelf);
                 _model.ShowShelfAfterDrop();
             },
-            dropToShare: paths =>
+            dropToShare: items =>
             {
                 _model.Close();
-                ShelfActions.Share(paths, _window.Hwnd, L.Get("Shelf_Title"));
+                ShelfActions.Share(items, _window.Hwnd, L.Get("Shelf_Title"));
+                return Task.CompletedTask;
             });
         _view.Area.PointerEntered += (_, e) => UpdateHover(e, touchInside: true);
         _view.Area.PointerMoved += (_, e) => UpdateHover(e, touchInside: true);
@@ -372,6 +388,7 @@ internal sealed class IslandController : IDisposable
         _view.Agents.Detach();
         _view.AgentEar.Stop();
         _view.DevicesChip.Detach();
+        _view.Clock.Stop();
         _view.Bars.Stop();
         _view.Banner.Bars.Stop();
         _view.TimerEar.Stop();
@@ -406,6 +423,7 @@ internal sealed class IslandController : IDisposable
         _view.DropTarget.Root.Visibility = dropTarget ? Visibility.Visible : Visibility.Collapsed;
         IslandSurface.SetOpacity(_view.DropTarget.Root, dropTarget ? 1 : 0);
         IslandSurface.SetOpacity(_view.PillLayer, state is IslandState.Pill or IslandState.Peek && _model.Pill == PillKind.Compact ? 1 : 0);
+        UpdateClock(animate: false);
         UpdatePlayer();
         UpdateBars();
     }
@@ -504,6 +522,7 @@ internal sealed class IslandController : IDisposable
         _settled = false;
 
         if (state != IslandState.Expanded) ReturnKeyboard();
+        if (state == IslandState.Expanded) _trim.Cancel();
         // Whatever happened to the window's place meanwhile, what opens is drawn above every window.
         if (state != IslandState.Pill) _window.BringToTop();
         if (state == IslandState.Expanded)
@@ -552,6 +571,7 @@ internal sealed class IslandController : IDisposable
         if (state is IslandState.Peek or IslandState.Alert or IslandState.DropTarget) _window.SetHitRegion(Region(layout, state));
         _surface.SetOpen(state is IslandState.Expanded or IslandState.Alert or IslandState.DropTarget, animate: true);
         _surface.MorphTo(shape, Corner(shape, state), Spring(), shadow: state == IslandState.Expanded, Settle);
+        UpdateClock(animate: true);
         UpdatePlayer();
         UpdateBars();
     }
@@ -610,7 +630,25 @@ internal sealed class IslandController : IDisposable
             compact ? MotionTimings.ContentDelay : TimeSpan.Zero,
             compact ? MotionTimings.ContentFadeIn : MotionTimings.ContentFadeOut);
         _surface.MorphTo(shape, Corner(shape, _model.State), Spring(), shadow: false, Settle);
+        UpdateClock(animate: true);
         UpdateBars();
+    }
+
+    /// <summary>
+    /// The time on the idle pill, when Settings › Appearance › Island asks for it: shown while the
+    /// island rests as the plain pill, faded with the pill's other content otherwise.
+    /// </summary>
+    private void UpdateClock(bool animate)
+    {
+        var wanted = _settings.ShowIdleClock;
+        _view.Clock.SetRunning(wanted);
+        var shown = wanted && _model.State is IslandState.Pill or IslandState.Peek && _model.Pill == PillKind.Idle;
+        if (!animate)
+        {
+            IslandSurface.SetOpacity(_view.Clock.Root, shown ? 1 : 0);
+            return;
+        }
+        _surface.Fade(_view.Clock.Root, shown ? 1 : 0, shown ? MotionTimings.ContentDelay : TimeSpan.Zero, shown ? MotionTimings.ContentFadeIn : MotionTimings.ContentFadeOut);
     }
 
     /// <summary>The shape came to rest. Back at the pill, the player leaves the tree and the mouse region shrinks to it.</summary>
@@ -618,7 +656,11 @@ internal sealed class IslandController : IDisposable
     {
         if (_model.State == IslandState.Expanded || _window.Layout is not { } layout) return;
         _settled = true;
-        if (_model.State == IslandState.Pill) _view.ExpandedLayer.Visibility = Visibility.Collapsed;
+        if (_model.State == IslandState.Pill)
+        {
+            _view.ExpandedLayer.Visibility = Visibility.Collapsed;
+            _trim.Schedule();
+        }
         if (_model.State != IslandState.Alert) _view.AlertLayer.Visibility = Visibility.Collapsed;
         if (_model.State != IslandState.DropTarget) _view.DropTarget.Root.Visibility = Visibility.Collapsed;
         _window.SetHitRegion(Region(layout, _model.State));
@@ -710,7 +752,6 @@ internal sealed class IslandController : IDisposable
         UpdateBars();
     }
 
-    /// <summary>One banner took another's place: the same size for now, so only the content changes.</summary>
     // MARK: Agents
 
     /// <summary>The ears follow the agents; the AI tab redraws itself; a banner for an answered approval goes.</summary>
@@ -836,6 +877,9 @@ internal sealed class IslandController : IDisposable
         else _view.Bars.Stop();
         if (playing && state == IslandState.Alert && _model.Alert is NowPlayingAlert) _view.Banner.Bars.Start();
         else _view.Banner.Bars.Stop();
+        // The title scrolls only while the wide pill can be seen; otherwise it waits where it started.
+        var title = _settings.ShowPillTitle && _media.Current is { Title: { Length: > 0 } name } ? name : null;
+        _view.PillTitle.Show(title, running: earsSeen && _model.Activity == PillActivity.Media && title is not null);
     }
 
     private async void LoadArtwork()

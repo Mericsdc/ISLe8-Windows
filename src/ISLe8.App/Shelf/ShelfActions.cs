@@ -12,14 +12,15 @@ namespace ISLe8.ShelfTab;
 /// <summary>What you can do with files on the shelf (ShelfActions.swift).</summary>
 internal static partial class ShelfActions
 {
-    public static async void Open(string path)
+    public static void Open(string path)
     {
         try
         {
-            if (Directory.Exists(path)) await Windows.System.Launcher.LaunchFolderPathAsync(path);
-            else await Windows.System.Launcher.LaunchFileAsync(await StorageFile.GetFileFromPathAsync(path));
+            // As a double click in Explorer does: the shell picks the app. A StorageFile would refuse
+            // some places a desktop app may open (UNABLE_TO_MASK_PATH).
+            using var _ = Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
         }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException or COMException)
+        catch (Exception e) when (e is System.ComponentModel.Win32Exception or InvalidOperationException or IOException)
         {
             Log.Error(e, "shelf open");
         }
@@ -93,6 +94,44 @@ internal static partial class ShelfActions
     /// Windows' share window for the files, with Nearby Share among its targets: the counterpart of
     /// the Mac's AirDrop picker. A Win32 window gets it through IDataTransferManagerInterop.
     /// </summary>
+    /// <summary>
+    /// Files dropped on the shelf. Those ISLe8 can open where they are go on as they are (or copied,
+    /// as Settings › Shelf says); one only Windows' drop can reach, such as a file in another packaged
+    /// app's own folder, is copied into the shelf now, through the dropped item itself.
+    /// </summary>
+    public static async Task AddDropped(IReadOnlyList<IStorageItem> items, ShelfStore store, bool copy)
+    {
+        var reachable = new List<string>();
+        var copies = new List<string>();
+        foreach (var item in items)
+        {
+            if (!string.IsNullOrEmpty(item.Path) && (File.Exists(item.Path) || Directory.Exists(item.Path)))
+            {
+                reachable.Add(item.Path);
+                continue;
+            }
+            if (item is not StorageFile file) continue;
+            try
+            {
+                var folder = await StorageFolder.GetFolderFromPathAsync(store.NewCopyFolder());
+                var copied = await file.CopyAsync(folder, file.Name, NameCollisionOption.GenerateUniqueName);
+                copies.Add(copied.Path);
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException or COMException)
+            {
+                Log.Error(e, "shelf copy");
+            }
+        }
+        if (reachable.Count > 0) store.Add(reachable, copy);
+        if (copies.Count > 0) store.AddCopies(copies);
+    }
+
+    /// <summary>Items just dropped on the share zone, shared as they are.</summary>
+    public static void Share(IReadOnlyList<IStorageItem> items, nint window, string title)
+    {
+        if (items.Count > 0) ShowShare(items.ToList(), window, title);
+    }
+
     public static async void Share(IReadOnlyList<string> paths, nint window, string title)
     {
         if (paths.Count == 0) return;
@@ -109,6 +148,11 @@ internal static partial class ShelfActions
             }
         }
         if (items.Count == 0) return;
+        ShowShare(items, window, title);
+    }
+
+    private static void ShowShare(List<IStorageItem> items, nint window, string title)
+    {
         try
         {
             var manager = ForWindow(window);

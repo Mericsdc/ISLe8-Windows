@@ -34,9 +34,13 @@ Gereken: Windows 10 2004+ ya da Windows 11.
 - Bildirim alanındaki kapsül simgesi: tıklayınca Ayarlar açılır, sağ tıklayınca **Ayarlar…** ve
   **ISLe8'den çık**. Windows 11 yeni simgeleri görev çubuğundaki **^** okunun altına koyar; oradan
   görev çubuğuna sürükleyebilirsin. ISLe8 çalışırken yeniden açmak da Ayarlar'ı açar.
+- **Adayı kendine göre:** ekranın üstünde (isteğe bağlı kenara bitişik, Mac'teki çentik gibi) ya da görev çubuğunun üstünde solda,
+  ortada, sağda; boştayken saat, müzik çalarken ortada kayan şarkı adı; tam ekranda gizlenip gizlenmeyeceği ve büyütülen
+  pencereler için şerit (**Ayarlar › Görünüm › Ada**, **Genel**).
 - **Pil, kablo ve ses:** şarja takınca ve çıkarınca, Ethernet kablosu girip çıkınca ada iPhone'daki gibi iki yana açılır;
   pil %20 ve %10'a inince uyarır. Ses ve (dizüstünde, parlaklık tuşlarıyla) parlaklık değişince kulaklarda seviye çubuğu.
-  Başlıkta pil, LAN ve şarj olurken pile giren güç (**Ayarlar › Sistem**, **Görünüm › Başlık çubuğu**).
+  Başlıkta pil, LAN ve şarj olurken pile giren güç (**Ayarlar › Sistem**, **Görünüm › Başlık çubuğu**). İsteğe bağlı olarak
+  ses tuşlarını ISLe8 karşılar, Windows'un kendi ses göstergesi çıkmaz.
 - **AI sekmesi:** Claude Code ve Codex'in ne yaptığı, adım adım; izin isteklerine adadan Onayla / Reddet. Yanında (ya da
   altında) Codex, Claude ve Antigravity'nin kalan kotası: her servisin kendi CLI'sine sorulur (`codex`, `claude`, `agy`),
   ISLe8 parola, token ya da çerez okumaz (**Ayarlar › Ajanlar › Kullanım limitleri**; LimitBar'dan, MIT). Bağlamak için

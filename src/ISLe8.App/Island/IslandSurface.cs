@@ -111,6 +111,7 @@ internal sealed class IslandSurface
     public void JumpTo(DipRect rect, double cornerRadius, bool shadow)
     {
         _morphs++;
+        rect = Flushed(rect, cornerRadius);
         Set(_shapeGeometry, rect, cornerRadius, _areaOffset);
         Set(_clipGeometry, rect, cornerRadius, Vector2.Zero);
         _shadow.StopAnimation("Opacity");
@@ -124,6 +125,7 @@ internal sealed class IslandSurface
     public void MorphTo(DipRect rect, double cornerRadius, SpringSpec spring, bool shadow, Action settled)
     {
         var morph = ++_morphs;
+        rect = Flushed(rect, cornerRadius);
         var batch = _compositor.CreateScopedBatch(CompositionBatchTypes.Animation);
         Animate(_shapeGeometry, rect, cornerRadius, _areaOffset, spring);
         Animate(_clipGeometry, rect, cornerRadius, Vector2.Zero, spring);
@@ -139,6 +141,13 @@ internal sealed class IslandSurface
             if (morph == _morphs) settled();
         };
     }
+
+    /// <summary>
+    /// Flush with the top of the screen (Settings › Appearance › Island): the shape runs up past the
+    /// window's top by its corner radius, so only its bottom corners are round, like the Mac's notch.
+    /// </summary>
+    private DipRect Flushed(DipRect rect, double cornerRadius) =>
+        _layout is { Flush: true } && rect.Y < 0.5 ? new DipRect(rect.X, rect.Y - cornerRadius, rect.Width, rect.Height + cornerRadius) : rect;
 
     /// <summary>Fades an element by its composition visual; XAML's own Opacity is left alone.</summary>
     public void Fade(UIElement element, float to, TimeSpan delay, TimeSpan duration)
@@ -332,7 +341,7 @@ internal sealed class IslandSurface
     {
         var brush = _compositor.CreateLinearGradientBrush();
         brush.MappingMode = CompositionMappingMode.Absolute;
-        var top = (float)((_layout?.Area.Y ?? 0) + IslandMetrics.TopMargin);
+        var top = (float)((_layout?.Area.Y ?? 0) + (_layout?.Expanded.Y ?? IslandMetrics.TopMargin));
         var bottom = (float)((_layout?.Area.Y ?? 0) + (_layout?.Expanded.Bottom ?? IslandSizes.HeaderHeight));
         brush.StartPoint = new Vector2(0, top);
         brush.EndPoint = new Vector2(0, bottom);

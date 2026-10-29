@@ -1039,10 +1039,10 @@
     <comment>mac: Kapalıyken raf orijinal dosyayı gösterir; dosya taşınsa da bulunur.</comment>
   </data>
   <data name="Settings_ReserveStrip" xml:space="preserve">
-    <value>Pencereler adanın altında başlasın</value>
+    <value>Ada için şerit ayır</value>
   </data>
   <data name="Settings_ReserveStripNote" xml:space="preserve">
-    <value>Ekranın üstünde ada için ince bir şerit ayrılır, görev çubuğu gibi. Tam ekran açılan pencereler (tarayıcı sekmeleri) pill'in altında kalmaz; açık ada yine pencerelerin üstüne açılır.</value>
+    <value>Görev çubuğu gibi ada için ince bir şerit ayrılır (ada üstteyse ekranın üstünde, görev çubuğundaysa onun üstünde); büyütülen pencereler, tarayıcı sekmeleri adanın altında kalmaz. Kapatınca pencereler ekranın kenarına kadar uzanır, aradaki boşluk kalkar ve ada pencerelerin üstünde durur.</value>
   </data>
   <data name="Settings_Notifications" xml:space="preserve">
     <value>Bildirimler</value>
@@ -1577,5 +1577,54 @@
   <data name="Settings_NetworkChip" xml:space="preserve">
     <value>Kablolu bağlantı (LAN)</value>
     <comment>mac: Kablolu bağlantı (LAN)</comment>
+  </data>
+  <data name="Settings_Island" xml:space="preserve">
+    <value>Ada</value>
+  </data>
+  <data name="Settings_Placement" xml:space="preserve">
+    <value>Konum</value>
+  </data>
+  <data name="Settings_PlacementTop" xml:space="preserve">
+    <value>Ekranın üstünde</value>
+  </data>
+  <data name="Settings_PlacementTaskbarLeft" xml:space="preserve">
+    <value>Görev çubuğunda, solda</value>
+  </data>
+  <data name="Settings_PlacementTaskbarCenter" xml:space="preserve">
+    <value>Görev çubuğunda, ortada</value>
+  </data>
+  <data name="Settings_PlacementTaskbarRight" xml:space="preserve">
+    <value>Görev çubuğunda, sağda</value>
+  </data>
+  <data name="Settings_PlacementNote" xml:space="preserve">
+    <value>Görev çubuğundayken ada onun hemen üstünde durur ve yukarı doğru açılır; görev çubuğundaki simgeleri kapatmaz.</value>
+  </data>
+  <data name="Settings_FlushTop" xml:space="preserve">
+    <value>Ekranın üst kenarına bitişik</value>
+  </data>
+  <data name="Settings_FlushTopNote" xml:space="preserve">
+    <value>Pill'in üstünde boşluk kalmaz, üst köşeleri düz olur; Mac'teki çentik gibi.</value>
+  </data>
+  <data name="Settings_IdleClock" xml:space="preserve">
+    <value>Boştayken saati göster</value>
+  </data>
+  <data name="Settings_PillTitle" xml:space="preserve">
+    <value>Müzik çalarken şarkı adını ortada göster</value>
+  </data>
+  <data name="Settings_PillTitleNote" xml:space="preserve">
+    <value>Kapak ile ses çubuklarının arasında; sığmayan adlar kayar.</value>
+  </data>
+  <data name="Settings_HideInFullscreen" xml:space="preserve">
+    <value>Tam ekranda gizle</value>
+  </data>
+  <data name="Settings_HideInFullscreenNote" xml:space="preserve">
+    <value>Bir oyun, video ya da sunum tam ekran açılınca ada o ekranda gizlenir, kapanınca geri gelir.</value>
+  </data>
+  <data name="Settings_ReplaceSystemHud" xml:space="preserve">
+    <value>Sistem göstergesinin yerine ISLe8'inkini kullan</value>
+    <comment>mac: Sistem göstergesinin yerine ISLe8'inkini kullan</comment>
+  </data>
+  <data name="Settings_ReplaceSystemHudNote" xml:space="preserve">
+    <value>Ses tuşlarını ISLe8 karşılar, Windows'un kendi ses göstergesi çıkmaz. Parlaklık tuşlarını Windows kendisi karşılıyor; onların göstergesi kapatılamıyor, ISLe8'inki onun yanında çıkar.</value>
   </data>
 </root>

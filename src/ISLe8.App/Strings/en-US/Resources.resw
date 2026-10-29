@@ -1039,10 +1039,10 @@
     <comment>mac: Kapalıyken raf orijinal dosyayı gösterir; dosya taşınsa da bulunur.</comment>
   </data>
   <data name="Settings_ReserveStrip" xml:space="preserve">
-    <value>Start windows below the island</value>
+    <value>Keep a strip free for the island</value>
   </data>
   <data name="Settings_ReserveStripNote" xml:space="preserve">
-    <value>A thin strip at the top of the screen is kept for the island, as for the taskbar. Maximised windows (a browser's tabs) stay clear of the pill; the open island still opens over windows.</value>
+    <value>A thin strip is kept free for the island, as for the taskbar (at the top of the screen, or just above the taskbar); maximized windows such as a browser's tabs never run under it. Turned off, windows reach the screen's edge with no gap, and the island sits over them.</value>
   </data>
   <data name="Settings_Notifications" xml:space="preserve">
     <value>Notifications</value>
@@ -1577,5 +1577,54 @@
   <data name="Settings_NetworkChip" xml:space="preserve">
     <value>Wired connection (LAN)</value>
     <comment>mac: Kablolu bağlantı (LAN)</comment>
+  </data>
+  <data name="Settings_Island" xml:space="preserve">
+    <value>Island</value>
+  </data>
+  <data name="Settings_Placement" xml:space="preserve">
+    <value>Position</value>
+  </data>
+  <data name="Settings_PlacementTop" xml:space="preserve">
+    <value>Top of the screen</value>
+  </data>
+  <data name="Settings_PlacementTaskbarLeft" xml:space="preserve">
+    <value>On the taskbar, left</value>
+  </data>
+  <data name="Settings_PlacementTaskbarCenter" xml:space="preserve">
+    <value>On the taskbar, center</value>
+  </data>
+  <data name="Settings_PlacementTaskbarRight" xml:space="preserve">
+    <value>On the taskbar, right</value>
+  </data>
+  <data name="Settings_PlacementNote" xml:space="preserve">
+    <value>On the taskbar, the island stands just above it and opens upwards, clear of the taskbar's icons.</value>
+  </data>
+  <data name="Settings_FlushTop" xml:space="preserve">
+    <value>Flush with the top edge</value>
+  </data>
+  <data name="Settings_FlushTopNote" xml:space="preserve">
+    <value>No gap above the pill and square top corners, like the Mac's notch.</value>
+  </data>
+  <data name="Settings_IdleClock" xml:space="preserve">
+    <value>Show the time when idle</value>
+  </data>
+  <data name="Settings_PillTitle" xml:space="preserve">
+    <value>Show the song's title in the middle while music plays</value>
+  </data>
+  <data name="Settings_PillTitleNote" xml:space="preserve">
+    <value>Between the artwork and the bars; titles too long to fit scroll by.</value>
+  </data>
+  <data name="Settings_HideInFullscreen" xml:space="preserve">
+    <value>Hide in full screen</value>
+  </data>
+  <data name="Settings_HideInFullscreenNote" xml:space="preserve">
+    <value>When a game, video or presentation goes full screen, the island hides on that screen and comes back afterwards.</value>
+  </data>
+  <data name="Settings_ReplaceSystemHud" xml:space="preserve">
+    <value>Use ISLe8's HUD instead of the system's</value>
+    <comment>mac: Sistem göstergesinin yerine ISLe8'inkini kullan</comment>
+  </data>
+  <data name="Settings_ReplaceSystemHudNote" xml:space="preserve">
+    <value>ISLe8 takes the volume keys, so Windows' own volume HUD doesn't appear. Windows handles the brightness keys itself; their HUD can't be turned off, and ISLe8's shows beside it.</value>
   </data>
 </root>

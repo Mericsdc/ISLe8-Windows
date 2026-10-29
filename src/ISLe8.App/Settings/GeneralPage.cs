@@ -31,6 +31,12 @@ internal static class GeneralPage
             context.Save();
             context.Island.PlaceIsland();
         }), L.Get("Settings_ReserveStripNote")));
+        page.Children.Add(SettingsUi.Card(palette, L.Get("Settings_HideInFullscreen"), SettingsUi.Switch(settings.HideInFullscreen, on =>
+        {
+            settings.HideInFullscreen = on;
+            context.Save();
+            context.Island.ApplyFullscreenSetting();
+        }), L.Get("Settings_HideInFullscreenNote")));
         page.Children.Add(LanguageCard(context));
 
         page.Children.Add(SettingsUi.SectionHeader(L.Get("Settings_Behavior")));

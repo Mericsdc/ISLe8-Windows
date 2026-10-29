@@ -107,6 +107,19 @@ Mac'te deneme yanılmayla bulundu; Windows'ta baştan böyle yapılmalı.
 | Durum kulakları | Şarj aleti takıldı/çıkarıldı, Ethernet kablosu takıldı/çıkarıldı: ada banner açmaz, notch'un iki yanına doğru açılır (kulak 104). Yay response 0,42, damping 0,6 (görünür bir sekme); simge ve yazı notch'un içinden küçük başlayıp dışarı kayar, simge bir kez zıplar. Kapanırken önce ikisi içeri kayar (0,22 sn), sonra ada aynı yayla küçülür. Takınca yeşil, çıkarınca beyaz ("%61" ya da "Wi-Fi"/"Çevrimdışı"). "Tam şarj oldu" bildirimi yok | [IslandModel.swift][mac-model] `isStatusAlert`, [SystemViews.swift][mac-systemviews] `StatusEarsView` |
 | Bildirim kuyruğu | En fazla 5 bekleyen, banner'da "+N". Ada açıkken gelenler kaybolmaz, kapanınca sırayla gösterilir | [IslandModel.swift][mac-model] `showNotification` |
 
+**Windows'a özgü ada seçenekleri (2026-10-30, Ayarlar › Görünüm › Ada).** Mac'te ada notch'tan sarkar ve ortası notch'tur;
+Windows'ta ikisi de serbest, bu yüzden kullanıcı isteğiyle eklendi. Hepsinin varsayılanı Mac'teki görünüm.
+
+- **Konum:** ekranın üstü (varsayılan) ya da görev çubuğunun üstünde solda, ortada, sağda. Görev çubuğundayken pill çalışma
+  alanının altından 6 DIP yukarıda durur, ada yukarı doğru açılır (yaylar ve boyutlar aynı); köşede ekran kenarından 16 DIP içeride,
+  o kenara yaslanarak büyür. Banner'larda boş pill satırı altta kalır. Görev çubuğundaki simgeleri kapatmaz.
+- **Üst kenara bitişik:** pill'in üstünde boşluk yok, şekil ekranın üstünden taşar; üst köşeler düz, alt köşeler yuvarlak (notch gibi).
+- **Boştayken saat:** boştaki pill'in ortasında kullanıcının bölge ayarındaki kısa saat; dakikada bir, dakika başında güncellenir.
+- **Şarkı adı:** müzik çalarken geniş pill'de kapak ile çubukların arasında; sığmazsa her turun başında 1,6 sn bekleyip 28 DIP/sn
+  kayar (kompozisyon animasyonu, ISLe8 tarafında zamanlayıcı yok). Yalnızca geniş pill görünürken kayar.
+- **Tam ekranda gizle** (Ayarlar › Genel; önceden ayarı vardı, düğmesi yoktu) ve **ada için şerit ayır** (görev çubuğundayken
+  şerit görev çubuğunun üstünde, `ABE_BOTTOM`).
+
 ### Boyutlar (Windows'ta etkin piksel / DIP)
 
 | Düzen | Genişlik | İçerik yüksekliği | Not |
@@ -170,7 +183,7 @@ Her modülde: Mac dosyaları → Windows karşılığı → önemli davranışla
   - Gösterge kulaklarda: solda simge, sağda seviye çubuğu ve yüzde ("%62", İngilizcede "62%"); kulak genişliği 92.
   - **Parlaklık göstergesi yalnızca parlaklık tuşuyla açılır.** Mac son 1,2 sn içinde bir NX_SYSDEFINED (medya/parlaklık tuşu) olayı olup olmadığına bakıyor (`CGEventSource.secondsSinceLastEventType`, izin gerektirmez). Otomatik parlaklık, ekranın kararması ve uyanması göstermez. Windows: Raw Input ile HID tüketici sayfasındaki parlaklık artır/azalt kullanımları (0x6F/0x70) dinlenir; değişiklik o tuşu izlemiyorsa gösterge açılmaz.
   - Ada açıkken gösterge çıkmaz.
-- **Not:** Windows'un kendi ses göstergesini gizlemenin desteklenen bir yolu yok; ISLe8'inki yanında çıkar. Pencere bulup gizleme gibi kırılgan yöntemler kullanılmaz.
+- **Not:** Windows'un kendi ses göstergesini gizlemenin desteklenen bir yolu yok; pencere bulup gizleme gibi kırılgan yöntemler kullanılmaz. Mac'teki gibi tuşları ISLe8 karşılarsa gösterge hiç çıkmaz (aşağıda, 2026-10-30).
 - **Kabul:** Ses tuşlarıyla gösterge çıkıyor (kaydırıcı açık adada; Mac'te de açık adanın üstüne gösterge gelmez); otomatik parlaklık gösterge açmıyor; ayardan ikisi de kapatılabiliyor.
 - **Windows'ta yapılan (2026-10-29):**
   - **Ses:** `IMMDeviceEnumerator` + `IAudioEndpointVolume`, geri çağrılar (`IAudioEndpointVolumeCallback`, varsayılan aygıt
@@ -185,8 +198,14 @@ Her modülde: Mac dosyaları → Windows karşılığı → önemli davranışla
   - **Parlaklık tuşları:** Raw Input, HID tüketici sayfası (0x0C/0x01, `RIDEV_INPUTSINK`), `HidP_GetUsages` ile 0x6F/0x70; yalnızca
     dahili ekranı olan ya da kapaklı bilgisayarda kaydedilir. Fn tuşunu kendi sürücüsüyle (ACPI) karşılayan dizüstülerde tuş
     Windows'a HID olarak gelmez; orada parlaklık göstergesi çıkmaz (otomatik parlaklık gibi sayılır).
-  - **Yapılmayan:** "Sistem göstergesinin yerine ISLe8'inkini kullan" (yukarıdaki not). Harici monitör (DDC/CI): Mac de yalnızca
-    dahili ekranı izliyor.
+  - **"Sistem göstergesinin yerine ISLe8'inkini kullan" (2026-10-30, varsayılan kapalı, Mac'teki gibi):** ses tuşları
+    (VK_VOLUME_MUTE/DOWN/UP) kendi iş parçacığındaki alt düzey klavye kancasıyla (`WH_KEYBOARD_LL`) önce ISLe8'e gelir; ISLe8
+    sesi kendisi ayarlar, Windows'un göstergesi çıkmaz. Başka tuşa bakılmaz. Adım Windows'unki gibi %2, tam adımlara oturur (Mac
+    16 adımına oturuyor); yukarı tuşu sessizi açar. Sesi sabit aygıtta ya da aygıt yokken tuş Windows'a bırakılır. Mac izin
+    istiyor; Windows'ta izin gerekmez. **Parlaklık tuşları** klavye kancasına hiç gelmez (ACPI ya da HID tüketici kullanımı,
+    sanal tuş kodu yok), bu yüzden Windows'un parlaklık göstergesi kapatılamaz; ISLe8'inki onun yanında çıkar.
+  - **Yapılmayan:** Mac'teki ince adım (Shift+Option ile 1/64): Windows'ta yok. Harici monitör (DDC/CI): Mac de yalnızca dahili
+    ekranı izliyor.
 
 ### 3.3 Pil, şarj gücü (W1)
 
@@ -324,6 +343,10 @@ Her modülde: Mac dosyaları → Windows karşılığı → önemli davranışla
   adı değişen dosya bulunur, başka sürücüye taşınan bulunamaz. Dönüştür menüsünde PNG ve JPEG var; HEIC
   kodlayıcısı her Windows'ta kurulu olmadığı için yok. Mac'teki "notch'a sürükle" ve "AirDrop'la gönder"
   metinleri "pill'e sürükle" ve "paylaş" oldu.
+- **Düzeltme (2026-10-30):** Başka bir paketli uygulamanın kendi klasöründen (ör. Claude masaüstü) sürüklenen dosyanın yolu
+  ISLe8'den görünmüyordu; açma ve küçük resim "Erişim engellendi (UNABLE_TO_MASK_PATH)" veriyordu. Artık böyle bir dosya bırakıldığı
+  anda Windows'un verdiği dosya nesnesiyle rafın klasörüne kopyalanıyor (kaldırılınca silinir). Açma `StorageFile` yerine Explorer'daki
+  çift tıklama gibi kabukla. Paylaş bölgesine bırakılanlar da yollarından değil, bırakılan nesnelerden paylaşılıyor.
 
 ### 3.11 Bildirim aynası (W3, MSIX gerekir)
 

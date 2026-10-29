@@ -176,6 +176,7 @@ internal static unsafe partial class Win32
     public const uint ABM_QUERYPOS = 2;
     public const uint ABM_SETPOS = 3;
     public const uint ABE_TOP = 1;
+    public const uint ABE_BOTTOM = 3;
     public const nint ABN_POSCHANGED = 1;
     public const nint ABN_FULLSCREENAPP = 2;
 

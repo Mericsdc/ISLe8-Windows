@@ -133,7 +133,7 @@ internal sealed class NotificationService : IDisposable
         RandomAccessStreamReference? logo = null;
         try
         {
-            logo = Windows.ApplicationModel.AppInfo.GetFromAppUserModelId(appId)?.DisplayInfo.GetLogo(new Windows.Foundation.Size(64, 64));
+            logo = Windows.ApplicationModel.AppInfo.GetFromAppUserModelId(appId)?.DisplayInfo.GetLogo(AppIcon.LogoRequest);
         }
         catch (Exception e) when (e is ArgumentException or System.Runtime.InteropServices.COMException or UnauthorizedAccessException)
         {
@@ -197,7 +197,7 @@ internal sealed class NotificationService : IDisposable
         {
             appId = received.AppInfo.AppUserModelId ?? "";
             name = received.AppInfo.DisplayInfo.DisplayName ?? "";
-            var logo = received.AppInfo.DisplayInfo.GetLogo(new Windows.Foundation.Size(64, 64));
+            var logo = received.AppInfo.DisplayInfo.GetLogo(AppIcon.LogoRequest);
             lock (_logosGate) _logos.TryAdd(appId, logo);
         }
         catch (Exception e) when (e is System.Runtime.InteropServices.COMException or ArgumentException)

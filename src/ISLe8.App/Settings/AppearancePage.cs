@@ -50,6 +50,8 @@ internal static class AppearancePage
                 width.Visibility = Styles[index] == HomeStyle.Dashboard ? Visibility.Visible : Visibility.Collapsed;
             }), styleNote));
 
+        page.Children.Add(IslandSection(context));
+
         page.Children.Add(SettingsUi.SectionHeader(L.Get("Settings_SizeAndMotion")));
         page.Children.Add(width);
         page.Children.Add(SettingsUi.Card(palette, L.Get("Settings_AnimationSpeed"), SettingsUi.SliderRow(
@@ -89,6 +91,51 @@ internal static class AppearancePage
             context.Island.ApplyStatusSettings();
         })));
         return page;
+    }
+
+    private static readonly IslandPlacement[] Placements = [IslandPlacement.Top, IslandPlacement.TaskbarLeft, IslandPlacement.TaskbarCenter, IslandPlacement.TaskbarRight];
+
+    /// <summary>
+    /// Where the island sits and what the pill shows besides the Mac's (Windows only: there is no notch
+    /// to hang from, so the island can go elsewhere, and the pill's middle is free).
+    /// </summary>
+    private static StackPanel IslandSection(SettingsContext context)
+    {
+        var settings = context.Settings;
+        var palette = context.Palette;
+        var section = new StackPanel();
+        section.Children.Add(SettingsUi.SectionHeader(L.Get("Settings_Island")));
+        var flush = SettingsUi.Card(palette, L.Get("Settings_FlushTop"), SettingsUi.Switch(settings.FlushTop, on =>
+        {
+            settings.FlushTop = on;
+            context.Save();
+            context.Island.ApplyIslandSettings();
+        }), L.Get("Settings_FlushTopNote"));
+        flush.Visibility = settings.Placement == IslandPlacement.Top ? Visibility.Visible : Visibility.Collapsed;
+        section.Children.Add(SettingsUi.Card(palette, L.Get("Settings_Placement"), SettingsUi.Choices(
+            [L.Get("Settings_PlacementTop"), L.Get("Settings_PlacementTaskbarLeft"), L.Get("Settings_PlacementTaskbarCenter"), L.Get("Settings_PlacementTaskbarRight")],
+            Math.Max(Array.IndexOf(Placements, settings.Placement), 0),
+            index =>
+            {
+                settings.Placement = Placements[index];
+                context.Save();
+                context.Island.ApplyIslandSettings();
+                flush.Visibility = Placements[index] == IslandPlacement.Top ? Visibility.Visible : Visibility.Collapsed;
+            }), L.Get("Settings_PlacementNote")));
+        section.Children.Add(flush);
+        section.Children.Add(SettingsUi.Card(palette, L.Get("Settings_IdleClock"), SettingsUi.Switch(settings.ShowIdleClock, on =>
+        {
+            settings.ShowIdleClock = on;
+            context.Save();
+            context.Island.ApplyIslandSettings();
+        })));
+        section.Children.Add(SettingsUi.Card(palette, L.Get("Settings_PillTitle"), SettingsUi.Switch(settings.ShowPillTitle, on =>
+        {
+            settings.ShowPillTitle = on;
+            context.Save();
+            context.Island.ApplyIslandSettings();
+        }), L.Get("Settings_PillTitleNote")));
+        return section;
     }
 
     /// <summary>Only the wide layout has a width to choose.</summary>

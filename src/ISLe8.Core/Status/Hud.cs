@@ -42,6 +42,21 @@ public static class HudLook
 }
 
 /// <summary>
+/// The volume keys when ISLe8 takes them over: Windows' own step of 2 %, landing on whole steps as
+/// Windows does (the Mac lands on its 16 steps the same way, HUDModule.swift snap).
+/// </summary>
+public static class VolumeSteps
+{
+    public const double Step = 0.02;
+
+    public static double Next(double current, bool up)
+    {
+        var target = Math.Round((current + (up ? Step : -Step)) / Step) * Step;
+        return Math.Clamp(Math.Round(target, 4), 0, 1);
+    }
+}
+
+/// <summary>
 /// The volume's last known value. The audio endpoint reports the same value more than once; only a
 /// real change brings up the HUD (HUDModule.swift, volumeChanged).
 /// </summary>

@@ -27,6 +27,8 @@
     <!-- Lightness: no JIT, trimmed. Applies to dotnet publish and to app packages. -->
     <PublishAot>true</PublishAot>
     <JsonSerializerIsReflectionEnabledByDefault>false</JsonSerializerIsReflectionEnabledByDefault>
+    <!-- The heap is small (about 10 MB) and blocking collections of it take a millisecond: no background GC thread. -->
+    <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
     <!-- The Windows App SDK travels with ISLe8, in the package as in the zip: nothing else to install. -->
     <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
   </PropertyGroup>

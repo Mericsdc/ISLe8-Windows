@@ -99,16 +99,27 @@ internal sealed partial class ClipboardService
         if (IsPrivate()) return;
         var app = ForegroundApp();
         if (app is not null && _settings.ClipboardExcludedApps.Contains(app, StringComparer.OrdinalIgnoreCase)) return;
-        try
+        for (var attempt = 1; ; attempt++)
         {
-            if (await Capture(WinClipboard.GetContent()) is not { } capture) return;
-            History.Record(capture, app, DateTimeOffset.Now, _settings.ClipboardLimit, TimeSpan.FromDays(_settings.ClipboardMaxAgeDays));
-            Reload();
-        }
-        catch (Exception e) when (e is COMException or UnauthorizedAccessException or InvalidOperationException)
-        {
-            // Another program holds the clipboard open, or its data went away; the next copy will do.
-            Log.Error(e, "clipboard read");
+            try
+            {
+                if (await Capture(WinClipboard.GetContent()) is not { } capture) return;
+                History.Record(capture, app, DateTimeOffset.Now, _settings.ClipboardLimit, TimeSpan.FromDays(_settings.ClipboardMaxAgeDays));
+                Reload();
+                return;
+            }
+            catch (Exception e) when (e is COMException or UnauthorizedAccessException or InvalidOperationException)
+            {
+                // The program that copied often still holds the clipboard open for a moment; asked again
+                // a little later, it has let go. Refused three times, its data went away: the next copy will do.
+                if (attempt < 3)
+                {
+                    await Task.Delay(TimeSpan.FromMilliseconds(150 * attempt));
+                    continue;
+                }
+                Log.Error(e, "clipboard read");
+                return;
+            }
         }
     }
 

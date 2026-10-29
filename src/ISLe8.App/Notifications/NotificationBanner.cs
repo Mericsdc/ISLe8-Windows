@@ -81,6 +81,12 @@ internal sealed class NotificationBanner
 /// <summary>An app's logo, or a bell on a rounded square while there is none (NotificationViews.swift, AppIconView).</summary>
 internal sealed class AppIcon
 {
+    /// <summary>
+    /// What Windows is asked for. A desktop app's logo comes from its .exe icon at the nearest size it
+    /// has; asked for 64, Chrome's came back small and was blown up, blurred, on a 150 % screen.
+    /// </summary>
+    public static readonly Windows.Foundation.Size LogoRequest = new(256, 256);
+
     private readonly Image _image;
     private readonly Border _placeholder;
     private int _version;
@@ -110,7 +116,8 @@ internal sealed class AppIcon
         try
         {
             using var stream = await logo.OpenReadAsync();
-            var bitmap = new BitmapImage();
+            // Decoded at the size it is drawn, so a big logo is scaled down sharply, not by the compositor.
+            var bitmap = new BitmapImage { DecodePixelType = DecodePixelType.Logical, DecodePixelWidth = (int)Math.Ceiling(_image.Width) };
             await bitmap.SetSourceAsync(stream);
             if (version != _version) return;
             _image.Source = bitmap;

@@ -35,6 +35,34 @@ aktivitesi, kulak önceliği, açılış sekmesi ve hook kurulumu Core testlerin
 
 - [ ] İkinci satır: kullanımdan sonra bellek yine 80 MB'ın üstünde (Raf ölçümündeki açık madde). W6'nın ölçüm turunda bakılacak.
 
+## Bellek, raf, ses tuşları ve ada seçenekleri (2026-10-30)
+
+Paketli Release JIT. Konumlar, üste bitişik yerleşim, ses adımları ve rafa kopyalanan dosyalar Core testlerinde
+(`PlacementTests`; 328'den 337'ye).
+
+- [x] **Bellek:** Görev Yöneticisi'ndeki "Bellek" (etkin özel çalışma kümesi) 92 MB'tı. Ada kapandıktan 5 sn sonra kullanılmayan
+      sayfalar Windows'a veriliyor: açılıştan sonra 8,4 MB, ada açıkken 32 MB, kapandıktan 5 sn sonra 6,0 MB. Yeniden açılış gecikmesiz.
+- [x] Yönetilen yığın yalnızca ~10 MB; özel bayt (commit) ~115 MB'ın çoğu JIT yapısının yerel yığınları ve DLL'leri. Sürüm yapısı
+      Native AOT (CI'da); bu bilgisayarda C++ araçları olmadığı için AOT ölçülemedi.
+- [x] **Disk:** Codex çalışırken her yazmada oturum kaydının son 256 KB'ı yeniden okunuyordu (~0,1 MB/sn); artık yalnızca eklenen
+      satırlar okunuyor.
+- [x] Pano okuması: pano meşgulse 150 ve 300 ms sonra iki kez daha deneniyor (önce COMException ile düşüyordu).
+- [x] Görev çubuğu ortada: pencere çalışma alanının altında (Bottom = 2088), ada yukarı açılıyor, dock altta; saat ortada.
+- [x] Üste bitişik: üst köşeler düz, alt köşeler yuvarlak, saat ortada.
+- [x] Ses tuşlarını devralma: kanca kuruluyor ("taken over from Windows"); sessiz tuşunda adada "%0" göstergesi, ikinci basışta ses
+      geri açılıyor. Kulaklık sabit sesli olduğu için yukarı/aşağı tuşları Windows'a bırakılıyor (doğru).
+- [ ] Müzik çalarken şarkı adı ortada; uzun adlar kayıyor, ada açılınca duruyor.
+- [ ] Görev çubuğunda solda ve sağda; ekran kenarından 16 DIP içeride, o tarafa yaslanarak açılıyor.
+- [ ] Başka bir paketli uygulamadan rafa dosya sürükleme: kopyası rafta, çift tıklayınca açılıyor.
+- [ ] Chrome bildiriminde simge net (256 piksel istenip ekrandaki boyutta çözülüyor).
+- [ ] Laptop hoparlöründe ses tuşları devralınınca Windows'un göstergesi çıkmıyor, ISLe8'inki çıkıyor.
+
+**Ölçüm** (`scripts/measure.ps1`; "özel" Görev Yöneticisi'ndeki bellek, etkin özel çalışma kümesi)
+
+| Tarih | Yapı | Durum | CPU | Özel bellek | Çalışma kümesi |
+|---|---|---|---|---|---|
+| 2026-10-30 | Kırpma ve Codex düzeltmesi, paketli Release JIT x64 | Taze açılış, ada kapalı, müzik yok, 60 sn | %0,008 (hedef < %0,1) | 10,7 MB (hedef < 80 MB; önce 59,9–94,6) | 30,0 MB |
+
 ## Pil, LAN ve ses/parlaklık göstergesi (2026-10-29)
 
 Paketli Release JIT. Pil olayları, kablo, gösterge değerleri, boyutlar ve kapanma sırası Core testlerinde (`StatusTests`;
