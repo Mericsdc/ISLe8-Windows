@@ -37,12 +37,12 @@ aktivitesi, kulak önceliği, açılış sekmesi ve hook kurulumu Core testlerin
 
 ## Güncellemeler (2026-10-30)
 
-Sürüm 0.2.0. Release okuma, sürüm karşılaştırma, dosya seçimi, güvenilen adresler ve günlük denetim Core testlerinde
+Sürüm 0.2.1 (0.2.0 etiketinin yayını CI'da isle8-cli geri yüklenmediği için çıkmadı). Release okuma, sürüm karşılaştırma, dosya seçimi, güvenilen adresler ve günlük denetim Core testlerinde
 (`UpdateTests`; 338'den 344'e).
 
 - [ ] Ayarlar › Genel › Güncellemeler: "Güncellemeleri denetle" → "ISLe8 güncel" ya da "0.2.0 sürümüne güncelle".
-- [ ] Kurulu ISLe8 (0.1.x) → 0.2.0: indirme yüzdesi, ISLe8 kapanıp açılıyor, sürüm 0.2.0; bildirim izni ve ayarlar duruyor.
-- [ ] Zip'ten açılan ISLe8 → 0.2.0: klasör yerinde güncelleniyor.
+- [ ] Kurulu ISLe8 (0.1.x) → 0.2.1: indirme yüzdesi, ISLe8 kapanıp açılıyor, sürüm 0.2.1; bildirim izni ve ayarlar duruyor.
+- [ ] Zip'ten açılan ISLe8 → 0.2.1: klasör yerinde güncelleniyor.
 - [ ] Bildirim alanı menüsünde "Güncelle" öğesi yalnızca yeni sürüm varken.
 
 ## Bellek, raf, ses tuşları ve ada seçenekleri (2026-10-30)
