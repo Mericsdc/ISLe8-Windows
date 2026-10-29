@@ -24,10 +24,10 @@ public class OpenIslandTests
     [Theory]
     [InlineData(HomeStyle.Dashboard, IslandTab.Home, 820, 396)]
     [InlineData(HomeStyle.Dashboard, IslandTab.Devices, 820, 396)]
-    [InlineData(HomeStyle.Compact, IslandTab.Home, 640, 288)]
-    [InlineData(HomeStyle.Compact, IslandTab.Shelf, 640, 288)]
-    [InlineData(HomeStyle.Minimal, IslandTab.Home, 600, 156)]
-    [InlineData(HomeStyle.Minimal, IslandTab.Agents, 600, 288)]
+    [InlineData(HomeStyle.Compact, IslandTab.Home, 870, 192)]
+    [InlineData(HomeStyle.Compact, IslandTab.Shelf, 870, 288)]
+    [InlineData(HomeStyle.Minimal, IslandTab.Home, 720, 156)]
+    [InlineData(HomeStyle.Minimal, IslandTab.Agents, 720, 288)]
     public void EachLayoutHasTheMacsSizes(HomeStyle style, IslandTab tab, double width, double height)
     {
         _settings.HomeStyle = style;
@@ -42,7 +42,7 @@ public class OpenIslandTests
         Assert.Equal(980, IslandSizes.Width(_settings));
 
         _settings.HomeStyle = HomeStyle.Compact;
-        Assert.Equal(640, IslandSizes.Width(_settings));
+        Assert.Equal(870, IslandSizes.Width(_settings));
     }
 
     [Fact]
@@ -50,7 +50,7 @@ public class OpenIslandTests
     {
         _settings.HomeStyle = HomeStyle.Minimal;
 
-        Assert.Equal(new DipSize(600, 288), IslandSizes.Largest(_settings));
+        Assert.Equal(new DipSize(720, 288), IslandSizes.Largest(_settings));
     }
 
     [Theory]

@@ -124,12 +124,20 @@ Her modülde: Mac dosyaları → Windows karşılığı → önemli davranışla
 
 - **Mac:** [NowPlayingService.swift][mac-nowplaying], [MediaViews.swift][mac-mediaviews], [NowPlaying.swift][mac-nowplaying-model]
 - **Windows:** SMTC (var).
-- **Kalanlar:**
-  - Kapak, yalnızca parça değişince değil **küçük resim referansı değişince** de yenilenmeli; Chrome önce eski kapağı yolluyor.
-  - Duraklat→oynat geçişinde zaman çizelgesi yeniden okunmalı; okunmazsa ilerleme sıçrar.
-  - İlk SMTC isteği başarısız olursa yeniden denenmeli.
-  - `GetCurrentSession` duraklatılmış bir oturum veriyorsa ve başka bir oturum çalıyorsa, çalanı seçmeli (`GetSessions`).
-  - Kapalıyken her SMTC olayında oynatıcı yeniden çizilmemeli.
+- **W1 adım 4'te yapıldı** (kurallar `MediaRules`'ta, Core testleriyle):
+  - Kapak, yalnızca parça değişince değil **küçük resim referansı değişince** de yenileniyor (`ArtworkVersion`); Chrome önce eski kapağı yolluyor.
+  - Duraklatınca konum durduğu yerde tutuluyor; oynat'ta zaman çizelgesi yeniden okunuyor, oynatıcı yeni rapor yollamadıysa konum devam ettiği andan sayılıyor. Yoksa ilerleme duraklatma süresi kadar sıçrıyordu.
+  - İlk SMTC isteği başarısız olursa 1, 2, 4, 8, 16 sn sonra, sonra 30 sn'de bir yeniden deneniyor.
+  - Bütün oturumların oynatma durumu dinleniyor: `GetCurrentSession` duraklatılmış bir oturum verirken başka biri çalıyorsa çalan seçiliyor (`GetSessions`).
+  - Kapalıyken SMTC olayları yalnızca pill'i, kapağı ve çubukları güncelliyor; Home açılınca yetişiyor.
+- **Şarkı banner'ı (Mac: MediaModule.swift):** ISLe8 açıldığında çalan ve duraklatılmışken seçilip sonra
+  çalınan şarkı banner almaz. Windows'a özgü: SMTC yeni bir oturumu önce başlıksız bildiriyor; o rapor
+  sayılmıyor, başlıklı olan sayılıyor.
+- **Taşınmayanlar:**
+  - Ayarlar › Medya'daki "MediaRemote köprüsü" satırı: Windows'ta köprü yok, SMTC sistemin parçası.
+  - Medya sütunundaki uygulama simgesi ("Uygulamayı aç"): henüz yok. Simge AUMID'den
+    `shell:AppsFolder\<AUMID>` ve `IShellItemImageFactory` ile alınabilir; Spotify'ın masaüstü sürümü
+    gibi kısayolu farklı AUMID'li oynatıcılarda bulunamayabilir.
 - **Ses kaydırıcısı (W1):**
   - `IMMDeviceEnumerator` + `IAudioEndpointVolume` + `IAudioEndpointVolumeCallback`. Varsayılan çıkış değişince `IMMNotificationClient.OnDefaultDeviceChanged`.
   - Değer 0–100, sessizdeyken 0. Sıfırdan yukarı çekmek sesi açar.

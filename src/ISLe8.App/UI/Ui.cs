@@ -35,6 +35,11 @@ internal static class Glyphs
     public const string Layout = "";
     public const string Up = "";
     public const string Down = "";
+    public const string Calendar = "";
+    public const string Weather = "";
+    public const string Timer = "";
+    public const string Add = "";
+    public const string Remove = "";
 }
 
 internal static class ThemeColors

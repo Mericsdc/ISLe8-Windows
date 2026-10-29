@@ -263,13 +263,13 @@ public class IslandModelTests
     // MARK: Pill and springs
 
     [Fact]
-    public void ThePillWidensAtOnceAndNarrowsLate()
+    public void ThePillWidensAtOnceAndNarrowsEightSecondsLaterAsOnTheMac()
     {
         _model.SetLive(true);
         Assert.Equal(PillKind.Compact, _model.Pill);
 
         _model.SetLive(false);
-        Wait(1499);
+        Wait(7999);
         Assert.Equal(PillKind.Compact, _model.Pill);
         Wait(1);
         Assert.Equal(PillKind.Idle, _model.Pill);
@@ -282,7 +282,7 @@ public class IslandModelTests
         _model.SetLive(false);
         Wait(400);
         _model.SetLive(true);
-        Wait(3000);
+        Wait(10_000);
 
         Assert.Equal(PillKind.Compact, _model.Pill);
     }

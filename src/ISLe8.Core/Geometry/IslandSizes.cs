@@ -7,8 +7,9 @@ namespace ISLe8.Core.Geometry;
 /// <summary>
 /// The open island's size in each Home layout, after IslandModel.swift (expandedWidth,
 /// contentHeight, bottomSpace) and PORTING.md §2: a header row as tall as the pill, the tab's
-/// content, then the dock. Within the wide and compact layouts every tab is the same size, so
-/// switching tabs never resizes the island; minimal Home is a single strip.
+/// content, then the dock. In the wide layout every tab is the same size, so switching tabs never
+/// resizes the island; compact and minimal Home are strips as wide as their columns need, and the
+/// other tabs are taller than that.
 /// </summary>
 public static class IslandSizes
 {
@@ -31,19 +32,30 @@ public static class IslandSizes
     /// <summary>The Mac sizes the island by its notch; here the idle pill stands in for it.</summary>
     private const double Notch = IslandMetrics.IdlePillWidth;
 
-    public static double Width(AppSettings settings) => settings.HomeStyle switch
+    /// <summary>The wide layout's from the setting; the strips' from their columns (<see cref="HomeStrip"/>).</summary>
+    public static double Width(AppSettings settings)
     {
-        HomeStyle.Compact => Math.Max(640, Notch + 400),
-        HomeStyle.Minimal => Math.Max(600, Notch + 380),
-        _ => Math.Max(settings.ExpandedWidth, Notch + 480),
-    };
+        var strip = HomeStrip.Width(settings.HomeTiles, settings.HomeStyle) + HomeStrip.SideRoom;
+        return settings.HomeStyle switch
+        {
+            HomeStyle.Compact => Math.Max(strip, Math.Max(Notch + 440, 640)),
+            HomeStyle.Minimal => Math.Max(strip, Math.Max(Notch + 400, 600)),
+            _ => Math.Max(settings.ExpandedWidth, Notch + 480),
+        };
+    }
 
     public static double ContentHeight(HomeStyle style, IslandTab tab) => style switch
     {
-        HomeStyle.Compact => 196,
+        HomeStyle.Compact => tab == IslandTab.Home ? 100 : 196,
         HomeStyle.Minimal => tab == IslandTab.Home ? 64 : 196,
         _ => 304,
     };
+
+    /// <summary>
+    /// Home's columns sit this far in from the island's sides: the content margin on the dashboard,
+    /// half the strip's side room in the strips, so the strip is as wide as the Mac's.
+    /// </summary>
+    public static double HomeInset(HomeStyle style) => style == HomeStyle.Dashboard ? ContentInset : HomeStrip.SideRoom / 2;
 
     /// <summary>The open island showing <paramref name="tab"/>.</summary>
     public static DipSize Open(AppSettings settings, IslandTab tab) =>
@@ -52,6 +64,16 @@ public static class IslandSizes
     /// <summary>The biggest the island gets in the current layout; the window is sized for it.</summary>
     public static DipSize Largest(AppSettings settings) =>
         Enum.GetValues<IslandTab>().Select(tab => Open(settings, tab)).MaxBy(size => size.Height);
+
+    /// <summary>
+    /// A banner: the wide pill plus 60, at least 340, and the pill's row plus 46 for its content
+    /// (IslandModel.swift, size(for: .alert)). Its top row stays empty, as the notch's does on the Mac.
+    /// </summary>
+    public static DipSize Alert(IslandAlert alert) =>
+        new(Math.Max(IslandMetrics.CompactPillWidth + 60, 340), HeaderHeight + 46);
+
+    /// <summary>A banner's corners: the Mac's bottom radius for alerts (IslandModel.swift, bottomRadius).</summary>
+    public const double AlertCornerRadius = 20;
 
     /// <summary>The open island follows the theme's corners: sharp themes get a crisper outline.</summary>
     public static double CornerRadius(IslandTheme theme) => Math.Min(theme.CornerRadius + 12, 28);

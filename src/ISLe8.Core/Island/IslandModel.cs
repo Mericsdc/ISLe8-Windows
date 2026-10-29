@@ -9,6 +9,8 @@ public enum IslandState
     Pill,
     /// <summary>Click mode only: the pointer rests on the pill, which swells a little to say it can be clicked.</summary>
     Peek,
+    /// <summary>A short-lived banner (<see cref="IslandModel.Alert"/>), for example a new song.</summary>
+    Alert,
     /// <summary>The full island.</summary>
     Expanded,
 }
@@ -32,8 +34,14 @@ public sealed class IslandModel
     /// <summary>A finger lifting is not leaving: an island opened by touch stays this long.</summary>
     public static readonly TimeSpan TouchCloseDelay = TimeSpan.FromSeconds(4);
 
-    /// <summary>Players report "paused" for a moment between tracks; the pill waits this long before narrowing.</summary>
-    public static readonly TimeSpan PillShrinkDelay = TimeSpan.FromSeconds(1.5);
+    /// <summary>
+    /// After a pause the wide pill stays this long, so a quick resume (or a player reporting "paused"
+    /// between tracks) doesn't make it flicker (MediaModule.swift).
+    /// </summary>
+    public static readonly TimeSpan PillShrinkDelay = TimeSpan.FromSeconds(8);
+
+    /// <summary>A banner the pointer rested on goes this long after the pointer leaves.</summary>
+    public static readonly TimeSpan AlertAfterHover = TimeSpan.FromSeconds(1.2);
 
     /// <summary>Reopening within this time returns to the tab you left; later it starts at the first tab.</summary>
     public static readonly TimeSpan TabMemory = TimeSpan.FromSeconds(15);
@@ -43,6 +51,7 @@ public sealed class IslandModel
     private IDisposable? _hoverTimer;
     private IDisposable? _closeTimer;
     private IDisposable? _shrinkTimer;
+    private IDisposable? _alertTimer;
     private DateTimeOffset _closedAt = DateTimeOffset.MinValue;
 
     public IslandModel(AppSettings settings, IIslandClock clock)
@@ -58,6 +67,9 @@ public sealed class IslandModel
 
     /// <summary>The open island's tab, or the one it will open on.</summary>
     public IslandTab Tab { get; private set; } = IslandTab.Home;
+
+    /// <summary>The banner shown in <see cref="IslandState.Alert"/>, or last shown.</summary>
+    public IslandAlert? Alert { get; private set; }
 
     /// <summary>The tabs in the dock, in the user's order.</summary>
     public IReadOnlyList<IslandTab> VisibleTabs => IslandTabs.Visible(_settings);
@@ -84,6 +96,9 @@ public sealed class IslandModel
     /// <summary><see cref="Tab"/> changed; the argument is the tab it left.</summary>
     public event Action<IslandTab>? TabChanged;
 
+    /// <summary>One banner took another's place without the state changing.</summary>
+    public event Action? AlertChanged;
+
     /// <summary>Anything changed: state, pill, pointer, pin or menu.</summary>
     public event Action? Changed;
 
@@ -94,6 +109,14 @@ public sealed class IslandModel
     public void SetHovering(bool inside, bool touch = false)
     {
         IsHovering = inside;
+        // A banner stays while the pointer rests on it, so there is time to read it; a click opens the island.
+        if (State == IslandState.Alert)
+        {
+            Cancel(ref _alertTimer);
+            if (!inside) EndAlert(AlertAfterHover);
+            Changed?.Invoke();
+            return;
+        }
         Cancel(ref _hoverTimer);
         Cancel(ref _closeTimer);
 
@@ -136,8 +159,38 @@ public sealed class IslandModel
     {
         Cancel(ref _hoverTimer);
         Cancel(ref _closeTimer);
+        Cancel(ref _alertTimer);
         Transition(IslandState.Pill);
     }
+
+    /// <summary>
+    /// Shows a banner for <paramref name="duration"/>, then returns to the pill. Only an island at
+    /// rest (or showing another banner) takes one, and not under the pointer: a banner never covers
+    /// what you are doing on the island.
+    /// </summary>
+    public void ShowAlert(IslandAlert alert, TimeSpan duration)
+    {
+        if (State is not (IslandState.Pill or IslandState.Alert) || IsHovering || IsMenuOpen) return;
+        Cancel(ref _alertTimer);
+        Alert = alert;
+        if (State == IslandState.Alert)
+        {
+            AlertChanged?.Invoke();
+            Changed?.Invoke();
+        }
+        else
+        {
+            Transition(IslandState.Alert);
+        }
+        EndAlert(duration);
+    }
+
+    private void EndAlert(TimeSpan after) =>
+        _alertTimer = _clock.After(after, () =>
+        {
+            _alertTimer = null;
+            if (State == IslandState.Alert) Transition(IslandState.Pill);
+        });
 
     /// <summary>Pinning keeps the island open; pinning it from the pill (the menu) opens it.</summary>
     public void SetPinned(bool pinned)
@@ -219,6 +272,7 @@ public sealed class IslandModel
 
     private void Open()
     {
+        Cancel(ref _alertTimer);
         if (State != IslandState.Expanded) ChooseTabForOpening();
         Transition(IslandState.Expanded);
     }

@@ -70,6 +70,12 @@ public sealed class AppSettings
     public List<string> TabOrder { get; set; } = [.. Island.IslandTabs.AllIds];
 
     public List<string> HiddenTabs { get; set; } = [];
+
+    /// <summary>Home's columns by id (<see cref="Island.HomeColumns.AllIds"/>), left to right; may be empty.</summary>
+    public List<string> HomeTiles { get; set; } = ["calendar", "media", "weather"];
+
+    /// <summary>A short banner when a new song starts (Settings › Media).</summary>
+    public bool ShowTrackChangeAlert { get; set; } = true;
     public bool SwipeToChangeTabs { get; set; } = true;
 
     /// <summary>Kept out of screenshots, recordings and shared screens.</summary>
@@ -108,6 +114,7 @@ public sealed class AppSettings
         TabOrder = (TabOrder ?? []).Where(known.Contains).Distinct().Concat(known).Distinct().ToList();
         HiddenTabs = (HiddenTabs ?? []).Where(known.Contains).Distinct().ToList();
         if (HiddenTabs.Count >= known.Count) HiddenTabs.Clear();
+        HomeTiles = (HomeTiles ?? []).Where(Island.HomeColumns.AllIds.Contains).Distinct().ToList();
         if (!Languages.Contains(Language)) Language = "system";
         CustomThemes = (CustomThemes ?? []).Where(theme => theme is not null).Select(theme => theme.Normalized()).ToList();
         if (Monitor == MonitorChoice.Named && string.IsNullOrWhiteSpace(MonitorDevice)) Monitor = MonitorChoice.Primary;

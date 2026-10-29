@@ -22,6 +22,7 @@ namespace ISLe8.Island;
 /// ├─ BackgroundHost   shape + shadow
 /// └─ Area             the island column: takes the hover, clipped to the shape
 ///    ├─ PillLayer     artwork + bars, shown in the wide pill
+///    ├─ AlertLayer    a banner under an empty top row (IslandView.swift, AlertView)
 ///    └─ ExpandedLayer the open island (IslandView.swift, ExpandedView)
 ///       ├─ Header     chips · pin, settings
 ///       ├─ content    one view per tab; the shown one only
@@ -68,14 +69,8 @@ internal sealed class IslandView
             Children = { pillArtwork, barsHost },
         };
 
-        // Home holds W0's player until step 4 gives it columns; minimal Home is too short for it.
-        Player = new MediaPlayerView(media, theme, queue);
-        Player.Root.Width = 560;
-        Player.Root.Height = 160;
-        Player.Root.HorizontalAlignment = HorizontalAlignment.Center;
-        Player.Root.VerticalAlignment = VerticalAlignment.Center;
-        Strip = new MediaStrip(media, theme);
-        _tabs[IslandTab.Home] = new Grid { Children = { Player.Root, Strip.Root } };
+        Home = new HomeView(media, theme, queue);
+        _tabs[IslandTab.Home] = Home.Root;
         foreach (var tab in new[] { IslandTab.Shelf, IslandTab.Clipboard, IslandTab.Agents, IslandTab.Devices })
         {
             _tabs[tab] = Placeholder(tab);
@@ -116,13 +111,26 @@ internal sealed class IslandView
             Children = { open },
         };
 
+        Banner = new MediaBanner(media, theme);
+        Banner.Root.Margin = new Thickness(14, 0, 14, 4);
+        AlertLayer = new Grid
+        {
+            HorizontalAlignment = HorizontalAlignment.Left,
+            VerticalAlignment = VerticalAlignment.Top,
+            Visibility = Visibility.Collapsed,
+            IsHitTestVisible = false,
+            RowDefinitions = { new RowDefinition { Height = new GridLength(IslandSizes.HeaderHeight) }, new RowDefinition() },
+            Children = { Banner.Root },
+        };
+        Grid.SetRow(Banner.Root, 1);
+
         // A transparent (not null) background, so the whole column takes the pointer.
         Area = new Grid
         {
             Background = Ui.Clear(),
             HorizontalAlignment = HorizontalAlignment.Left,
             VerticalAlignment = VerticalAlignment.Top,
-            Children = { PillLayer, ExpandedLayer },
+            Children = { PillLayer, AlertLayer, ExpandedLayer },
         };
 
         Root = new Grid { Children = { BackgroundHost, Area } };
@@ -132,11 +140,12 @@ internal sealed class IslandView
     public Grid BackgroundHost { get; }
     public Grid Area { get; }
     public Grid PillLayer { get; }
+    public Grid AlertLayer { get; }
     public Grid ExpandedLayer { get; }
     public HeaderBar Header { get; }
     public TabDock Dock { get; }
-    public MediaPlayerView Player { get; }
-    public MediaStrip Strip { get; }
+    public HomeView Home { get; }
+    public MediaBanner Banner { get; }
     public AudioBars Bars { get; }
 
     public void ApplyLayout(IslandLayout layout, DipRect open, HomeStyle style, IslandTab tab)
@@ -144,9 +153,18 @@ internal sealed class IslandView
         Place(Area, layout.Area);
         Place(PillLayer, layout.CompactPill);
         SetOpen(open, style, tab);
-        var minimal = style == HomeStyle.Minimal;
-        Player.Root.Visibility = minimal ? Visibility.Collapsed : Visibility.Visible;
-        Strip.Root.Visibility = minimal ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    /// <summary>Where the banner sits while one shows.</summary>
+    public void SetAlert(DipRect alert) => Place(AlertLayer, alert);
+
+    /// <summary>Home's columns across the open island, inside its margins.</summary>
+    public void SetHomeColumns(HomeStyle style, IReadOnlyList<string> columns, double islandWidth)
+    {
+        var inset = IslandSizes.HomeInset(style);
+        // The content already sits ContentInset in; the strips go a little further.
+        Home.Root.Margin = new Thickness(inset - IslandSizes.ContentInset, 0, inset - IslandSizes.ContentInset, 0);
+        Home.Build(style, columns, islandWidth - 2 * inset);
     }
 
     /// <summary>The open island's outline for <paramref name="tab"/>: the dock sits under that tab's content.</summary>
@@ -167,8 +185,8 @@ internal sealed class IslandView
     public void SetArtwork(ImageSource? source)
     {
         _pillArtwork.Source = source;
-        Player.SetArtwork(source);
-        Strip.SetArtwork(source);
+        Home.SetArtwork(source);
+        Banner.SetArtwork(source);
     }
 
     /// <summary>What a tab that arrives later in W1–W5 shows until then.</summary>

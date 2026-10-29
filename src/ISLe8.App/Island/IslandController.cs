@@ -1,6 +1,7 @@
 using ISLe8.Core.Diagnostics;
 using ISLe8.Core.Geometry;
 using ISLe8.Core.Island;
+using ISLe8.Core.Media;
 using ISLe8.Core.Motion;
 using ISLe8.Core.Settings;
 using ISLe8.Core.Theming;
@@ -18,9 +19,9 @@ using Microsoft.UI.Xaml.Media.Imaging;
 namespace ISLe8.Island;
 
 /// <summary>
-/// Draws the island in whatever state <see cref="IslandModel"/> puts it: pill, peek or open on one
-/// of its tabs, the pill widening while music plays. Feeds the model pointer, menu, dock and media
-/// events, and rebuilds the view when the theme or language changes.
+/// Draws the island in whatever state <see cref="IslandModel"/> puts it: pill, peek, a banner or
+/// open on one of its tabs, the pill widening while music plays. Feeds the model pointer, menu, dock
+/// and media events, and rebuilds the view when the theme or language changes.
 /// </summary>
 internal sealed class IslandController : IDisposable
 {
@@ -38,6 +39,7 @@ internal sealed class IslandController : IDisposable
     private IslandSurface _surface = null!;
     /// <summary>False while the shape is still moving after it shrank.</summary>
     private bool _settled = true;
+    private readonly TrackChangeDetector _trackChanges = new();
     private nint _foregroundBeforeMenu;
     private string? _artworkKey;
 
@@ -79,6 +81,12 @@ internal sealed class IslandController : IDisposable
         _view.Dock.SetTabs(_model.VisibleTabs, _model.Tab);
     }
 
+    /// <summary>Settings › Layout › Home columns. The strips are as wide as their columns, so the window is placed again.</summary>
+    public void ApplyHomeColumns() => _window.Place();
+
+    /// <summary>Settings › Media.</summary>
+    public void ApplyMediaSettings() => UpdateBars();
+
     /// <summary>Settings › Appearance › Hide in screenshots and screen sharing.</summary>
     public void ApplyCapture() => _window.SetExcludedFromCapture(_settings.HideFromScreenCapture);
 
@@ -89,6 +97,7 @@ internal sealed class IslandController : IDisposable
         _model.PillChanged += OnPillChanged;
         _model.TabChanged += OnTabChanged;
         _model.Changed += OnModelChanged;
+        _model.AlertChanged += OnAlertChanged;
         ApplyCapture();
         _window.LayoutChanged += ApplyLayout;
         _window.FullscreenChanged += _ => UpdateBars();
@@ -101,8 +110,7 @@ internal sealed class IslandController : IDisposable
     public void Dispose()
     {
         _outsideClicks.Dispose();
-        _view.Player.SetActive(false);
-        _view.Bars.Stop();
+        StopView();
         _media.Dispose();
         _window.Dispose();
     }
@@ -116,11 +124,7 @@ internal sealed class IslandController : IDisposable
         Ui.Font = Ui.FontFor(theme.Typeface);
 
         // The old view's clock and bars would otherwise keep running, detached from the window.
-        if (_view is not null)
-        {
-            _view.Player.SetActive(false);
-            _view.Bars.Stop();
-        }
+        if (_view is not null) StopView();
 
         _view = new IslandView(theme, _media, _queue);
         _view.Area.PointerEntered += (_, e) => UpdateHover(e, touchInside: true);
@@ -150,11 +154,17 @@ internal sealed class IslandController : IDisposable
         _surface.SetTheme(theme);
         _window.Window.Content = _view.Root;
 
+        _view.Banner.Refresh();
         if (_window.Layout is { } layout) ApplyLayout(layout);
-        _view.Player.Refresh();
-        _view.Strip.Refresh();
         _artworkKey = null;
         LoadArtwork();
+    }
+
+    private void StopView()
+    {
+        _view.Home.SetActive(false);
+        _view.Bars.Stop();
+        _view.Banner.Bars.Stop();
     }
 
     /// <summary>A new monitor, DPI, layout or view: everything jumps to where it belongs, without animating.</summary>
@@ -162,19 +172,25 @@ internal sealed class IslandController : IDisposable
     {
         var state = _model.State;
         var expanded = state == IslandState.Expanded;
+        var alert = state == IslandState.Alert;
         var shape = Shape(layout, state);
         var open = OpenRect(layout);
         _settled = true;
         _view.ApplyLayout(layout, open, _settings.HomeStyle, _model.Tab);
+        _view.SetHomeColumns(_settings.HomeStyle, _settings.HomeTiles, open.Width);
+        _view.SetAlert(AlertRect(layout));
         _surface.SetLayout(layout);
         _surface.JumpTo(shape, Corner(shape, state), shadow: expanded);
+        _surface.SetOpen(expanded || alert, animate: false);
         _window.SetHitRegion(Region(layout, state));
         _outline.Reset(layout.OpenRegion(open));
 
         _view.ExpandedLayer.Visibility = expanded ? Visibility.Visible : Visibility.Collapsed;
         _view.ExpandedLayer.IsHitTestVisible = expanded;
         IslandSurface.SetContentShown(_view.ExpandedLayer, expanded);
-        IslandSurface.SetOpacity(_view.PillLayer, !expanded && _model.Pill == PillKind.Compact ? 1 : 0);
+        _view.AlertLayer.Visibility = alert ? Visibility.Visible : Visibility.Collapsed;
+        IslandSurface.SetOpacity(_view.AlertLayer, alert ? 1 : 0);
+        IslandSurface.SetOpacity(_view.PillLayer, state is IslandState.Pill or IslandState.Peek && _model.Pill == PillKind.Compact ? 1 : 0);
         UpdatePlayer();
         UpdateBars();
     }
@@ -182,9 +198,13 @@ internal sealed class IslandController : IDisposable
     /// <summary>The open island for the current tab in the current layout.</summary>
     private DipRect OpenRect(IslandLayout layout) => layout.Open(IslandSizes.Open(_settings, _model.Tab));
 
-    /// <summary>The big player's clock only ticks while it can be seen: open, on Home, in a layout that shows it.</summary>
-    private void UpdatePlayer() => _view.Player.SetActive(
-        _model.State == IslandState.Expanded && _model.Tab == IslandTab.Home && _settings.HomeStyle != HomeStyle.Minimal);
+    /// <summary>The banner for the current alert, centred under the pill's row.</summary>
+    private DipRect AlertRect(IslandLayout layout) => layout.Open(IslandSizes.Alert(_model.Alert ?? new NowPlayingAlert()));
+
+    /// <summary>Home only draws, and its clock only ticks, while it can be seen: open, on Home.</summary>
+    private bool HomeShown => _model.State == IslandState.Expanded && _model.Tab == IslandTab.Home;
+
+    private void UpdatePlayer() => _view.Home.SetActive(HomeShown);
 
     /// <summary>
     /// XAML draws at the window's DPI, the layout uses the monitor's. They should agree after every
@@ -202,18 +222,24 @@ internal sealed class IslandController : IDisposable
     private DipRect Shape(IslandLayout layout, IslandState state) => state switch
     {
         IslandState.Expanded => OpenRect(layout),
+        IslandState.Alert => AlertRect(layout),
         IslandState.Peek => layout.Peek(_model.Pill),
         _ => layout.Pill(_model.Pill),
     };
 
     /// <summary>Pills and the peek are fully round at the ends; the open island follows the theme's corners.</summary>
-    private double Corner(DipRect shape, IslandState state) =>
-        state == IslandState.Expanded ? IslandSizes.CornerRadius(_settings.Theme) : shape.Height / 2;
+    private double Corner(DipRect shape, IslandState state) => state switch
+    {
+        IslandState.Expanded => IslandSizes.CornerRadius(_settings.Theme),
+        IslandState.Alert => IslandSizes.AlertCornerRadius,
+        _ => shape.Height / 2,
+    };
 
     /// <summary>The part of the window that takes the mouse in <paramref name="state"/>, in window pixels.</summary>
     private PixelRect Region(IslandLayout layout, IslandState state) => state switch
     {
         IslandState.Expanded => layout.ExpandedRegion,
+        IslandState.Alert => layout.OpenRegion(AlertRect(layout)),
         IslandState.Peek => layout.PeekRegion(_model.Pill),
         _ => layout.PillRegion(_model.Pill),
     };
@@ -224,6 +250,7 @@ internal sealed class IslandController : IDisposable
         : _model.State switch
         {
             IslandState.Expanded => layout.OpenRegion(OpenRect(layout)),
+            IslandState.Alert => layout.OpenRegion(AlertRect(layout)),
             IslandState.Peek => layout.PeekRegion(_model.Pill),
             _ => layout.PillRegion(_model.Pill),
         };
@@ -257,18 +284,28 @@ internal sealed class IslandController : IDisposable
             _surface.Reveal(_view.ExpandedLayer, show: true);
             _surface.Fade(_view.PillLayer, 0, TimeSpan.Zero, MotionTimings.ContentFadeOut);
         }
+        else if (state == IslandState.Alert)
+        {
+            _view.Banner.Refresh();
+            _view.SetAlert(shape);
+            _view.AlertLayer.Visibility = Visibility.Visible;
+            _surface.Fade(_view.AlertLayer, 1, MotionTimings.ContentDelay, MotionTimings.ContentFadeIn);
+            _surface.Fade(_view.PillLayer, 0, TimeSpan.Zero, MotionTimings.ContentFadeOut);
+        }
         else if (from == IslandState.Expanded)
         {
             _view.ExpandedLayer.IsHitTestVisible = false;
             _surface.Reveal(_view.ExpandedLayer, show: false);
-            if (_model.Pill == PillKind.Compact)
-            {
-                _surface.Fade(_view.PillLayer, 1, MotionTimings.ContentDelay, MotionTimings.ContentFadeIn);
-            }
+        }
+        if (from == IslandState.Alert) _surface.Fade(_view.AlertLayer, 0, TimeSpan.Zero, MotionTimings.ContentFadeOut);
+        if (state == IslandState.Pill && from is IslandState.Expanded or IslandState.Alert && _model.Pill == PillKind.Compact)
+        {
+            _surface.Fade(_view.PillLayer, 1, MotionTimings.ContentDelay, MotionTimings.ContentFadeIn);
         }
 
         // Growing takes the bigger mouse region now; shrinking keeps it until the shape has settled.
-        if (state == IslandState.Peek) _window.SetHitRegion(Region(layout, state));
+        if (state is IslandState.Peek or IslandState.Alert) _window.SetHitRegion(Region(layout, state));
+        _surface.SetOpen(state is IslandState.Expanded or IslandState.Alert, animate: true);
         _surface.MorphTo(shape, Corner(shape, state), Spring(), shadow: state == IslandState.Expanded, Settle);
         UpdatePlayer();
         UpdateBars();
@@ -336,6 +373,7 @@ internal sealed class IslandController : IDisposable
         if (_model.State == IslandState.Expanded || _window.Layout is not { } layout) return;
         _settled = true;
         if (_model.State == IslandState.Pill) _view.ExpandedLayer.Visibility = Visibility.Collapsed;
+        if (_model.State != IslandState.Alert) _view.AlertLayer.Visibility = Visibility.Collapsed;
         _window.SetHitRegion(Region(layout, _model.State));
         UpdateBars();
     }
@@ -400,32 +438,46 @@ internal sealed class IslandController : IDisposable
 
     // MARK: Media
 
+    /// <summary>
+    /// Closed, a media event only moves the pill, its artwork and bars; Home catches up when it is
+    /// next shown (PORTING.md §3.1). A new song gets a banner.
+    /// </summary>
     private void OnMediaChanged()
     {
-        _view.Player.Refresh();
-        _view.Strip.Refresh();
+        var now = _media.Current;
+        if (HomeShown) _view.Home.Media?.Refresh();
+        if (_model.State == IslandState.Alert) _view.Banner.Refresh();
         LoadArtwork();
-        _model.SetLive(_media.Current?.IsPlaying == true);
+        _model.SetLive(now?.IsPlaying == true);
+        if (_trackChanges.Update(now) && _settings.ShowTrackChangeAlert && !_window.IsHiddenForFullscreen)
+        {
+            _model.ShowAlert(new NowPlayingAlert(), AlertDurations.NowPlaying);
+        }
         UpdateBars();
     }
 
-    /// <summary>Bars only move while they can be seen: the wide pill or its peek, playing, window shown.</summary>
+    /// <summary>One banner took another's place: the same size for now, so only the content changes.</summary>
+    private void OnAlertChanged() => _view.Banner.Refresh();
+
+    /// <summary>
+    /// Bars only move while they can be seen and something plays: in the wide pill or its peek (if
+    /// Settings › Media wants them), and in the song banner.
+    /// </summary>
     private void UpdateBars()
     {
-        var visible = _model.State != IslandState.Expanded
-            && _model.Pill == PillKind.Compact
-            && _media.Current?.IsPlaying == true
-            && _settings.AudioBars
-            && !_window.IsHiddenForFullscreen;
-        if (visible) _view.Bars.Start();
+        var playing = _media.Current?.IsPlaying == true && !_window.IsHiddenForFullscreen;
+        var state = _model.State;
+        if (playing && _settings.AudioBars && state is IslandState.Pill or IslandState.Peek && _model.Pill == PillKind.Compact) _view.Bars.Start();
         else _view.Bars.Stop();
+        if (playing && state == IslandState.Alert) _view.Banner.Bars.Start();
+        else _view.Banner.Bars.Stop();
     }
 
     private async void LoadArtwork()
     {
         var now = _media.Current;
         var thumbnail = _media.Thumbnail;
-        var key = now is null || thumbnail is null ? null : now.TrackKey;
+        var key = now is null || thumbnail is null ? null : now.ArtworkKey;
         if (key == _artworkKey) return;
         _artworkKey = key;
         if (key is null || thumbnail is null)
@@ -439,7 +491,7 @@ internal sealed class IslandController : IDisposable
             var bitmap = new BitmapImage
             {
                 DecodePixelType = DecodePixelType.Logical,
-                DecodePixelWidth = (int)MediaPlayerView.ArtworkSize,
+                DecodePixelWidth = (int)MediaColumn.LargestArtwork,
             };
             await bitmap.SetSourceAsync(stream);
             if (_artworkKey == key) _view.SetArtwork(bitmap);

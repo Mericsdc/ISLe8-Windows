@@ -11,7 +11,9 @@ namespace ISLe8.Island;
 
 /// <summary>
 /// The island's shape, drawn and animated by the compositor: one rounded rectangle that springs
-/// between pill and open sizes, its shadow, and a clip that shapes the content the same way.
+/// between pill and open sizes, its shadow, and a clip that shapes the content the same way. It is
+/// black; while the island is open or showing a banner the theme fades in over the black, never
+/// replacing it, so the island is never see-through halfway (IslandView.swift, IslandBackground).
 /// Once an animation starts the UI thread has nothing to do, and at rest nothing runs at all.
 /// </summary>
 internal sealed class IslandSurface
@@ -23,6 +25,8 @@ internal sealed class IslandSurface
     private readonly CompositionRoundedRectangleGeometry _clipGeometry;
     private readonly CompositionSpriteShape _shape;
     private readonly ShapeVisual _shapeVisual;
+    private readonly CompositionSpriteShape _themeShape;
+    private readonly ShapeVisual _themeVisual;
     private readonly ContainerVisual _root;
     private readonly ShapeVisual _maskVisual;
     private readonly CompositionVisualSurface _maskSurface;
@@ -34,6 +38,7 @@ internal sealed class IslandSurface
     private Vector2 _areaOffset;
     private int _morphs;
     private int _crossfades;
+    private bool _open;
 
     /// <param name="backgroundHost">Fills the window; the shape and its shadow are drawn into it.</param>
     /// <param name="area">The island column; its content is clipped to the shape.</param>
@@ -43,8 +48,13 @@ internal sealed class IslandSurface
 
         _shapeGeometry = _compositor.CreateRoundedRectangleGeometry();
         _shape = _compositor.CreateSpriteShape(_shapeGeometry);
+        _shape.FillBrush = _compositor.CreateColorBrush(Windows.UI.Color.FromArgb(255, 0, 0, 0));
         _shapeVisual = _compositor.CreateShapeVisual();
         _shapeVisual.Shapes.Add(_shape);
+        _themeShape = _compositor.CreateSpriteShape(_shapeGeometry);
+        _themeVisual = _compositor.CreateShapeVisual();
+        _themeVisual.Shapes.Add(_themeShape);
+        _themeVisual.Opacity = 0;
 
         // The shadow is cast by an empty sprite through a mask: a live copy of the same shape. A
         // LayerVisual would be simpler, but in a per-pixel-alpha window it draws as an opaque,
@@ -70,6 +80,7 @@ internal sealed class IslandSurface
         _root = _compositor.CreateContainerVisual();
         _root.Children.InsertAtTop(_shadowVisual);
         _root.Children.InsertAtTop(_shapeVisual);
+        _root.Children.InsertAtTop(_themeVisual);
         ElementCompositionPreview.SetElementChildVisual(backgroundHost, _root);
 
         _clipGeometry = _compositor.CreateRoundedRectangleGeometry();
@@ -82,6 +93,7 @@ internal sealed class IslandSurface
         var canvas = new Vector2((float)layout.Canvas.Width, (float)layout.Canvas.Height);
         _root.Size = canvas;
         _shapeVisual.Size = canvas;
+        _themeVisual.Size = canvas;
         _maskVisual.Size = canvas;
         _maskSurface.SourceSize = canvas;
         _shadowVisual.Size = canvas;
@@ -275,17 +287,44 @@ internal sealed class IslandSurface
         geometry.CornerRadius = new Vector2((float)cornerRadius);
     }
 
+    /// <summary>
+    /// Open (or a banner): the theme over the black; glass alone lets the black go. Closed: black,
+    /// whatever the theme, so the pill matches the screen's top edge.
+    /// </summary>
+    public void SetOpen(bool open, bool animate)
+    {
+        _open = open;
+        var glass = _theme.Material == IslandMaterial.Glass;
+        Animate(_themeVisual, open ? 1 : 0, animate);
+        Animate(_shapeVisual, open && glass ? 0 : 1, animate);
+    }
+
+    private void Animate(Visual visual, float to, bool animate)
+    {
+        visual.StopAnimation("Opacity");
+        if (!animate)
+        {
+            visual.Opacity = to;
+            return;
+        }
+        var fade = _compositor.CreateScalarKeyFrameAnimation();
+        fade.InsertKeyFrame(1f, to);
+        fade.Duration = !_animationsEnabled ? MotionTimings.ReducedMotion : to > 0 ? MotionTimings.ContentFadeIn : MotionTimings.ContentFadeOut;
+        visual.StartAnimation("Opacity", fade);
+    }
+
     private void ApplyBrush()
     {
-        _shape.FillBrush = _theme.Material switch
+        _themeShape.FillBrush = _theme.Material switch
         {
             IslandMaterial.Gradient or IslandMaterial.Artwork => Gradient(),
             // Acrylic arrives in W5; until then glass is a translucent solid.
             IslandMaterial.Glass => _compositor.CreateColorBrush(_theme.Background.WithAlpha(0xD9).ToColor()),
             _ => _compositor.CreateColorBrush(_theme.Background.ToColor()),
         };
-        _shape.StrokeBrush = _theme.Border.IsClear ? null : _compositor.CreateColorBrush(_theme.Border.ToColor());
-        _shape.StrokeThickness = 1;
+        _themeShape.StrokeBrush = _theme.Border.IsClear ? null : _compositor.CreateColorBrush(_theme.Border.ToColor());
+        _themeShape.StrokeThickness = 1;
+        SetOpen(_open, animate: false);
     }
 
     /// <summary>Top colour at the pill, bottom colour at the open island's bottom edge.</summary>

@@ -36,7 +36,16 @@ public sealed record NowPlaying
     public bool IsShuffling { get; init; }
     public RepeatMode Repeat { get; init; }
 
+    /// <summary>
+    /// Counts the artworks the player has handed over. Chrome sends the old song's cover first and the
+    /// new one moments later under the same title, so a new reference, not a new track, means reload.
+    /// </summary>
+    public int ArtworkVersion { get; init; }
+
     public string TrackKey => $"{Title}\u001F{Artist}\u001F{Album}";
+
+    /// <summary>What the shown artwork belongs to: the track and the artwork reference.</summary>
+    public string ArtworkKey => $"{TrackKey}\u001F{ArtworkVersion}";
     public string SourceName => MediaSources.FriendlyName(SourceAppId);
 
     /// <summary>The position at <paramref name="now"/>, worked out from the last report instead of a running timer.</summary>

@@ -9,11 +9,16 @@ using Windows.Storage.Streams;
 namespace ISLe8.Media;
 
 /// <summary>
-/// What is playing, from Windows' System Media Transport Controls: the same session the volume
+/// What is playing, from Windows' System Media Transport Controls: the same sessions the volume
 /// flyout shows (Spotify, browsers, Media Player, Apple Music…). Driven entirely by SMTC events;
 /// nothing polls. Events arrive on worker threads and are handled on the UI thread. A player that
-/// quits can leave its session object dead (calls throw); that drops back to whatever is current.
+/// quits can leave its session object dead (calls throw); that drops back to another session.
 /// </summary>
+/// <remarks>
+/// Every session's playback is watched, so a player that starts while Windows still calls a
+/// paused one current takes over (<see cref="MediaRules.PickSession"/>). Titles, artwork and the
+/// timeline are read from the followed session only.
+/// </remarks>
 internal sealed class MediaService : IDisposable
 {
     private readonly DispatcherQueue _queue;
@@ -21,12 +26,15 @@ internal sealed class MediaService : IDisposable
     private readonly TypedEventHandler<GlobalSystemMediaTransportControlsSession, PlaybackInfoChangedEventArgs> _playbackChanged;
     private readonly TypedEventHandler<GlobalSystemMediaTransportControlsSession, TimelinePropertiesChangedEventArgs> _timelineChanged;
     private GlobalSystemMediaTransportControlsSessionManager? _manager;
+    private List<GlobalSystemMediaTransportControlsSession> _sessions = [];
     private GlobalSystemMediaTransportControlsSession? _session;
     private string _appId = "";
+    private bool _disposed;
 
     private string _title = "";
     private string _artist = "";
     private string _album = "";
+    private int _artworkVersion;
     private GlobalSystemMediaTransportControlsSessionPlaybackStatus _status;
     private GlobalSystemMediaTransportControlsSessionPlaybackControls? _controls;
     private bool _shuffling;
@@ -36,13 +44,16 @@ internal sealed class MediaService : IDisposable
     private TimeSpan _duration;
     private TimeSpan _position;
     private DateTimeOffset _positionAt;
+    /// <summary>The timeline as the player last reported it, to tell a new report from the same one read again.</summary>
+    private (TimeSpan Position, DateTimeOffset At) _reported;
+    private DateTimeOffset _pausedAt;
 
     public MediaService(DispatcherQueue queue)
     {
         _queue = queue;
-        // The event's sender may be a different wrapper for the same session; work on the attached one.
+        // The event's sender may be a different wrapper for the same session; work on the followed one.
         _propertiesChanged = (session, args) => OnUi(session, current => _ = ReadPropertiesAsync(current));
-        _playbackChanged = (session, _) => OnUi(session, current => { ReadPlayback(current); Publish(); });
+        _playbackChanged = (session, _) => _queue.TryEnqueue(() => OnPlaybackChanged(session));
         _timelineChanged = (session, _) => OnUi(session, current => { ReadTimeline(current); Publish(); });
     }
 
@@ -53,19 +64,31 @@ internal sealed class MediaService : IDisposable
 
     public event Action? Changed;
 
+    /// <summary>
+    /// Asks Windows for the media sessions. Right after sign-in that can fail; it is asked again
+    /// after 1, 2, 4, 8 and 16 s, then every 30 s.
+    /// </summary>
     public async Task StartAsync()
     {
-        try
+        for (var attempt = 0; !_disposed; attempt++)
         {
-            _manager = await GlobalSystemMediaTransportControlsSessionManager.RequestAsync();
-            _manager.CurrentSessionChanged += (_, _) => _queue.TryEnqueue(() => Attach(CurrentSession()));
+            try
+            {
+                _manager = await GlobalSystemMediaTransportControlsSessionManager.RequestAsync();
+                break;
+            }
+            catch (Exception e)
+            {
+                Log.Error(e, $"media (attempt {attempt + 1})");
+            }
+            await Task.Delay(MediaRules.RetryDelay(attempt));
         }
-        catch (Exception e)
-        {
-            Log.Error(e, "media");
-            return;
-        }
-        Attach(CurrentSession());
+        if (_manager is not { } manager || _disposed) return;
+        manager.SessionsChanged += (_, _) => _queue.TryEnqueue(Refresh);
+        manager.CurrentSessionChanged += (_, _) => _queue.TryEnqueue(Refresh);
+        Refresh();
+        // Nothing to follow is news too: what starts after this is new (TrackChangeDetector).
+        if (_session is null) Publish();
     }
 
     public void TogglePlayPause() => Send(session => session.TryTogglePlayPauseAsync());
@@ -85,21 +108,93 @@ internal sealed class MediaService : IDisposable
 
     public void Dispose()
     {
+        _disposed = true;
         Detach();
+        Watch([]);
         _manager = null;
     }
 
-    private GlobalSystemMediaTransportControlsSession? CurrentSession()
+    // MARK: Sessions
+
+    /// <summary>Sessions came or went, or Windows changed its mind about the current one.</summary>
+    private void Refresh()
     {
+        if (_manager is not { } manager || _disposed) return;
         try
         {
-            return _manager?.GetCurrentSession();
+            Watch([.. manager.GetSessions()]);
+        }
+        catch (Exception e)
+        {
+            Log.Error(e, "media sessions");
+            Watch([]);
+        }
+        Follow();
+    }
+
+    /// <summary>Listens to every session's playback, so one that starts playing can take over.</summary>
+    private void Watch(List<GlobalSystemMediaTransportControlsSession> sessions)
+    {
+        foreach (var session in _sessions)
+        {
+            try
+            {
+                session.PlaybackInfoChanged -= _playbackChanged;
+            }
+            catch (Exception)
+            {
+                // A dead session can refuse even this; it is dropped either way.
+            }
+        }
+        _sessions = [];
+        foreach (var session in sessions)
+        {
+            try
+            {
+                session.PlaybackInfoChanged += _playbackChanged;
+                _sessions.Add(session);
+            }
+            catch (Exception e)
+            {
+                Log.Error(e, "media watch");
+            }
+        }
+    }
+
+    /// <summary>Follows the session <see cref="MediaRules.PickSession"/> chooses; true if that is a different one.</summary>
+    private bool Follow()
+    {
+        var summaries = new List<SessionSummary>(_sessions.Count);
+        var alive = new List<GlobalSystemMediaTransportControlsSession>(_sessions.Count);
+        foreach (var session in _sessions)
+        {
+            try
+            {
+                summaries.Add(new SessionSummary(
+                    session.SourceAppUserModelId ?? "",
+                    session.GetPlaybackInfo().PlaybackStatus == GlobalSystemMediaTransportControlsSessionPlaybackStatus.Playing));
+                alive.Add(session);
+            }
+            catch (Exception)
+            {
+                // Its player just quit; SessionsChanged follows.
+            }
+        }
+        string? current = null;
+        try
+        {
+            current = _manager?.GetCurrentSession()?.SourceAppUserModelId;
         }
         catch (Exception e)
         {
             Log.Error(e, "media session");
-            return null;
         }
+
+        var index = MediaRules.PickSession(summaries, current);
+        var chosen = index < 0 ? null : alive[index];
+        if (chosen is null ? _session is null : _session is not null && summaries[index].AppId == _appId) return false;
+        Attach(chosen);
+        return true;
     }
 
     private void Attach(GlobalSystemMediaTransportControlsSession? session)
@@ -107,13 +202,14 @@ internal sealed class MediaService : IDisposable
         Detach();
         _title = _artist = _album = "";
         Thumbnail = null;
+        _reported = default;
+        _pausedAt = DateTimeOffset.Now;
         if (session is not null)
         {
             try
             {
                 _appId = session.SourceAppUserModelId ?? "";
                 session.MediaPropertiesChanged += _propertiesChanged;
-                session.PlaybackInfoChanged += _playbackChanged;
                 session.TimelinePropertiesChanged += _timelineChanged;
                 _session = session;
                 ReadPlayback(session);
@@ -136,7 +232,6 @@ internal sealed class MediaService : IDisposable
             try
             {
                 session.MediaPropertiesChanged -= _propertiesChanged;
-                session.PlaybackInfoChanged -= _playbackChanged;
                 session.TimelinePropertiesChanged -= _timelineChanged;
             }
             catch (Exception)
@@ -149,8 +244,8 @@ internal sealed class MediaService : IDisposable
     }
 
     /// <summary>
-    /// Hops to the UI thread and drops events from a session that is no longer current. If the
-    /// session has died under us, falls back to whatever session Windows calls current now.
+    /// Hops to the UI thread and drops events from a session that is not followed. If the session
+    /// has died under us, follows another.
     /// </summary>
     private void OnUi(GlobalSystemMediaTransportControlsSession sender, Action<GlobalSystemMediaTransportControlsSession> action) =>
         _queue.TryEnqueue(() =>
@@ -162,9 +257,46 @@ internal sealed class MediaService : IDisposable
             catch (Exception e)
             {
                 Log.Error(e, "media event");
-                Attach(CurrentSession());
+                Refresh();
             }
         });
+
+    /// <summary>Any session played or paused: it may take over; if it is the followed one, its state is read.</summary>
+    private void OnPlaybackChanged(GlobalSystemMediaTransportControlsSession sender)
+    {
+        try
+        {
+            if (Follow()) return;
+            if (_session is not { } current || sender.SourceAppUserModelId != _appId) return;
+            var wasPlaying = IsPlaying;
+            var playedFor = Current;
+            ReadPlayback(current);
+            if (wasPlaying && !IsPlaying)
+            {
+                // Hold the position where it stopped; a player that sends no timeline on pause
+                // would otherwise show the last report's position.
+                var now = DateTimeOffset.Now;
+                if (playedFor is not null) _position = playedFor.PositionAt(now);
+                _positionAt = _pausedAt = now;
+                ReadTimeline(current);
+            }
+            else if (!wasPlaying && IsPlaying)
+            {
+                ReadTimeline(current);
+                _positionAt = MediaRules.ResumeTimestamp(_positionAt, _pausedAt, DateTimeOffset.Now);
+            }
+            Publish();
+        }
+        catch (Exception e)
+        {
+            Log.Error(e, "media event");
+            Refresh();
+        }
+    }
+
+    // MARK: Reading
+
+    private bool IsPlaying => _status == GlobalSystemMediaTransportControlsSessionPlaybackStatus.Playing;
 
     private async Task ReadPropertiesAsync(GlobalSystemMediaTransportControlsSession session)
     {
@@ -175,7 +307,10 @@ internal sealed class MediaService : IDisposable
             _title = properties.Title ?? "";
             _artist = string.IsNullOrEmpty(properties.Artist) ? properties.AlbumArtist ?? "" : properties.Artist;
             _album = properties.AlbumTitle ?? "";
+            // Every report brings a new reference, even for the same picture: Chrome sends the old
+            // song's cover under the new title first, the right one moments later.
             Thumbnail = properties.Thumbnail;
+            _artworkVersion++;
             Publish();
         }
         catch (Exception e)
@@ -199,11 +334,18 @@ internal sealed class MediaService : IDisposable
         };
     }
 
+    /// <summary>
+    /// Takes the player's timeline, unless it is the same report read again: then the position
+    /// held at a pause, or counted from a resume, stands.
+    /// </summary>
     private void ReadTimeline(GlobalSystemMediaTransportControlsSession session)
     {
         var timeline = session.GetTimelineProperties();
         _start = timeline.StartTime;
         _duration = timeline.EndTime - timeline.StartTime;
+        var reported = (timeline.Position, timeline.LastUpdatedTime);
+        if (reported == _reported) return;
+        _reported = reported;
         _position = timeline.Position - timeline.StartTime;
         _positionAt = NowPlaying.NormalizeTimestamp(timeline.LastUpdatedTime, DateTimeOffset.Now);
     }
@@ -219,7 +361,7 @@ internal sealed class MediaService : IDisposable
             Duration = _duration > TimeSpan.Zero ? _duration : TimeSpan.Zero,
             Position = _position,
             PositionUpdatedAt = _positionAt,
-            IsPlaying = _status == GlobalSystemMediaTransportControlsSessionPlaybackStatus.Playing,
+            IsPlaying = IsPlaying,
             Rate = _rate,
             CanPlayPause = _controls is { } c && (c.IsPlayPauseToggleEnabled || c.IsPlayEnabled || c.IsPauseEnabled),
             CanNext = _controls?.IsNextEnabled ?? false,
@@ -229,6 +371,7 @@ internal sealed class MediaService : IDisposable
             CanSeek = (_controls?.IsPlaybackPositionEnabled ?? false) && _duration > TimeSpan.Zero,
             IsShuffling = _shuffling,
             Repeat = _repeat,
+            ArtworkVersion = _artworkVersion,
         };
         Changed?.Invoke();
     }

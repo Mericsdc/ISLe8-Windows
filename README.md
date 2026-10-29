@@ -24,8 +24,9 @@ Gereken: Windows 10 2004+ ya da Windows 11.
 
 - İmleci üstteki pill'in üstünde bir an tut ya da pill'e tıkla: ada açılır. Üstünden geçip giden imleç
   açmaz. İmleç çıkınca ya da başka bir yere tıklayınca kapanır.
-- Müzik çalarken (Spotify, tarayıcı, Medya Oynatıcı, Apple Music…) pill genişler; açık adada oynatıcı
-  var.
+- Müzik çalarken (Spotify, tarayıcı, Medya Oynatıcı, Apple Music…) pill genişler; şarkı değişince kısa
+  bir banner çıkar (**Ayarlar › Medya**). Açık adanın Home'unda sütunlar var: takvim, çalan şarkı, hava
+  durumu, zamanlayıcı; hangileri ve hangi sırayla **Ayarlar › Düzen › Home sütunları**'nda.
 - Açık adanın altındaki dock'ta sekmeler var (Home, Raf, Pano, AI, Cihazlar; şimdilik yalnızca Home
   dolu). Dokunmatik yüzeyde iki parmakla yana kaydırmak da sekme değiştirir. Sağ üstte sabitle ve
   ayarlar düğmeleri.

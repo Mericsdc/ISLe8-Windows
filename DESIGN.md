@@ -109,7 +109,8 @@ iletip durumu çiziyor. Süreler testlerde elle ilerletilen bir saatle sınanıy
 | Hover alanı | Yalnızca adanın kendisi (pill, peek ya da açık ada); pencerenin geri kalanı sayılmaz. Her giriş, çıkış ve hareket olayı `GetCursorPos` ile doğrulanıyor: adanın içindeki bir düğmeden çıkmak adadan çıkmak sayılmıyor, kapanırken büyük kalan pencere bölgesine girmek de adaya girmek sayılmıyor |
 | Dışarı tıklama | Ada açıkken ve imleç üstünde değilken başka yere tıklamak adayı hemen kapatır (sabitliyse kapatmaz). Ada odak almadığı için Windows bunu bildirmiyor; düşük seviyeli bir fare kancası yalnızca bu durumdayken kurulu (`OutsideClickWatcher`) |
 | Dokunma | Dokununca açılır; parmak kalkınca 4 sn açık kalır |
-| Müzik durdu | Pill 1,5 sn sonra daralır, şarkı geçişindeki kısa "duraklatıldı" raporlarında titremesin |
+| Müzik durdu | Pill 8 sn sonra daralır (Mac: MediaModule.swift); kısa bir duraklatma ya da şarkı geçişi pill'i titretmez |
+| Banner | Pill'den büyür, süresi bitince geri döner (şarkı 2,5 sn). İmleç üstündeyken bekler, çıkınca 1,2 sn sonra kapanır; üstünde durmak adayı açmaz, tıklamak açar. Ada açıkken, imleç üstündeyken ya da menü açıkken gelmez; yeni banner eskisinin yerini ve süresini alır |
 | Sağ tık | Menü: Açık tut, Tema, Ekran, Dil, Çık. Menü açıkken ada ne açılır ne kapanır; kapanınca imleç dışarıdaysa ada kapanma gecikmesiyle kapanır. Menü açılırken ada geçici olarak öne alınıyor (dışarı tıklayınca kapansın diye), kapanınca odak önceki pencereye dönüyor. Mac'te bu menü yok (sabitleme ve ayarlar başlıktaki düğmelerde); Windows alışkanlığı olduğu için duruyor |
 
 **Gecikme kararı:** W0'da Windows'a özgü 150 ms seçilmişti (üst ortada başlık çubukları ve tarayıcı
@@ -123,29 +124,54 @@ PORTING.md §2 › Boyutlar; değerler `IslandSizes`'ta, Core testleriyle.
 | Düzen | Genişlik | İçerik | Açık ada |
 |---|---|---|---|
 | Geniş | 820 (ayar 680–980) | 304 | 820 × 396 |
-| Kompakt | 640 | 196 | 640 × 288 |
-| Minimal | 600 | Home 64, diğerleri 196 | 600 × 156 / 288 |
+| Kompakt | şeridin ihtiyacı + 48, en az 640 (varsayılan sütunlarla 870) | Home 100, diğerleri 196 | 870 × 192 / 288 |
+| Minimal | şeridin ihtiyacı + 48, en az 600 (varsayılan sütunlarla 720) | Home 64, diğerleri 196 | 720 × 156 / 288 |
 
 - **Yükseklik:** başlık satırı (pill kadar, 32) + 6 + içerik + dock alanı (8 + 36 + 10). İçerik yanlardan 14.
 - **Pencere:** o düzenin en büyük sekmesine göre bir kez boyutlanıyor; sekme değişince pencere değil
   yalnızca şekil yaylanıyor. Düzen ya da genişlik ayarı değişince pencere yeniden yerleşiyor.
 - **Köşeler:** açık adada `min(tema köşesi + 12, 28)`; pill ve peek tam yuvarlak.
+- **Zemin:** ada siyah; açıkken ve banner'da tema siyahın **üstüne** açılır (0,22 sn), kapanırken söner
+  (0,16 sn). Siyah hiç değişmediği için geçişin ortasında ada yarı saydam görünmez; yalnızca cam teması
+  açıkken siyahı söndürür (Mac: `IslandBackground`). Kapalı pill her temada siyah.
+- **Sabit çerçeve:** her durumun görünümü (pill'in kapak ve çubukları, banner, açık ada) kendi son
+  çerçevesinde, pencerede ortalı durur; animasyonda yalnızca zemin ve kırpma şekli büyür.
 - **Başlık satırı:** solda durum çipleri (pil 8. adımda), sağda sabitle ve ayarlar. Ayarlar düğmesi
   pencereyi açıp adayı kapatıyor (Mac'teki gibi).
 - **Dock:** altta, tema yüzeyi renginde bir kapsül; seçili sekme vurgu renginin %20'siyle dolu. Düğmeler
   `Button` değil, düz `Border`: ada odak almıyor ve seçime bağlı görünüm, `Button`'ın görsel
   durumlarıyla çatışırdı.
 - **Sekmeler:** Home, Raf, Pano, AI, Cihazlar (Mac'in kimlikleri). W1'de yalnızca Home dolu; ötekiler
-  "Windows'a yakında geliyor" diyor. Geçiş 0,18 sn'lik çapraz solma; Geniş ve Kompakt'ta ada boyut
-  değiştirmiyor. 15 sn içinde yeniden açılınca son sekme, sonra ilk sekme.
-- **Küçülürken açık kalma:** Minimal'de Home'a dönünce ada kısalıyor ve dock'a tıklayan imleç birden
+  "Windows'a yakında geliyor" diyor. Geçiş 0,18 sn'lik çapraz solma; Geniş'te ada boyut değiştirmiyor,
+  Kompakt ve Minimal'de Home şeridi ile öteki sekmeler arasında yaylanıyor. 15 sn içinde yeniden
+  açılınca son sekme, sonra ilk sekme.
+- **Küçülürken açık kalma:** Kompakt ya da Minimal'de Home'a dönünce ada kısalıyor ve dock'a tıklayan imleç birden
   altında kalıyor. `HoverOutline` eski çerçeveyi, imleç yeni çerçeveye girene ya da ikisinden de
   çıkana kadar "üstünde" sayıyor.
 - **İki parmakla kaydırma:** Hassas dokunmatik yüzey yatay tekerlek olayı yolluyor, hareketin başı sonu
   yok; `SwipeTracker` bir tekerlek çentiğini (120) bir sekme sayıyor, 250 ms duraklama yeni bir
   kaydırma başlatıyor. Raf ve Pano'da yalnızca başlık ve dock satırı.
-- **Home şimdilik:** W0'ın oynatıcısı (Geniş/Kompakt) ya da ince bir şerit (Minimal). Sütunlar
-  (takvim, medya, hava, zamanlayıcı) 4. adımda ve sonrasında geliyor.
+- **Home sütunları:** Ayarlar › Düzen'deki sütunlar soldan sağa, tam yükseklikte (Mac'in HomeView.swift
+  değerleri, `HomeColumns` ve `HomeStrip`). Sütun yoksa "Home boş…" yazıyor. Takvim, hava ve
+  zamanlayıcı kendi adımlarına kadar "Windows'a yakında geliyor".
+  - **Geniş:** her sütun bir kart (tema yüzeyi, kenarlığı, köşesi), aralık 10; genişlik ağırlıkla: takvim
+    1, medya 1,1, hava 1, zamanlayıcı 0,62.
+  - **Kompakt ve Minimal şeritleri:** kart yok; sütunlar 1'lik ince çizgilerle ayrılıyor (iki yanında 10).
+    Her sütunun ihtiyacı: Kompakt takvim 270, medya 240, hava 270, zamanlayıcı 120; Minimal 170, 250,
+    190, 130. Oynatıcı ortada, pill'in altında; iki yanındaki sütunlar eşit yarıları paylaşıyor. İki yan
+    80'den fazla dengesizse (zamanlayıcı bir yanda) ya da oynatıcı uçtaysa sütunlar yan yana diziliyor.
+    Şerit adanın iki yanından 24 içeride (Mac'in omuz ve kenar payı); ada genişliği şerit + 48.
+- **Medya sütunu:**
+  - **Geniş:** kapak 104 (gölgeli), başlık ve sanatçı iki satıra kadar, ilerleme çubuğu (4, sürüklerken
+    6; bırakınca atlar), karışık çal · önceki · halkalı oynat (52) · sonraki · tekrarla, hepsi kartın
+    yüksekliğine yayılmış.
+  - **Kompakt:** kapak 64 (gölgeli), yanında başlık, sanatçı ve aynı beş düğme; oynat 34, halkası vurgu
+    renginde. İlerleme çubuğu yok.
+  - **Minimal:** tek satır: kapak 38, başlık ve sanatçı, önceki · oynat (dolu daire) · sonraki.
+  - Saat yalnızca Home görünürken ve çalarken, yarım saniyede bir işliyor; ada kapalıyken medya olayları
+    Home'u çizmiyor, açılınca yetişiyor.
+- **Banner:** 340 × 78; üst satır (pill kadar) boş, içerik altında; köşe 20 (Mac'in alt köşesi). Şarkı
+  banner'ı: kapak 30, başlık, sanatçı, sağda çubuklar (çubuk ayarından bağımsız, Mac'teki gibi).
 
 ### Tray, Ayarlar ve ikinci açılış (W1)
 
@@ -155,7 +181,7 @@ PORTING.md §2 › Boyutlar; değerler `IslandSizes`'ta, Core testleriyle.
   penceresinin mesajlarını dinliyor. Explorer yeniden başlayınca (`TaskbarCreated`) kendini yeniden ekler.
 - **Ayarlar penceresi:** Sıradan bir WinUI penceresi, Mica, solda menü, kartlı bölümler. Ada hep koyu;
   Ayarlar Windows'un açık/koyu modunu izliyor (`UISettings`). İlk açılınca kuruluyor, kapanınca
-  bırakılıyor. Bölümler W1 adımlarıyla geliyor; şu an Genel.
+  bırakılıyor. Bölümler W1 adımlarıyla geliyor; şu an Genel, Görünüm, Düzen ve Medya.
 - **İkinci açılış:** `AppInstance.RedirectActivationToAsync` ile çalışan örneğe gidiyor, o da Ayarlar'ı
   açıyor (ön plana çıkabilmesi için yeni süreç `AllowSetForegroundWindow` veriyor).
 - **Dil ve içe aktarma:** Mac'teki gibi ISLe8'i yeniden başlatıyor (`AppInstance.Restart`); bütün

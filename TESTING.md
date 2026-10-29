@@ -3,6 +3,59 @@
 Her maddeyi işaretle; olmayan varsa günlükle birlikte not et (README › Günlük ve ayarlar). W1'in
 adımları en üstte, W0'ın listesi altta.
 
+## W1 · Adım 4: banner'lar, Home sütunları ve medya (2026-10-27, şeritler 2026-10-29)
+
+Debug (JIT). Banner süreleri ve bekleme, sütun genişlikleri ve şeritler, sütun ayarının okunması, oturum
+seçimi, devam zamanı, yeniden deneme ve şarkı değişimi kuralı Core testlerinde (`BannerAndHomeTests`;
+149'dan 171'e). Test oturumu: `Windows.Media.Playback` ile sessiz bir WAV, başlık ve sanatçıyla.
+
+29 Ekim'de PORTING.md ed73b8a'ya göre güncellendi: Kompakt ve Minimal Home artık kartsız şeritler
+(Mac dab77e8), tema siyahın üstüne açılıyor. Aşağıdaki Kompakt ve Minimal maddeleri bu hale göre.
+
+**Banner**
+- [x] Çalarken şarkı değişince 340×78 banner: üst satır boş, kapak, başlık, sanatçı, sağda çubuklar;
+      2,5 sn sonra pill'e dönüyor.
+- [x] Başlığı çalmadan önce gelen parça (duraklatılmışken seçilip çalınan) banner almıyor (Mac kuralı).
+- [ ] Spotify'da sonraki şarkıya geçince banner çıkıyor (canlı).
+- [ ] İmleç banner'ın üstündeyken bekliyor, çıkınca 1,2 sn sonra kapanıyor; tıklayınca ada açılıyor (canlı).
+- [ ] Ayarlar › Medya › "Şarkı değişince kısaca göster" kapalıyken banner çıkmıyor (canlı).
+
+**Home**
+- [x] Geniş: Takvim · Çalan şarkı · Hava durumu. Medya sütununda kapak 104, başlık, sanatçı, ilerleme,
+      beş düğme; oynatıcının desteklemediği düğmeler soluk. Takvim ve hava "Windows'a yakında geliyor".
+- [x] Kompakt: ada 870 × 192 (%150'de 1305 px), kartsız şerit; sütunlar ince çizgilerle ayrılıyor,
+      oynatıcı tam ortada: kapak 64, başlık, sanatçı, beş düğme, oynat halkası vurgu renginde.
+- [x] Minimal: ada 720 × 156, tek satır: kapak 38, başlık, önceki · oynat · sonraki; oynatıcı ortada.
+- [x] Ember temasında kapalı pill siyah, açık ada ve banner temanın renginde.
+- [ ] Kompakt'ta Raf'a geçince ada 288'e büyüyor, Home'a dönünce kısalıyor ve imleç dock'tayken açık
+      kalıyor (canlı).
+- [ ] Ada kapanırken tema rengi siyaha sönüyor, arada saydamlaşmıyor (canlı, Ember).
+- [ ] İlerleme çubuğunu sürükleyip bırakınca şarkı o yere atlıyor, sürüklerken çubuk kalınlaşıyor (canlı).
+- [ ] Chrome'da sonraki videoya geçince kapak yenileniyor (canlı).
+- [ ] Spotify duraklatılıp 1 dk sonra sürdürülünce süre sıçramıyor (canlı).
+- [ ] YouTube duraklatılmışken Spotify çalınca ada Spotify'ı gösteriyor (canlı).
+
+**Ayarlar**
+- [x] Düzen › Home sütunları: her sütun simgesi ve adıyla, yukarı/aşağı, kaldır; "Sütun ekle" yalnızca
+      Home'da olmayanları sunuyor; altında Mac'in açıklaması.
+- [x] Medya: "Şarkı değişince kısaca göster", "Kulakta ses çubukları".
+- [ ] Sütun eklenip kaldırılınca ya da sırası değişince Home hemen değişiyor; hepsi kaldırılınca
+      "Home boş. Ayarlar > Düzen'den sütun ekleyebilirsin." (canlı).
+- [ ] "Kulakta ses çubukları" kapatılınca pill'deki çubuklar duruyor (canlı).
+
+**Ölçüm** (Release JIT, ada ve Ayarlar kapalı, `media-state.ps1` önce ve sonra)
+
+| Tarih | Yapı | Durum | CPU | Özel bellek | Çalışma kümesi |
+|---|---|---|---|---|---|
+| 2026-10-27 | W1 adım 4, Release JIT x64 | **Boşta:** medya oturumu yok (önce ve sonra), 60 sn | %0,003 (hedef < %0,1) | 36,7 MB (hedef < 80 MB) | 135,2 MB |
+| 2026-10-27 | W1 adım 4, Release JIT x64 | Test oturumu **çalıyor** (önce ve sonra), çubuklar açık, 60 sn | %0,260 (müzik hedefi < %1) | 38,8 MB | 140,2 MB |
+| 2026-10-27 | W1 adım 4, Release JIT x64 | Test oturumu **çalıyor**, çubuklar kapalı, 50 sn | %0,008 | 38,7 MB | 140,1 MB |
+| 2026-10-29 | W1 adım 4 (şeritler, tema katmanı), Release JIT x64 | **Boşta:** medya oturumu yok (önce ve sonra), 60 sn | %0,002 (hedef < %0,1) | 37,1 MB (hedef < 80 MB) | 135,4 MB |
+
+- [x] Boşta (medya yok) CPU < %0,1.
+- [x] Kapalı adada çalarken çubuk animasyonundan başka bir şey çalışmıyor (PORTING.md §3.1 kabulü):
+      çubuklar kapalıyken %0,008.
+
 ## W1 · Adım 3: açık ada iskeleti, dock ve düzenler (2026-10-27)
 
 Debug (JIT). Boyutlar, sekme sırası ve gizleme, sekme hafızası, kaydırma ve küçülürken açık kalma Core

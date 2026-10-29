@@ -311,4 +311,60 @@
     <value>Move Down</value>
     <comment>mac: Aşağı taşı</comment>
   </data>
+  <data name="Settings_Media" xml:space="preserve">
+    <value>Media</value>
+    <comment>mac: Medya</comment>
+  </data>
+  <data name="Settings_TrackChangeAlert" xml:space="preserve">
+    <value>Briefly show when the song changes</value>
+    <comment>mac: Şarkı değişince kısaca göster</comment>
+  </data>
+  <data name="Settings_AudioBars" xml:space="preserve">
+    <value>Audio bars in the ear</value>
+    <comment>mac: Kulakta ses çubukları</comment>
+  </data>
+  <data name="Settings_HomeColumns" xml:space="preserve">
+    <value>Home Columns</value>
+    <comment>mac: Home sütunları</comment>
+  </data>
+  <data name="Settings_HomeColumnsNote" xml:space="preserve">
+    <value>Laid out as columns, left to right. The timer is a narrow column; a wide island (Appearance &gt; Open island width) fits four comfortably.</value>
+    <comment>mac: Soldan sağa sütunlar halinde dizilir. Zamanlayıcı dar bir sütundur; geniş bir ada (Görünüm &gt; Açık ada genişliği) dört sütuna rahat yeter.</comment>
+  </data>
+  <data name="Settings_AddColumn" xml:space="preserve">
+    <value>Add Column</value>
+    <comment>mac: Sütun ekle</comment>
+  </data>
+  <data name="Settings_Remove" xml:space="preserve">
+    <value>Remove</value>
+    <comment>mac: Kaldır</comment>
+  </data>
+  <data name="Home_Calendar" xml:space="preserve">
+    <value>Calendar</value>
+    <comment>mac: Takvim</comment>
+  </data>
+  <data name="Home_Media" xml:space="preserve">
+    <value>Now playing</value>
+    <comment>mac: Çalan şarkı</comment>
+  </data>
+  <data name="Home_Weather" xml:space="preserve">
+    <value>Weather</value>
+    <comment>mac: Hava durumu</comment>
+  </data>
+  <data name="Home_Timer" xml:space="preserve">
+    <value>Timer</value>
+    <comment>mac: Zamanlayıcı</comment>
+  </data>
+  <data name="Home_Empty" xml:space="preserve">
+    <value>Home is empty. You can add columns in Settings &gt; Layout.</value>
+    <comment>mac: Home boş. Ayarlar &gt; Düzen'den sütun ekleyebilirsin.</comment>
+  </data>
+  <data name="Media_Play" xml:space="preserve">
+    <value>Play</value>
+    <comment>mac: Oynat</comment>
+  </data>
+  <data name="Media_Pause" xml:space="preserve">
+    <value>Pause</value>
+    <comment>mac: Duraklat</comment>
+  </data>
 </root>
