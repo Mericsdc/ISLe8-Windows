@@ -1,4 +1,4 @@
-# Kurulu (paketli) ISLe8'in güncelleme dosyasını yapar: install.ps1'in kaydettiği klasörün aynısı,
+﻿# Kurulu (paketli) ISLe8'in güncelleme dosyasını yapar: install.ps1'in kaydettiği klasörün aynısı,
 # AppxManifest.xml'iyle birlikte, bir zip'te (ISLe8-<sürüm>-<rid>-package.zip). Uygulamadaki
 # Güncelle düğmesi bunu indirir, kendi klasörünün yerine koyar ve paketi yeniden kaydeder.
 # Release iş akışı (release.yml) Native AOT ile çalıştırır.
@@ -19,6 +19,9 @@ $name = "ISLe8-$version-$rid-package"
 $artifacts = Join-Path $root $Output
 $staging = Join-Path $artifacts $name
 
+# isle8-cli.exe ISLe8'in derlemesinin içinden derleniyor; o yol kendi paketlerini geri yüklemiyor (temiz bir kopyada, CI'da).
+dotnet restore "$root\src\ISLe8.Cli" -r $rid
+if ($LASTEXITCODE -ne 0) { throw "dotnet restore başarısız oldu (çıkış kodu $LASTEXITCODE)." }
 # dotnet publish paketin bildirimini yazmıyor; derleme yazıyor (install.ps1'deki gibi).
 dotnet build "$root\src\ISLe8.App" -c Release -r $rid -p:Platform=$Platform
 if ($LASTEXITCODE -ne 0) { throw "dotnet build başarısız oldu (çıkış kodu $LASTEXITCODE)." }

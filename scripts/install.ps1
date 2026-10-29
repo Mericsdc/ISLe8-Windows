@@ -1,4 +1,4 @@
-# ISLe8'i bu bilgisayara paketli (MSIX kimliğiyle) kurar: bildirim aynası ve "Girişte başlat"ın
+﻿# ISLe8'i bu bilgisayara paketli (MSIX kimliğiyle) kurar: bildirim aynası ve "Girişte başlat"ın
 # başlangıç görevi bu kimliği ister. Zip'ten açılan ISLe8'de ikisi de yok.
 #
 # Gereken: Windows Ayarları › Sistem › Geliştiriciler için › Geliştirici Modu açık. Paket imzasız,
@@ -19,6 +19,9 @@ $rid = if ($Platform -eq 'ARM64') { 'win-arm64' } else { 'win-x64' }
 $layout = Join-Path $root "artifacts\package-$rid"
 $name = 'com.lrxe8.isle8'
 
+# isle8-cli.exe ISLe8'in derlemesinin içinden derleniyor; o yol kendi paketlerini geri yüklemiyor (temiz bir kopyada, CI'da).
+dotnet restore "$root\src\ISLe8.Cli" -r $rid
+if ($LASTEXITCODE -ne 0) { throw "dotnet restore başarısız oldu (çıkış kodu $LASTEXITCODE)." }
 # dotnet publish paketin bildirimini (AppxManifest.xml) yazmıyor; derleme yazıyor. Önce derlenir,
 # sonra yayınlanır ve bildirim yayının yanına konur.
 dotnet build "$root\src\ISLe8.App" -c Release -r $rid -p:Platform=$Platform
