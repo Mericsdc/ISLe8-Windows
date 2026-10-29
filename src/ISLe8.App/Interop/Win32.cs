@@ -164,6 +164,15 @@ internal static unsafe partial class Win32
     public const int DWMWCP_DONOTROUND = 1;
     public const uint DWMWA_COLOR_NONE = 0xFFFFFFFE;
 
+    public const uint SND_ASYNC = 0x0001;
+    public const uint SND_NODEFAULT = 0x0002;
+    public const uint SND_ALIAS = 0x00010000;
+
+    /// <summary>Plays one of Windows' sound-scheme events (Control Panel › Sound › Sounds) without waiting.</summary>
+    [LibraryImport("winmm.dll", EntryPoint = "PlaySoundW", StringMarshalling = StringMarshalling.Utf16)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool PlaySound(string sound, nint module, uint flags);
+
     [LibraryImport("user32.dll", EntryPoint = "GetWindowLongPtrW")]
     public static partial nint GetWindowLongPtr(nint hwnd, int index);
 

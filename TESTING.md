@@ -3,6 +3,51 @@
 Her maddeyi işaretle; olmayan varsa günlükle birlikte not et (README › Günlük ve ayarlar). W1'in
 adımları en üstte, W0'ın listesi altta.
 
+## W1 · Zamanlayıcı, hava durumu ve takvim (2026-10-29)
+
+Debug (JIT). Kurallar Core testlerinde: `TimerTests` (geri sayım, duraklatma, Pomodoro turları,
+kronometre, kulak önceliği), `WeatherTests` (Open-Meteo yanıtı, Türkçe ayarda noktalı koordinat, saat
+diliminden şehir, 30 dk kuralı), `CalendarTests` (ICS: Windows ve IANA saat dilimleri, tüm gün,
+tekrarlayan etkinlik, EXDATE ve taşınan tekrar, toplantı linki, 5 dk uyarısı, hızlı ekleme); 171'den 213'e.
+Ada otomasyonla açılamadı (o sırada fare kullanılıyordu); görünüm maddeleri canlı denenecek.
+
+**Zamanlayıcı**
+- [ ] Home'a zamanlayıcı sütunu eklenince (Ayarlar › Düzen) 5 dk / 15 dk, Pomodoro ve kronometre düğmeleri.
+- [ ] Çalışırken etiket ("Odaklan · 1. tur"), süre, ilerleme çubuğu, duraklat/sürdür ve durdur.
+- [ ] Ada kapalıyken müzik yoksa kulakta zamanlayıcı simgesi ve süre; müzik çalınca kulak medyaya geçiyor,
+      durunca 8 sn sonra zamanlayıcıya dönüyor.
+- [ ] Süre dolunca ses (Ayarlar › Widget'lar) ve 4 sn'lik "Süre doldu" banner'ı.
+- [ ] Minimal'de çalışmıyorken 5/15 dk düğmeleri, çalışırken süre ve durdur.
+
+**Hava durumu**
+- [x] Open-Meteo bu bilgisayardan yanıt veriyor; saat diliminden "İstanbul" bulunuyor.
+- [ ] Geniş: şehir, gökyüzü, sıcaklık, hissedilen, Y/D, nem, rüzgar, yön, UV, Şimdi + 5 saat, 5 gün.
+- [ ] Kompakt: şimdi + beşer gün, › ile sonraki beş gün; güne dokununca altında ayrıntı satırı.
+- [ ] Minimal: şehir, simge + sıcaklık, gökyüzü ve Y/D.
+- [ ] Ayarlar › Widget'lar: şehir arama, seçme, saat dilimine dönme, °C/°F.
+- [ ] Ağ yokken "Hava durumu alınamadı" ve "Tekrar dene".
+
+**Takvim**
+- [ ] Bağlantı yokken de sade takvim: Geniş'te ay görünümü, bugün dolu daire, seçili gün halka, oklar ayı
+      değiştiriyor, ay başlığına tıklamak bugüne dönüyor; altında "Bu gün için etkinlik yok".
+- [ ] Bir ICS bağlantısı eklenince etkinlikli günlerde nokta, altında günün etkinlikleri ve toplantı linkinde
+      katıl düğmesi.
+- [ ] Kompakt: bu hafta, oklar haftayı değiştiriyor, altında "Per 29 · 14:00 Toplantı +1".
+- [ ] Minimal: sıradaki etkinlik ("5 dk sonra · 15:00"), yoksa bugünün tarihi ve "Etkinlik yok".
+- [ ] "+" ile "14:30 Toplantı" yazıp Enter: varsayılan takvim uygulaması etkinliği eklemeyi öneriyor.
+- [ ] Toplantıdan 5 dk önce 10 sn'lik banner, linkliyse "Katıl".
+
+**Ölçüm** (Release JIT, ada kapalı, `media-state.ps1` önce ve sonra)
+
+| Tarih | Yapı | Durum | CPU | Özel bellek | Çalışma kümesi |
+|---|---|---|---|---|---|
+| 2026-10-29 | Zamanlayıcı/hava/takvim, Release JIT x64 | Chrome'da medya **duraklatılmış**, 30 sn | %0,005 (hedef < %0,1) | 40,6 MB (hedef < 80 MB) | 145,8 MB |
+
+- [x] Boşta CPU < %0,1, bellek < 80 MB.
+- İlk iki ölçüm (%0,095 ve %0,288, 50 MB) sırasında Chrome'da medya kullanılıyordu (çal/duraklat, çubuklar).
+  Aynı koşulda adım 4 (69e9f47) ile sırayla ölçünce fark çıkmadı: ikisi de çalarken %0,01–0,4, duraklatılmışken
+  %0,005. Yeni kod boştayken iş yapmıyor (takvim bağlantısızken bekleyen bir şey yok, hava yalnızca Home açılınca).
+
 ## W1 · Adım 4: banner'lar, Home sütunları ve medya (2026-10-27, şeritler 2026-10-29)
 
 Debug (JIT). Banner süreleri ve bekleme, sütun genişlikleri ve şeritler, sütun ayarının okunması, oturum

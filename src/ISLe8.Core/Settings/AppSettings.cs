@@ -76,6 +76,30 @@ public sealed class AppSettings
 
     /// <summary>A short banner when a new song starts (Settings › Media).</summary>
     public bool ShowTrackChangeAlert { get; set; } = true;
+
+    /// <summary>A sound when a countdown or Pomodoro phase ends (Settings › Widgets › Timer).</summary>
+    public bool TimerSound { get; set; } = true;
+
+    /// <summary>Pomodoro focus, 5–90 minutes in steps of 5.</summary>
+    public int PomodoroWorkMinutes { get; set; } = 25;
+
+    /// <summary>Pomodoro break, 1–30 minutes.</summary>
+    public int PomodoroBreakMinutes { get; set; } = 5;
+
+    /// <summary>The weather's city; empty for the one in the time zone (Settings › Widgets).</summary>
+    public string WeatherCity { get; set; } = "";
+    public double WeatherLatitude { get; set; }
+    public double WeatherLongitude { get; set; }
+    public Weather.TemperatureUnit WeatherUnit { get; set; } = Weather.TemperatureUnit.Celsius;
+
+    /// <summary>
+    /// The calendars on Home: ICS subscription links (https or webcal), read-only. Windows has no
+    /// EventKit; this is how Outlook, Google and iCloud calendars get in (PORTING.md §3.6).
+    /// </summary>
+    public List<string> CalendarFeeds { get; set; } = [];
+
+    /// <summary>A banner five minutes before a meeting (Settings › Widgets).</summary>
+    public bool MeetingHeadsUp { get; set; } = true;
     public bool SwipeToChangeTabs { get; set; } = true;
 
     /// <summary>Kept out of screenshots, recordings and shared screens.</summary>
@@ -109,6 +133,13 @@ public sealed class AppSettings
         CloseDelay = Clamp(CloseDelay, 0, 1.5, 0.35);
         AnimationSpeed = Clamp(AnimationSpeed, 0.5, 2, 1);
         ExpandedWidth = Clamp(ExpandedWidth, 680, 980, 820);
+        PomodoroWorkMinutes = Math.Clamp((int)Math.Round(PomodoroWorkMinutes / 5.0) * 5, 5, 90);
+        PomodoroBreakMinutes = Math.Clamp(PomodoroBreakMinutes, 1, 30);
+        WeatherCity = (WeatherCity ?? "").Trim();
+        CalendarFeeds = (CalendarFeeds ?? []).Select(feed => (feed ?? "").Trim())
+            .Where(feed => Uri.TryCreate(feed, UriKind.Absolute, out var uri) && uri.Scheme is "https" or "http" or "webcal")
+            .Distinct(StringComparer.Ordinal).ToList();
+        if (!double.IsFinite(WeatherLatitude) || !double.IsFinite(WeatherLongitude)) WeatherLatitude = WeatherLongitude = 0;
         // Known tabs in the saved order, then any the file doesn't mention; at least one shown.
         var known = Island.IslandTabs.AllIds;
         TabOrder = (TabOrder ?? []).Where(known.Contains).Distinct().Concat(known).Distinct().ToList();

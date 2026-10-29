@@ -173,6 +173,23 @@ PORTING.md §2 › Boyutlar; değerler `IslandSizes`'ta, Core testleriyle.
 - **Banner:** 340 × 78; üst satır (pill kadar) boş, içerik altında; köşe 20 (Mac'in alt köşesi). Şarkı
   banner'ı: kapak 30, başlık, sanatçı, sağda çubuklar (çubuk ayarından bağımsız, Mac'teki gibi).
 
+### Zamanlayıcı, hava ve takvim (W1)
+
+- **Zamanlayıcı** (`IslandTimer`, Mac: TimerModule.swift): geri sayım, Pomodoro (25/5, Ayarlar › Widget'lar)
+  ve kronometre. Süreler saatten hesaplanıyor, kaymıyor; bekleyen tek şey fazın sonuna kurulan zamanlayıcı.
+  Ekrandaki süre yalnızca görünürken ve çalışırken saniyede bir güncelleniyor. Kulak önceliği medya 50,
+  zamanlayıcı 40: müzik durunca medya kulağı 8 sn daha tutuyor. Faz bitince ses (Windows'un
+  "Hatırlatıcı" sesi) ve 4 sn'lik banner.
+- **Hava** (`WeatherService`, Mac: WeatherModule.swift): Open-Meteo, anahtarsız. Şehir seçilmemişse saat
+  diliminden ("Turkey Standard Time" → "Europe/Istanbul" → İstanbul), konum izni yok. Arka planda iş yok:
+  Home görünür olduğunda rapor 30 dk'dan eskiyse ya da şehir/birim değiştiyse yenileniyor. Mac'in renkli SF
+  simgeleri yerine Windows'un renkli emojileri (☀️ ⛅ 🌧️).
+- **Takvim** (`CalendarService`, Mac: CalendarModule.swift): bağlantı yokken sade takvim (ay, hafta, bugün
+  bilgisayarın tarihinden); etkinliklerin kaynağı ICS abonelik bağlantıları (PORTING.md §3.6); tekrarlayan etkinlikler (RRULE, EXDATE, taşınan tekrar), Windows ve IANA saat dilimleri. Açılışta,
+  Home görünürken 15 dk'dan eskiyse ve bağlantı varken 30 dk'da bir okunuyor; arada yalnızca bir sonraki
+  önemli an bekleniyor (5 dk uyarısı, etkinlik sonu, gece yarısı). Hızlı ekleme bir `.ics` dosyası yazıp
+  varsayılan takvim uygulamasında açıyor. Yazma satırı için ada klavyeyi alıyor, kapanınca geri veriyor.
+
 ### Tray, Ayarlar ve ikinci açılış (W1)
 
 - **Tray:** `Shell_NotifyIcon` ile bildirim alanında bir kapsül (Mac'teki `capsule.fill`); koyu görev

@@ -1,5 +1,13 @@
 namespace ISLe8.Core.Geometry;
 
+/// <summary>What the wide pill shows in its ears.</summary>
+public enum PillActivity
+{
+    None,
+    Media,
+    Timer,
+}
+
 public enum PillKind
 {
     /// <summary>Nothing going on: a plain pill.</summary>

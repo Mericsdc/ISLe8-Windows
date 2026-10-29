@@ -224,6 +224,12 @@ Her modülde: Mac dosyaları → Windows karşılığı → önemli davranışla
   - Toplantıdan 5 dk önce banner (10 sn, "Katıl" düğmesiyle).
   - Reddedilen etkinlikler gösterilmez.
   - Hızlı ekleme metni "14:30 Toplantı": saat yoksa bugün için bir sonraki tam saat, başka gün için 09:00; süre 1 saat.
+  - **Windows'ta yapılan (W1):** Bağlantı yokken sütun sade bir takvimdir: ay, hafta ve bugün bilgisayarın
+    kendi tarihinden gelir (saati `time.windows.com` ile eşitleyen sistem saati); Mac'teki "Takvimi bağla"
+    ekranı yok, etkinlikler isteğe bağlı. ICS bağlantıları Ayarlar › Widget'lar'da (Mac'teki "Erişim" satırının yerine);
+    ICS'de takvim rengi olmadığı için her bağlantı Mac'in takvim renklerinden birini sırayla alır. Hızlı ekleme
+    yedek yolla: `.ics` dosyası varsayılan takvim uygulamasında açılır. Mac'teki "Bugünkü hatırlatıcıları da
+    göster" taşınmadı: Windows'ta okunacak bir hatırlatıcı kaynağı yok.
 - **Kabul:** Ay gezinme, gün seçme, noktalar, katıl düğmesi, 5 dk uyarısı ve hızlı ekleme penceresi çalışıyor.
 
 ### 3.7 Zamanlayıcı / Pomodoro (W1)

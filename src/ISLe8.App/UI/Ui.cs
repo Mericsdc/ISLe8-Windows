@@ -37,7 +37,19 @@ internal static class Glyphs
     public const string Down = "";
     public const string Calendar = "";
     public const string Weather = "";
-    public const string Timer = "";
+    public const string Timer = "\uE823";
+    public const string Stopwatch = "\uE916";
+    public const string Focus = "\uEA80";
+    public const string Break = "\uEC32";
+    public const string Stop = "\uE71A";
+    public const string Widgets = "\uECA5";
+    public const string Close = "\uE711";
+    public const string Video = "\uE714";
+    public const string Refresh = "\uE72C";
+    public const string Offline = "\uE701";
+    public const string Location = "\uE81D";
+    public const string Forward = "\uE76C";
+    public const string Back = "\uE76B";
     public const string Add = "";
     public const string Remove = "";
 }

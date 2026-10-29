@@ -51,6 +51,8 @@ public sealed class IslandModel
     private IDisposable? _hoverTimer;
     private IDisposable? _closeTimer;
     private IDisposable? _shrinkTimer;
+    private bool _mediaActive;
+    private bool _timerActive;
     private IDisposable? _alertTimer;
     private DateTimeOffset _closedAt = DateTimeOffset.MinValue;
 
@@ -64,6 +66,9 @@ public sealed class IslandModel
 
     /// <summary>The pill the island shows, or will show, at rest.</summary>
     public PillKind Pill { get; private set; } = PillKind.Idle;
+
+    /// <summary>What the wide pill's ears show; the last one while it narrows back.</summary>
+    public PillActivity Activity { get; private set; } = PillActivity.None;
 
     /// <summary>The open island's tab, or the one it will open on.</summary>
     public IslandTab Tab { get; private set; } = IslandTab.Home;
@@ -185,6 +190,14 @@ public sealed class IslandModel
         EndAlert(duration);
     }
 
+    /// <summary>A banner's button did what it offered (Katıl): the banner goes at once.</summary>
+    public void DismissAlert()
+    {
+        if (State != IslandState.Alert) return;
+        Cancel(ref _alertTimer);
+        Transition(IslandState.Pill);
+    }
+
     private void EndAlert(TimeSpan after) =>
         _alertTimer = _clock.After(after, () =>
         {
@@ -223,24 +236,34 @@ public sealed class IslandModel
     }
 
     /// <summary>
-    /// Something is live (music playing): the pill widens at once. When it stops, the pill
-    /// narrows only after <see cref="PillShrinkDelay"/>, so a song change doesn't make it twitch.
+    /// Music playing: media takes the ear and the pill widens at once. When it stops, media keeps the
+    /// ear for <see cref="PillShrinkDelay"/> (MediaModule.swift), so a song change doesn't make the
+    /// pill twitch and a timer underneath doesn't flash in.
     /// </summary>
-    public void SetLive(bool live)
+    public void SetLive(bool playing)
     {
-        if (live)
+        if (playing)
         {
             Cancel(ref _shrinkTimer);
-            SetPill(PillKind.Compact);
+            _mediaActive = true;
+            UpdateActivity();
         }
-        else if (Pill == PillKind.Compact && _shrinkTimer is null)
+        else if (_mediaActive && _shrinkTimer is null)
         {
             _shrinkTimer = _clock.After(PillShrinkDelay, () =>
             {
                 _shrinkTimer = null;
-                SetPill(PillKind.Idle);
+                _mediaActive = false;
+                UpdateActivity();
             });
         }
+    }
+
+    /// <summary>A timer, stopwatch or Pomodoro is set (running or paused): the ear when music isn't.</summary>
+    public void SetTimerLive(bool live)
+    {
+        _timerActive = live;
+        UpdateActivity();
     }
 
     /// <summary>A tab from the dock. The island stays open and, in the wide and compact layouts, the same size.</summary>
@@ -293,10 +316,15 @@ public sealed class IslandModel
         return -1;
     }
 
-    private void SetPill(PillKind pill)
+    /// <summary>The ear goes to the activity with the highest priority (IslandModule.swift): media 50, timer 40.</summary>
+    private void UpdateActivity()
     {
-        if (pill == Pill) return;
-        IsGrowing = pill == PillKind.Compact;
+        var activity = _mediaActive ? PillActivity.Media : _timerActive ? PillActivity.Timer : PillActivity.None;
+        var pill = activity == PillActivity.None ? PillKind.Idle : PillKind.Compact;
+        if (activity == Activity && pill == Pill) return;
+        if (pill != Pill) IsGrowing = pill == PillKind.Compact;
+        // Narrowing keeps the last ear's content while it fades out.
+        if (activity != PillActivity.None) Activity = activity;
         Pill = pill;
         PillChanged?.Invoke();
         Changed?.Invoke();

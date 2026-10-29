@@ -367,4 +367,360 @@
     <value>Duraklat</value>
     <comment>mac: Duraklat</comment>
   </data>
+  <data name="Timer_Five" xml:space="preserve">
+    <value>5 dk</value>
+    <comment>mac: 5 dk</comment>
+  </data>
+  <data name="Timer_Fifteen" xml:space="preserve">
+    <value>15 dk</value>
+    <comment>mac: 15 dk</comment>
+  </data>
+  <data name="Timer_StartPomodoro" xml:space="preserve">
+    <value>Pomodoro başlat</value>
+    <comment>mac: Pomodoro başlat</comment>
+  </data>
+  <data name="Timer_StartStopwatch" xml:space="preserve">
+    <value>Kronometre başlat</value>
+    <comment>mac: Kronometre başlat</comment>
+  </data>
+  <data name="Timer_Resume" xml:space="preserve">
+    <value>Sürdür</value>
+    <comment>mac: Sürdür</comment>
+  </data>
+  <data name="Timer_Stop" xml:space="preserve">
+    <value>Zamanlayıcıyı durdur</value>
+    <comment>mac: Zamanlayıcıyı durdur</comment>
+  </data>
+  <data name="Timer_Stopwatch" xml:space="preserve">
+    <value>Kronometre</value>
+    <comment>mac: Kronometre</comment>
+  </data>
+  <data name="Timer_Finished" xml:space="preserve">
+    <value>Süre doldu</value>
+    <comment>mac: Süre doldu</comment>
+  </data>
+  <data name="Timer_BreakTime" xml:space="preserve">
+    <value>Mola zamanı</value>
+    <comment>mac: Mola zamanı</comment>
+  </data>
+  <data name="Timer_FocusTime" xml:space="preserve">
+    <value>Odaklanma zamanı</value>
+    <comment>mac: Odaklanma zamanı</comment>
+  </data>
+  <data name="Timer_FinishedDetail" xml:space="preserve">
+    <value>Zamanlayıcı bitti</value>
+    <comment>mac: Zamanlayıcı bitti</comment>
+  </data>
+  <data name="Timer_NewRound" xml:space="preserve">
+    <value>{0} dakikalık yeni tur başladı</value>
+    <comment>mac: %lld dakikalık yeni tur başladı</comment>
+  </data>
+  <data name="Timer_Rest" xml:space="preserve">
+    <value>{0} dakika dinlen</value>
+  </data>
+  <data name="Timer_RestOne" xml:space="preserve">
+    <value>{0} dakika dinlen</value>
+  </data>
+  <data name="Timer_BreakRound" xml:space="preserve">
+    <value>Mola · {0}. tur</value>
+  </data>
+  <data name="Timer_FocusRound" xml:space="preserve">
+    <value>Odaklan · {0}. tur</value>
+  </data>
+  <data name="Settings_Widgets" xml:space="preserve">
+    <value>Widget'lar</value>
+    <comment>mac: Widget'lar</comment>
+  </data>
+  <data name="Settings_TimerSound" xml:space="preserve">
+    <value>Süre dolunca ses çal</value>
+    <comment>mac: Süre dolunca ses çal</comment>
+  </data>
+  <data name="Settings_PomodoroWork" xml:space="preserve">
+    <value>Pomodoro odak: {0} dk</value>
+    <comment>mac: Pomodoro odak: %lld dk</comment>
+  </data>
+  <data name="Settings_PomodoroBreak" xml:space="preserve">
+    <value>Pomodoro mola: {0} dk</value>
+    <comment>mac: Pomodoro mola: %lld dk</comment>
+  </data>
+  <data name="Weather_Failed" xml:space="preserve">
+    <value>Hava durumu alınamadı</value>
+    <comment>mac: Hava durumu alınamadı</comment>
+  </data>
+  <data name="Weather_Retry" xml:space="preserve">
+    <value>Tekrar dene</value>
+    <comment>mac: Tekrar dene</comment>
+  </data>
+  <data name="Weather_Today" xml:space="preserve">
+    <value>Bugün</value>
+    <comment>mac: Bugün</comment>
+  </data>
+  <data name="Weather_Tomorrow" xml:space="preserve">
+    <value>Yarın</value>
+    <comment>mac: Yarın</comment>
+  </data>
+  <data name="Weather_Now" xml:space="preserve">
+    <value>Şimdi</value>
+    <comment>mac: Şimdi</comment>
+  </data>
+  <data name="Weather_NextDays" xml:space="preserve">
+    <value>Sonraki günler</value>
+    <comment>mac: Sonraki günler</comment>
+  </data>
+  <data name="Weather_FirstDays" xml:space="preserve">
+    <value>İlk günler</value>
+    <comment>mac: İlk günler</comment>
+  </data>
+  <data name="Weather_Humidity" xml:space="preserve">
+    <value>Nem</value>
+    <comment>mac: Nem</comment>
+  </data>
+  <data name="Weather_Wind" xml:space="preserve">
+    <value>Rüzgar</value>
+    <comment>mac: Rüzgar</comment>
+  </data>
+  <data name="Weather_Direction" xml:space="preserve">
+    <value>Yön</value>
+    <comment>mac: Yön</comment>
+  </data>
+  <data name="Weather_UV" xml:space="preserve">
+    <value>UV</value>
+    <comment>mac: UV</comment>
+  </data>
+  <data name="Wind_0" xml:space="preserve">
+    <value>K</value>
+    <comment>mac: K</comment>
+  </data>
+  <data name="Wind_1" xml:space="preserve">
+    <value>KD</value>
+    <comment>mac: KD</comment>
+  </data>
+  <data name="Wind_2" xml:space="preserve">
+    <value>D</value>
+    <comment>mac: D</comment>
+  </data>
+  <data name="Wind_3" xml:space="preserve">
+    <value>GD</value>
+    <comment>mac: GD</comment>
+  </data>
+  <data name="Wind_4" xml:space="preserve">
+    <value>G</value>
+    <comment>mac: G</comment>
+  </data>
+  <data name="Wind_5" xml:space="preserve">
+    <value>GB</value>
+    <comment>mac: GB</comment>
+  </data>
+  <data name="Wind_6" xml:space="preserve">
+    <value>B</value>
+    <comment>mac: B</comment>
+  </data>
+  <data name="Wind_7" xml:space="preserve">
+    <value>KB</value>
+    <comment>mac: KB</comment>
+  </data>
+  <data name="Weather_Clear" xml:space="preserve">
+    <value>Açık</value>
+    <comment>mac: Açık</comment>
+  </data>
+  <data name="Weather_MostlyClear" xml:space="preserve">
+    <value>Çoğunlukla açık</value>
+    <comment>mac: Çoğunlukla açık</comment>
+  </data>
+  <data name="Weather_PartlyCloudy" xml:space="preserve">
+    <value>Parçalı bulutlu</value>
+    <comment>mac: Parçalı bulutlu</comment>
+  </data>
+  <data name="Weather_Overcast" xml:space="preserve">
+    <value>Çok bulutlu</value>
+    <comment>mac: Çok bulutlu</comment>
+  </data>
+  <data name="Weather_Fog" xml:space="preserve">
+    <value>Sisli</value>
+    <comment>mac: Sisli</comment>
+  </data>
+  <data name="Weather_Drizzle" xml:space="preserve">
+    <value>Çiseliyor</value>
+    <comment>mac: Çiseliyor</comment>
+  </data>
+  <data name="Weather_FreezingDrizzle" xml:space="preserve">
+    <value>Donan çisenti</value>
+    <comment>mac: Donan çisenti</comment>
+  </data>
+  <data name="Weather_Rain" xml:space="preserve">
+    <value>Yağmurlu</value>
+    <comment>mac: Yağmurlu</comment>
+  </data>
+  <data name="Weather_HeavyRain" xml:space="preserve">
+    <value>Şiddetli yağmur</value>
+    <comment>mac: Şiddetli yağmur</comment>
+  </data>
+  <data name="Weather_FreezingRain" xml:space="preserve">
+    <value>Donan yağmur</value>
+    <comment>mac: Donan yağmur</comment>
+  </data>
+  <data name="Weather_Snow" xml:space="preserve">
+    <value>Karlı</value>
+    <comment>mac: Karlı</comment>
+  </data>
+  <data name="Weather_Showers" xml:space="preserve">
+    <value>Sağanak</value>
+    <comment>mac: Sağanak</comment>
+  </data>
+  <data name="Weather_SnowShowers" xml:space="preserve">
+    <value>Kar sağanağı</value>
+    <comment>mac: Kar sağanağı</comment>
+  </data>
+  <data name="Weather_Thunderstorm" xml:space="preserve">
+    <value>Gök gürültülü</value>
+    <comment>mac: Gök gürültülü</comment>
+  </data>
+  <data name="Weather_Hail" xml:space="preserve">
+    <value>Dolulu fırtına</value>
+    <comment>mac: Dolulu fırtına</comment>
+  </data>
+  <data name="Weather_HighLow" xml:space="preserve">
+    <value>Y {0}  D {1}</value>
+    <comment>mac: Y %@  D %@</comment>
+  </data>
+  <data name="Weather_RainChance" xml:space="preserve">
+    <value>Yağış %{0}</value>
+    <comment>mac: Yağış %%%lld</comment>
+  </data>
+  <data name="Weather_FeelsLike" xml:space="preserve">
+    <value>Hissedilen {0}</value>
+    <comment>mac: Hissedilen %@</comment>
+  </data>
+  <data name="Weather_Percent" xml:space="preserve">
+    <value>%{0}</value>
+    <comment>mac: %%%lld</comment>
+  </data>
+  <data name="Weather_Kmh" xml:space="preserve">
+    <value>{0} km/sa</value>
+    <comment>mac: %lld km/sa</comment>
+  </data>
+  <data name="Weather_Mph" xml:space="preserve">
+    <value>{0} mph</value>
+    <comment>mac: %lld mph</comment>
+  </data>
+  <data name="Settings_City" xml:space="preserve">
+    <value>Şehir</value>
+    <comment>mac: Şehir</comment>
+  </data>
+  <data name="Settings_CityFromZone" xml:space="preserve">
+    <value>Saat dilimine göre ({0})</value>
+    <comment>mac: Saat dilimine göre (%@)</comment>
+  </data>
+  <data name="Settings_CitySearch" xml:space="preserve">
+    <value>Şehir ara</value>
+    <comment>mac: Şehir ara</comment>
+  </data>
+  <data name="Settings_Search" xml:space="preserve">
+    <value>Ara</value>
+    <comment>mac: Ara</comment>
+  </data>
+  <data name="Settings_UseTimeZone" xml:space="preserve">
+    <value>Saat dilimine dön</value>
+    <comment>mac: Saat dilimine dön</comment>
+  </data>
+  <data name="Settings_Unit" xml:space="preserve">
+    <value>Birim</value>
+    <comment>mac: Birim</comment>
+  </data>
+  <data name="Calendar_NoEvents" xml:space="preserve">
+    <value>Etkinlik yok</value>
+    <comment>mac: Etkinlik yok</comment>
+  </data>
+  <data name="Calendar_PrevWeek" xml:space="preserve">
+    <value>Önceki hafta</value>
+    <comment>mac: Önceki hafta</comment>
+  </data>
+  <data name="Calendar_NextWeek" xml:space="preserve">
+    <value>Sonraki hafta</value>
+    <comment>mac: Sonraki hafta</comment>
+  </data>
+  <data name="Calendar_PrevMonth" xml:space="preserve">
+    <value>Önceki ay</value>
+    <comment>mac: Önceki ay</comment>
+  </data>
+  <data name="Calendar_NextMonth" xml:space="preserve">
+    <value>Sonraki ay</value>
+    <comment>mac: Sonraki ay</comment>
+  </data>
+  <data name="Calendar_BackToToday" xml:space="preserve">
+    <value>Bugüne dön</value>
+    <comment>mac: Bugüne dön</comment>
+  </data>
+  <data name="Calendar_Cancel" xml:space="preserve">
+    <value>Vazgeç</value>
+    <comment>mac: Vazgeç</comment>
+  </data>
+  <data name="Calendar_AddEvent" xml:space="preserve">
+    <value>Etkinlik ekle</value>
+    <comment>mac: Etkinlik ekle</comment>
+  </data>
+  <data name="Calendar_AddPlaceholder" xml:space="preserve">
+    <value>14:30 Toplantı</value>
+    <comment>mac: 14:30 Toplantı</comment>
+  </data>
+  <data name="Calendar_DayEmpty" xml:space="preserve">
+    <value>Bu gün için etkinlik yok</value>
+    <comment>mac: Bu gün için etkinlik yok</comment>
+  </data>
+  <data name="Calendar_TodayTitle" xml:space="preserve">
+    <value>Bugün · {0}</value>
+    <comment>mac: Bugün · %@</comment>
+  </data>
+  <data name="Calendar_DayFree" xml:space="preserve">
+    <value>{0} · Etkinlik yok</value>
+    <comment>mac: %@ · Etkinlik yok</comment>
+  </data>
+  <data name="Calendar_AllDay" xml:space="preserve">
+    <value>Tüm gün</value>
+    <comment>mac: Tüm gün</comment>
+  </data>
+  <data name="Calendar_Join" xml:space="preserve">
+    <value>Katıl</value>
+    <comment>mac: Katıl</comment>
+  </data>
+  <data name="Calendar_TomorrowAllDay" xml:space="preserve">
+    <value>Yarın · tüm gün</value>
+    <comment>mac: Yarın · tüm gün</comment>
+  </data>
+  <data name="Calendar_NowEnds" xml:space="preserve">
+    <value>Şimdi · bitiş {0}</value>
+    <comment>mac: Şimdi · bitiş %@</comment>
+  </data>
+  <data name="Calendar_InMinutes" xml:space="preserve">
+    <value>{0} dk sonra · {1}</value>
+    <comment>mac: %lld dk sonra · %@</comment>
+  </data>
+  <data name="Calendar_Tomorrow" xml:space="preserve">
+    <value>Yarın · {0}</value>
+    <comment>mac: Yarın · %@</comment>
+  </data>
+  <data name="Settings_MeetingHeadsUp" xml:space="preserve">
+    <value>Toplantıdan 5 dakika önce haber ver</value>
+    <comment>mac: Toplantıdan 5 dakika önce haber ver</comment>
+  </data>
+  <data name="Settings_Access" xml:space="preserve">
+    <value>Erişim</value>
+    <comment>mac: Erişim</comment>
+  </data>
+  <data name="Settings_Connected" xml:space="preserve">
+    <value>Bağlı</value>
+    <comment>mac: Bağlı</comment>
+  </data>
+  <data name="Settings_CalendarFeeds" xml:space="preserve">
+    <value>Takvim bağlantıları (ICS)</value>
+  </data>
+  <data name="Settings_CalendarFeedsNote" xml:space="preserve">
+    <value>Outlook, Google ya da iCloud takviminin paylaşım ayarlarındaki gizli ICS adresini yapıştır. ISLe8 takvimleri yalnızca okur; eklediğin etkinlik varsayılan takvim uygulamasında açılır.</value>
+  </data>
+  <data name="Settings_AddFeed" xml:space="preserve">
+    <value>Ekle</value>
+  </data>
+  <data name="Settings_NotConnected" xml:space="preserve">
+    <value>Bağlı değil</value>
+  </data>
 </root>

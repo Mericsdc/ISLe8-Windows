@@ -3,7 +3,12 @@ using ISLe8.Core.Island;
 using ISLe8.Core.Settings;
 using ISLe8.Core.Theming;
 using ISLe8.Localization;
+using ISLe8.Calendar;
+using ISLe8.Core.Calendar;
+using ISLe8.Core.Timer;
+using ISLe8.Core.Weather;
 using ISLe8.Media;
+using ISLe8.Timer;
 using ISLe8.UI;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Text;
@@ -34,8 +39,11 @@ internal sealed class IslandView
     private readonly Image _pillArtwork;
     private readonly RowDefinition _contentRow = new();
     private readonly Dictionary<IslandTab, FrameworkElement> _tabs = [];
+    private readonly FrameworkElement[] _mediaEar;
 
-    public IslandView(IslandTheme theme, MediaService media, DispatcherQueue queue)
+    public IslandView(
+        IslandTheme theme, AppSettings settings, MediaService media, IslandTimer timer, WeatherService weather, CalendarService calendar,
+        DispatcherQueue queue, Action takeKeyboard, Action dismissAlert)
     {
         BackgroundHost = new Grid { IsHitTestVisible = false };
 
@@ -60,16 +68,22 @@ internal sealed class IslandView
         Bars = new AudioBars(barsHost);
         Bars.SetColor(theme.Accent.ToColor());
 
+        // The ears: the media's artwork and bars, or the timer's symbol and time.
+        _mediaEar = [pillArtwork, barsHost];
+        TimerEar = new TimerEar(timer, queue);
+        TimerEar.Leading.HorizontalAlignment = HorizontalAlignment.Left;
+        TimerEar.Trailing.HorizontalAlignment = HorizontalAlignment.Right;
         PillLayer = new Grid
         {
             Padding = new Thickness(5, 0, 14, 0),
             HorizontalAlignment = HorizontalAlignment.Left,
             VerticalAlignment = VerticalAlignment.Top,
             IsHitTestVisible = false,
-            Children = { pillArtwork, barsHost },
+            Children = { pillArtwork, barsHost, TimerEar.Leading, TimerEar.Trailing },
         };
+        TimerEar.SetShown(false, seen: false);
 
-        Home = new HomeView(media, theme, queue);
+        Home = new HomeView(media, timer, weather, calendar, settings, theme, queue, takeKeyboard);
         _tabs[IslandTab.Home] = Home.Root;
         foreach (var tab in new[] { IslandTab.Shelf, IslandTab.Clipboard, IslandTab.Agents, IslandTab.Devices })
         {
@@ -113,6 +127,12 @@ internal sealed class IslandView
 
         Banner = new MediaBanner(media, theme);
         Banner.Root.Margin = new Thickness(14, 0, 14, 4);
+        TimerBanner = new TimerBanner();
+        TimerBanner.Root.Margin = new Thickness(14, 0, 14, 4);
+        Grid.SetRow(TimerBanner.Root, 1);
+        MeetingBanner = new MeetingBanner(dismissAlert);
+        MeetingBanner.Root.Margin = new Thickness(14, 0, 14, 4);
+        Grid.SetRow(MeetingBanner.Root, 1);
         AlertLayer = new Grid
         {
             HorizontalAlignment = HorizontalAlignment.Left,
@@ -120,7 +140,7 @@ internal sealed class IslandView
             Visibility = Visibility.Collapsed,
             IsHitTestVisible = false,
             RowDefinitions = { new RowDefinition { Height = new GridLength(IslandSizes.HeaderHeight) }, new RowDefinition() },
-            Children = { Banner.Root },
+            Children = { Banner.Root, TimerBanner.Root, MeetingBanner.Root },
         };
         Grid.SetRow(Banner.Root, 1);
 
@@ -146,6 +166,9 @@ internal sealed class IslandView
     public TabDock Dock { get; }
     public HomeView Home { get; }
     public MediaBanner Banner { get; }
+    public TimerBanner TimerBanner { get; }
+    public MeetingBanner MeetingBanner { get; }
+    public TimerEar TimerEar { get; }
     public AudioBars Bars { get; }
 
     public void ApplyLayout(IslandLayout layout, DipRect open, HomeStyle style, IslandTab tab)
@@ -153,6 +176,26 @@ internal sealed class IslandView
         Place(Area, layout.Area);
         Place(PillLayer, layout.CompactPill);
         SetOpen(open, style, tab);
+    }
+
+    /// <summary>The ears show <paramref name="activity"/>: media's artwork and bars, or the timer, which ticks while <paramref name="seen"/>.</summary>
+    public void ShowEar(PillActivity activity, bool seen)
+    {
+        foreach (var part in _mediaEar) part.Visibility = activity == PillActivity.Timer ? Visibility.Collapsed : Visibility.Visible;
+        TimerEar.SetShown(activity == PillActivity.Timer, seen);
+    }
+
+    /// <summary>The banner for <paramref name="alert"/>: one content at a time.</summary>
+    public void ShowAlert(IslandAlert? alert)
+    {
+        Banner.Root.Visibility = alert is null or NowPlayingAlert ? Visibility.Visible : Visibility.Collapsed;
+        TimerBanner.Root.Visibility = alert is TimerAlert ? Visibility.Visible : Visibility.Collapsed;
+        MeetingBanner.Root.Visibility = alert is MeetingAlert ? Visibility.Visible : Visibility.Collapsed;
+        if (alert is TimerAlert timer) TimerBanner.Show(timer.Event);
+        else if (alert is MeetingAlert meeting) MeetingBanner.Show(meeting.Entry);
+        else Banner.Refresh();
+        // Only a banner with a button takes the pointer itself; otherwise a click opens the island.
+        AlertLayer.IsHitTestVisible = alert is MeetingAlert && MeetingBanner.HasJoin;
     }
 
     /// <summary>Where the banner sits while one shows.</summary>

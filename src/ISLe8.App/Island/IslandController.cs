@@ -2,6 +2,10 @@ using ISLe8.Core.Diagnostics;
 using ISLe8.Core.Geometry;
 using ISLe8.Core.Island;
 using ISLe8.Core.Media;
+using ISLe8.Core.Calendar;
+using ISLe8.Core.Timer;
+using ISLe8.Core.Weather;
+using ISLe8.Interop;
 using ISLe8.Core.Motion;
 using ISLe8.Core.Settings;
 using ISLe8.Core.Theming;
@@ -40,6 +44,13 @@ internal sealed class IslandController : IDisposable
     /// <summary>False while the shape is still moving after it shrank.</summary>
     private bool _settled = true;
     private readonly TrackChangeDetector _trackChanges = new();
+    private readonly IslandTimer _timer;
+    private readonly WeatherService _weather;
+    private readonly CalendarService _calendar;
+    private nint _foregroundBeforeKeyboard;
+
+    /// <summary>One client for the app's few requests (weather now; more later), as .NET recommends.</summary>
+    private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(15) };
     private nint _foregroundBeforeMenu;
     private string? _artworkKey;
 
@@ -53,9 +64,19 @@ internal sealed class IslandController : IDisposable
         _media = new MediaService(_queue);
         // The window is as big as the largest tab in the current layout; it never resizes while open.
         _window = new IslandWindow(_settings, () => IslandSizes.Largest(_settings));
-        _model = new IslandModel(_settings, new DispatcherClock(_queue));
+        var clock = new DispatcherClock(_queue);
+        _model = new IslandModel(_settings, clock);
+        _timer = new IslandTimer(_settings, clock);
+        _weather = new WeatherService(_settings, Http, () => DateTimeOffset.Now, TimeZoneInfo.Local.Id);
+        _calendar = new CalendarService(_settings, Http, clock);
         _outsideClicks = new OutsideClickWatcher(_queue, OnClickedOutside);
     }
+
+    /// <summary>The weather, for Settings › Widgets.</summary>
+    public WeatherService Weather => _weather;
+
+    /// <summary>The calendars, for Settings › Widgets.</summary>
+    public CalendarService Calendar => _calendar;
 
     /// <summary>The one settings object; the settings window changes it in place.</summary>
     public AppSettings Settings => _settings;
@@ -98,6 +119,13 @@ internal sealed class IslandController : IDisposable
         _model.TabChanged += OnTabChanged;
         _model.Changed += OnModelChanged;
         _model.AlertChanged += OnAlertChanged;
+        _timer.Changed += OnTimerChanged;
+        _timer.PhaseEnded += OnTimerPhaseEnded;
+        _calendar.MeetingSoon += entry =>
+        {
+            if (!_window.IsHiddenForFullscreen) _model.ShowAlert(new MeetingAlert(entry), AlertDurations.Meeting);
+        };
+        _ = _calendar.Start();
         ApplyCapture();
         _window.LayoutChanged += ApplyLayout;
         _window.FullscreenChanged += _ => UpdateBars();
@@ -126,7 +154,10 @@ internal sealed class IslandController : IDisposable
         // The old view's clock and bars would otherwise keep running, detached from the window.
         if (_view is not null) StopView();
 
-        _view = new IslandView(theme, _media, _queue);
+        _view = new IslandView(
+            theme, _settings, _media, _timer, _weather, _calendar, _queue,
+            takeKeyboard: TakeKeyboard,
+            dismissAlert: _model.DismissAlert);
         _view.Area.PointerEntered += (_, e) => UpdateHover(e, touchInside: true);
         _view.Area.PointerMoved += (_, e) => UpdateHover(e, touchInside: true);
         _view.Area.PointerExited += (_, e) => UpdateHover(e, touchInside: false);
@@ -162,9 +193,10 @@ internal sealed class IslandController : IDisposable
 
     private void StopView()
     {
-        _view.Home.SetActive(false);
+        _view.Home.Detach();
         _view.Bars.Stop();
         _view.Banner.Bars.Stop();
+        _view.TimerEar.Stop();
     }
 
     /// <summary>A new monitor, DPI, layout or view: everything jumps to where it belongs, without animating.</summary>
@@ -270,6 +302,7 @@ internal sealed class IslandController : IDisposable
         var shape = Shape(layout, state);
         _settled = false;
 
+        if (state != IslandState.Expanded) ReturnKeyboard();
         if (state == IslandState.Expanded)
         {
             _window.SetHitRegion(layout.ExpandedRegion);
@@ -286,7 +319,7 @@ internal sealed class IslandController : IDisposable
         }
         else if (state == IslandState.Alert)
         {
-            _view.Banner.Refresh();
+            _view.ShowAlert(_model.Alert);
             _view.SetAlert(shape);
             _view.AlertLayer.Visibility = Visibility.Visible;
             _surface.Fade(_view.AlertLayer, 1, MotionTimings.ContentDelay, MotionTimings.ContentFadeIn);
@@ -457,7 +490,42 @@ internal sealed class IslandController : IDisposable
     }
 
     /// <summary>One banner took another's place: the same size for now, so only the content changes.</summary>
-    private void OnAlertChanged() => _view.Banner.Refresh();
+    private void OnAlertChanged() => _view.ShowAlert(_model.Alert);
+
+    // MARK: Keyboard
+
+    /// <summary>
+    /// The island never takes focus, but typing needs it (the calendar's add line, as the Mac's
+    /// requestKeyboard). It is handed back to the window that had it once the island closes.
+    /// </summary>
+    private void TakeKeyboard()
+    {
+        if (_foregroundBeforeKeyboard == 0) _foregroundBeforeKeyboard = _window.TakeForeground();
+    }
+
+    private void ReturnKeyboard()
+    {
+        if (_foregroundBeforeKeyboard == 0) return;
+        _window.ReturnForeground(_foregroundBeforeKeyboard);
+        _foregroundBeforeKeyboard = 0;
+    }
+
+    // MARK: Timer
+
+    /// <summary>Set, paused or stopped: the ears and the Home tile follow (the tile on its own).</summary>
+    private void OnTimerChanged()
+    {
+        _model.SetTimerLive(_timer.Mode != TimerMode.Idle);
+        _view.TimerEar.Refresh();
+        UpdateBars();
+    }
+
+    /// <summary>A phase ended: the sound (Settings › Widgets) and a 4 s banner.</summary>
+    private void OnTimerPhaseEnded(TimerEvent e)
+    {
+        if (_settings.TimerSound) Win32.PlaySound("Notification.Reminder", 0, Win32.SND_ALIAS | Win32.SND_ASYNC);
+        if (!_window.IsHiddenForFullscreen) _model.ShowAlert(new TimerAlert(e), AlertDurations.Timer);
+    }
 
     /// <summary>
     /// Bars only move while they can be seen and something plays: in the wide pill or its peek (if
@@ -467,9 +535,11 @@ internal sealed class IslandController : IDisposable
     {
         var playing = _media.Current?.IsPlaying == true && !_window.IsHiddenForFullscreen;
         var state = _model.State;
-        if (playing && _settings.AudioBars && state is IslandState.Pill or IslandState.Peek && _model.Pill == PillKind.Compact) _view.Bars.Start();
+        var earsSeen = state is IslandState.Pill or IslandState.Peek && _model.Pill == PillKind.Compact && !_window.IsHiddenForFullscreen;
+        _view.ShowEar(_model.Activity, earsSeen);
+        if (playing && _settings.AudioBars && earsSeen && _model.Activity == PillActivity.Media) _view.Bars.Start();
         else _view.Bars.Stop();
-        if (playing && state == IslandState.Alert) _view.Banner.Bars.Start();
+        if (playing && state == IslandState.Alert && _model.Alert is NowPlayingAlert) _view.Banner.Bars.Start();
         else _view.Banner.Bars.Stop();
     }
 

@@ -2,7 +2,13 @@ using ISLe8.Core.Island;
 using ISLe8.Core.Settings;
 using ISLe8.Core.Theming;
 using ISLe8.Localization;
+using ISLe8.Calendar;
+using ISLe8.Core.Calendar;
+using ISLe8.Core.Timer;
+using ISLe8.Core.Weather;
+using ISLe8.Weather;
 using ISLe8.Media;
+using ISLe8.Timer;
 using ISLe8.UI;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
@@ -17,8 +23,14 @@ namespace ISLe8.Island;
 /// and minimal strips flat columns split by hairlines, the player in the middle. Built again only
 /// when the columns, the layout or the width change.
 /// </summary>
-internal sealed class HomeView(MediaService media, IslandTheme theme, DispatcherQueue queue)
+internal sealed class HomeView(
+    MediaService media, IslandTimer timer, WeatherService weather, CalendarService calendar, AppSettings settings,
+    IslandTheme theme, DispatcherQueue queue, Action takeKeyboard)
 {
+    private CalendarColumn? _calendar;
+    private TimerTile? _timer;
+    private WeatherColumn? _weather;
+
     private ImageSource? _artwork;
     private string? _built;
     private bool _active;
@@ -36,6 +48,12 @@ internal sealed class HomeView(MediaService media, IslandTheme theme, Dispatcher
 
         Media?.SetActive(false);
         Media = null;
+        _timer?.Detach();
+        _timer = null;
+        _weather?.Detach();
+        _weather = null;
+        _calendar?.Detach();
+        _calendar = null;
         Root.Children.Clear();
         Root.ColumnDefinitions.Clear();
         if (columns.Count == 0)
@@ -70,6 +88,21 @@ internal sealed class HomeView(MediaService media, IslandTheme theme, Dispatcher
                 Media.SetArtwork(_artwork);
                 view = Media.Root;
             }
+            else if (columns[i] == "calendar")
+            {
+                _calendar = new CalendarColumn(calendar, theme, style, queue, takeKeyboard);
+                view = _calendar.Root;
+            }
+            else if (columns[i] == "weather")
+            {
+                _weather = new WeatherColumn(weather, settings, theme, style);
+                view = _weather.Root;
+            }
+            else if (columns[i] == "timer")
+            {
+                _timer = new TimerTile(timer, theme, style, queue);
+                view = _timer.Root;
+            }
             else
             {
                 view = Placeholder(columns[i], style);
@@ -78,6 +111,18 @@ internal sealed class HomeView(MediaService media, IslandTheme theme, Dispatcher
             Root.Children.Add(view);
         }
         Media?.SetActive(_active);
+        _timer?.SetActive(_active);
+        _weather?.SetActive(_active);
+        _calendar?.SetActive(_active);
+    }
+
+    /// <summary>The view is dropped: its columns stop listening.</summary>
+    public void Detach()
+    {
+        SetActive(false);
+        _timer?.Detach();
+        _weather?.Detach();
+        _calendar?.Detach();
     }
 
     /// <summary>True while Home can be seen.</summary>
@@ -85,6 +130,9 @@ internal sealed class HomeView(MediaService media, IslandTheme theme, Dispatcher
     {
         _active = active;
         Media?.SetActive(active);
+        _timer?.SetActive(active);
+        _weather?.SetActive(active);
+        _calendar?.SetActive(active);
     }
 
     public void SetArtwork(ImageSource? source)
