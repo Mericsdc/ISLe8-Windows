@@ -154,6 +154,24 @@ public sealed class IslandModel
         Open();
     }
 
+    /// <summary>
+    /// A shortcut for one tab (Ctrl+Alt+V for the clipboard): opens the island on it at once, or
+    /// closes it when it is already open there.
+    /// </summary>
+    public void Toggle(IslandTab tab)
+    {
+        if (State == IslandState.Expanded && Tab == tab)
+        {
+            Close();
+            return;
+        }
+        Cancel(ref _hoverTimer);
+        Cancel(ref _closeTimer);
+        Cancel(ref _alertTimer);
+        Select(tab);
+        Transition(IslandState.Expanded);
+    }
+
     /// <summary>A click somewhere outside ISLe8 closes an island the pointer has left (unless pinned).</summary>
     public void ClickedOutside()
     {

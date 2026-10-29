@@ -3,6 +3,35 @@
 Her maddeyi işaretle; olmayan varsa günlükle birlikte not et (README › Günlük ve ayarlar). W1'in
 adımları en üstte, W0'ın listesi altta.
 
+## Pano sekmesi (2026-10-29)
+
+Debug (JIT). Geçmiş, arama (büyük/küçük harf, aksan, Türkçe ı/I, kelime başı), aynı içeriğin üste çıkması,
+200/30 gün sınırı, sabitlenenler ve Ctrl+Alt+V'nin aç/kapa kuralı Core testlerinde (`ClipboardTests`;
+231'den 239'a). Senin panona bir şey yazmamak için kayıt canlı denenecek.
+
+- [x] Kopyalanan metin geçmişe kaydediliyor; kaynak uygulama öndeki pencerenin programı (otomasyonla: pano kısa
+      bir an test metnine çevrilip geri kondu, test kaydı geçmişten silindi).
+- [x] Bozuk `clipboard.json` `.broken` olarak kenara alınıyor, geçmiş baştan başlıyor (önce "açılamadı" kalıyordu).
+- [ ] Bir metin, bir bağlantı, bir görsel (Ekran Alıntısı) ve Explorer'da dosya kopyalanınca Pano sekmesinde
+      üstte; türüne göre simge, görsel küçük resmi, #FF9F0A gibi renkler renk örneğiyle.
+- [ ] Aynı şey yeniden kopyalanınca yeni satır açılmıyor, mevcut satır en üste çıkıyor.
+- [ ] Bir parola yöneticisinden (Bitwarden, 1Password, KeePassXC) kopyalanan kaydedilmiyor.
+- [ ] Satıra tıklayınca panoya geri kopyalanıyor (yeşil onay); Alt ile tıklayınca önceki pencereye yapıştırılıyor.
+- [ ] "toplanti" araması "Toplantı"yı buluyor; arama kutusuna tıklayınca yazılabiliyor.
+- [ ] Üzerine gelince sabitle ve sil; sağ tık: Kopyala, Yapıştır, Sabitle, Tarayıcıda aç, E-posta yaz, Klasörde göster, Sil.
+- [ ] Ctrl+Alt+V adayı Pano'da açıyor ve arama hazır; yeniden basınca kapanıyor.
+- [ ] Ayarlar › Pano: kaydetmeyi kapatma, en fazla öğe ve gün, geçmişi temizle (sabitlenenler kalır),
+      kaydedilmeyen uygulama ekleme (.exe seçerek).
+
+**Ölçüm** (Release JIT, ada kapalı)
+
+| Tarih | Yapı | Durum | CPU | Özel bellek | Çalışma kümesi |
+|---|---|---|---|---|---|
+| 2026-10-29 | Pano, Release JIT x64 | Chrome'da medya **duraklatılmış**, 45 sn | %0,003 (hedef < %0,1) | 40,8 MB (hedef < 80 MB) | 149,0 MB |
+
+- [x] Yayın zip'inde `Assets` klasörü var (tepsi ve pencere simgeleri). Önceden `Content` öğeleri yayına kopyalanmıyordu;
+      Release'de tepsi simgesi yüklenemiyordu.
+
 ## Notlar ve Sistem sekmeleri (2026-10-29)
 
 Debug (JIT). Dock'ta artık Mac'teki yedi sekme var: Home, Raf, Pano, Notlar, AI, Cihazlar, Sistem

@@ -173,6 +173,20 @@ PORTING.md §2 › Boyutlar; değerler `IslandSizes`'ta, Core testleriyle.
 - **Banner:** 340 × 78; üst satır (pill kadar) boş, içerik altında; köşe 20 (Mac'in alt köşesi). Şarkı
   banner'ı: kapak 30, başlık, sanatçı, sağda çubuklar (çubuk ayarından bağımsız, Mac'teki gibi).
 
+### Pano sekmesi
+
+- **Kayıt** (`ClipboardService`, Mac: ClipboardService.swift): Mac panoyu yarım saniyede bir sorguluyor;
+  Windows değişince haber veriyor (`AddClipboardFormatListener`, `WM_CLIPBOARDUPDATE`), hiçbir şey sorgulamıyor.
+  `ExcludeClipboardContentFromMonitorProcessing` ya da `Clipboard Viewer Ignore` taşıyan, `CanIncludeInClipboardHistory`
+  ya da `CanUploadToCloudClipboard` değeri 0 olan içerik ve kaydedilmeyen uygulamalardan (öndeki pencerenin
+  .exe adı; varsayılan parola yöneticileri) kopyalanan okunmuyor. ISLe8'in kendi geri kopyalaması 1 sn
+  boyunca yeniden kaydedilmiyor.
+- **Geçmiş** (`ClipboardHistory`): `clipboard.json` ve görseller için `Clipboard` klasörü. Mac'teki SQLite + FTS5
+  yerine bellekte arama (en fazla 1000 öğe); arama Mac'teki gibi kelime başına göre, büyük/küçük harf ve aksan
+  duyarsız, ı/I → i katlanıyor. Sabitlenenler üstte, sonra en yenisi.
+- **Kullanım:** tıklama geri kopyalar; Alt ile tıklama ada kapanınca önceki pencereye Ctrl+V basar (ada odak
+  almadığı için klavye zaten oradadır). Ctrl+Alt+V (`RegisterHotKey`) adayı Pano'da açar, arama klavyeyi alır.
+
 ### Notlar ve Sistem sekmeleri
 
 - **Sekmeler:** Mac'teki yedisi, aynı sırayla: Home, Raf, Pano, Notlar, AI, Cihazlar, Sistem.

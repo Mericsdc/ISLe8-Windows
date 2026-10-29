@@ -28,7 +28,12 @@ public sealed class NotesStore
                 _notes = JsonSerializer.Deserialize(File.ReadAllText(_path), NotesJson.Default.ListNote) ?? [];
             }
         }
-        catch (Exception e) when (e is IOException or JsonException or UnauthorizedAccessException)
+        catch (JsonException e)
+        {
+            Log.Error(e, "notes");
+            Clipboard.ClipboardHistory.SetAside(_path);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
             Log.Error(e, "notes");
         }

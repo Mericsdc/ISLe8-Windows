@@ -863,4 +863,118 @@
     <value>Measuring…</value>
     <comment>mac: Ölçülüyor…</comment>
   </data>
+  <data name="Clipboard_Image" xml:space="preserve">
+    <value>Image</value>
+    <comment>mac: Görsel</comment>
+  </data>
+  <data name="Clipboard_Search" xml:space="preserve">
+    <value>Search clipboard</value>
+    <comment>mac: Panoda ara</comment>
+  </data>
+  <data name="Clipboard_ClearPinnedStay" xml:space="preserve">
+    <value>Clear history (pinned items stay)</value>
+    <comment>mac: Geçmişi temizle (sabitlenenler kalır)</comment>
+  </data>
+  <data name="Clipboard_Unavailable" xml:space="preserve">
+    <value>Couldn't open the clipboard history</value>
+    <comment>mac: Pano geçmişi açılamadı</comment>
+  </data>
+  <data name="Clipboard_UnavailableDetail" xml:space="preserve">
+    <value>The history file couldn't be opened.</value>
+  </data>
+  <data name="Clipboard_Off" xml:space="preserve">
+    <value>Clipboard history is off</value>
+    <comment>mac: Pano geçmişi kapalı</comment>
+  </data>
+  <data name="Clipboard_OffDetail" xml:space="preserve">
+    <value>You can turn it on in Settings &gt; Clipboard.</value>
+    <comment>mac: Ayarlar &gt; Pano bölümünden açabilirsin.</comment>
+  </data>
+  <data name="Clipboard_Empty" xml:space="preserve">
+    <value>Nothing copied yet</value>
+    <comment>mac: Henüz bir şey kopyalanmadı</comment>
+  </data>
+  <data name="Clipboard_EmptyDetail" xml:space="preserve">
+    <value>What you copy collects here. Open it from anywhere with Ctrl+Alt+V.</value>
+  </data>
+  <data name="Clipboard_NoResults" xml:space="preserve">
+    <value>No results</value>
+    <comment>mac: Sonuç yok</comment>
+  </data>
+  <data name="Clipboard_NoResultsDetail" xml:space="preserve">
+    <value>Try another word.</value>
+    <comment>mac: Başka bir kelime dene.</comment>
+  </data>
+  <data name="Clipboard_Unpin" xml:space="preserve">
+    <value>Unpin</value>
+    <comment>mac: Sabitlemeyi kaldır</comment>
+  </data>
+  <data name="Clipboard_Pin" xml:space="preserve">
+    <value>Pin</value>
+    <comment>mac: Sabitle</comment>
+  </data>
+  <data name="Clipboard_Help" xml:space="preserve">
+    <value>Click: copy · Alt-click: paste</value>
+  </data>
+  <data name="Clipboard_Copy" xml:space="preserve">
+    <value>Copy</value>
+    <comment>mac: Kopyala</comment>
+  </data>
+  <data name="Clipboard_Paste" xml:space="preserve">
+    <value>Paste</value>
+    <comment>mac: Yapıştır</comment>
+  </data>
+  <data name="Clipboard_OpenInBrowser" xml:space="preserve">
+    <value>Open in Browser</value>
+    <comment>mac: Tarayıcıda aç</comment>
+  </data>
+  <data name="Clipboard_WriteEmail" xml:space="preserve">
+    <value>Write Email</value>
+    <comment>mac: E-posta yaz</comment>
+  </data>
+  <data name="Clipboard_ShowInFolder" xml:space="preserve">
+    <value>Show in Folder</value>
+  </data>
+  <data name="Clipboard_Delete" xml:space="preserve">
+    <value>Delete</value>
+    <comment>mac: Sil</comment>
+  </data>
+  <data name="Settings_Clipboard" xml:space="preserve">
+    <value>Clipboard</value>
+    <comment>mac: Pano</comment>
+  </data>
+  <data name="Settings_RecordClipboard" xml:space="preserve">
+    <value>Keep clipboard history</value>
+    <comment>mac: Pano geçmişini kaydet</comment>
+  </data>
+  <data name="Settings_Shortcut" xml:space="preserve">
+    <value>Shortcut</value>
+    <comment>mac: Kısayol</comment>
+  </data>
+  <data name="Settings_Retention" xml:space="preserve">
+    <value>Retention</value>
+    <comment>mac: Saklama</comment>
+  </data>
+  <data name="Settings_ClipboardLimit" xml:space="preserve">
+    <value>At most {0} items</value>
+  </data>
+  <data name="Settings_ClipboardDays" xml:space="preserve">
+    <value>Keep for {0} days</value>
+  </data>
+  <data name="Settings_PinnedStay" xml:space="preserve">
+    <value>Pinned items are never deleted.</value>
+    <comment>mac: Sabitlenen öğeler hiç silinmez.</comment>
+  </data>
+  <data name="Settings_ClearHistory" xml:space="preserve">
+    <value>Clear History</value>
+    <comment>mac: Geçmişi temizle</comment>
+  </data>
+  <data name="Settings_ExcludedApps" xml:space="preserve">
+    <value>Apps Never Recorded</value>
+    <comment>mac: Kaydedilmeyen uygulamalar</comment>
+  </data>
+  <data name="Settings_AddApp" xml:space="preserve">
+    <value>Add App…</value>
+    <comment>mac: Uygulama ekle…</comment>
+  </data>
 </root>

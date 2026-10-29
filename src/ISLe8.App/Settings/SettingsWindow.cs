@@ -76,6 +76,7 @@ internal sealed class SettingsWindow(IslandController island, SettingsStore stor
         navigation.MenuItems.Add(Section("Settings_Appearance", Glyphs.Palette, AppearancePage.Build));
         navigation.MenuItems.Add(Section("Settings_Layout", Glyphs.Layout, LayoutPage.Build));
         navigation.MenuItems.Add(Section("Settings_Media", Glyphs.Music, MediaPage.Build));
+        navigation.MenuItems.Add(Section("Settings_Clipboard", Glyphs.Clipboard, ClipboardPage.Build));
         navigation.MenuItems.Add(Section("Settings_Widgets", Glyphs.Widgets, WidgetsPage.Build));
         navigation.SelectionChanged += (_, args) =>
         {

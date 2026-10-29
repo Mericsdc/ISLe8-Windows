@@ -272,6 +272,11 @@ Her modülde: Mac dosyaları → Windows karşılığı → önemli davranışla
   - Kısayol: Ctrl+Alt+V (`RegisterHotKey`). Win+V sistemin pano geçmişi, ona dokunulmaz.
   - `#RRGGBB` metin renk örneğiyle, e-posta adresi "E-posta yaz" düğmesiyle gösterilir.
 - **Kabul:** Parola yöneticisinden kopyalanan kaydedilmiyor; "toplanti" araması "Toplantı"yı buluyor; 200/30 gün sınırı çalışıyor.
+- **Windows'ta yapılan (değişiklik):** Microsoft.Data.Sqlite + FTS5 yerine `clipboard.json` ve bellekte arama.
+  Geçmiş en fazla 1000 öğe olduğu için arama yine anında; yerel bir SQLite kütüphanesine ve onun Native AOT
+  uyumluluğuna gerek kalmıyor. Kural Mac'tekiyle aynı (kelime başı, aksan ve büyük/küçük harf duyarsız, ı/I → i).
+  "Erişim" satırı yok: Windows pano için izin istemiyor. Mac'teki ⌃⌥V ve ⌥ tıklama metinleri Ctrl+Alt+V ve
+  "Alt ile tıkla" oldu; "Finder'da göster" "Klasörde göster".
 
 ### 3.10 Raf ve paylaşım (W2)
 

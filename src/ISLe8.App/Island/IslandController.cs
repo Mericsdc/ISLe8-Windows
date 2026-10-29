@@ -3,6 +3,8 @@ using ISLe8.Core.Geometry;
 using ISLe8.Core.Island;
 using ISLe8.Core.Media;
 using ISLe8.Core.Calendar;
+using ISLe8.ClipboardTab;
+using ISLe8.Core.Clipboard;
 using ISLe8.Core.Notes;
 using ISLe8.SystemTab;
 using ISLe8.Core.Timer;
@@ -51,6 +53,8 @@ internal sealed class IslandController : IDisposable
     private readonly CalendarService _calendar;
     private readonly NotesStore _notes;
     private readonly SystemSampler _system;
+    private readonly ClipboardService _clipboard;
+    private HotKey? _clipboardKey;
     private nint _foregroundBeforeKeyboard;
 
     /// <summary>One client for the app's few requests (weather now; more later), as .NET recommends.</summary>
@@ -75,6 +79,7 @@ internal sealed class IslandController : IDisposable
         _calendar = new CalendarService(_settings, Http, clock);
         _notes = new NotesStore(AppPaths.DataFolder, () => DateTimeOffset.Now);
         _system = new SystemSampler(_queue);
+        _clipboard = new ClipboardService(_settings, new ClipboardHistory(AppPaths.DataFolder), _window.Hwnd, _queue);
         _outsideClicks = new OutsideClickWatcher(_queue, OnClickedOutside);
     }
 
@@ -83,6 +88,17 @@ internal sealed class IslandController : IDisposable
 
     /// <summary>The calendars, for Settings › Widgets.</summary>
     public CalendarService Calendar => _calendar;
+
+    /// <summary>The clipboard history, for Settings › Clipboard.</summary>
+    public ClipboardService Clipboard => _clipboard;
+
+    /// <summary>Settings › Clipboard: recording on or off, the limits.</summary>
+    public void ApplyClipboardSettings()
+    {
+        _clipboard.ApplySettings();
+        _clipboard.History.Prune(_settings.ClipboardLimit, TimeSpan.FromDays(_settings.ClipboardMaxAgeDays), DateTimeOffset.Now);
+        _clipboard.Reload();
+    }
 
     /// <summary>The one settings object; the settings window changes it in place.</summary>
     public AppSettings Settings => _settings;
@@ -132,6 +148,15 @@ internal sealed class IslandController : IDisposable
             if (!_window.IsHiddenForFullscreen) _model.ShowAlert(new MeetingAlert(entry), AlertDurations.Meeting);
         };
         _ = _calendar.Start();
+        _window.AddMessageHandler(_clipboard.OnMessage);
+        _clipboard.ApplySettings();
+        // Ctrl+Alt+V opens the clipboard from anywhere, its search ready for typing (PORTING.md §3.9).
+        _clipboardKey = new HotKey(_window.Hwnd, 0x4953, 0x56, () =>
+        {
+            _model.Toggle(IslandTab.Clipboard);
+            if (_model.State == IslandState.Expanded) _view.Clipboard.FocusSearch();
+        });
+        _window.AddMessageHandler(_clipboardKey.OnMessage);
         ApplyCapture();
         _window.LayoutChanged += ApplyLayout;
         _window.FullscreenChanged += _ => UpdateBars();
@@ -144,6 +169,7 @@ internal sealed class IslandController : IDisposable
     public void Dispose()
     {
         _outsideClicks.Dispose();
+        _clipboardKey?.Dispose();
         StopView();
         _media.Dispose();
         _window.Dispose();
@@ -161,9 +187,10 @@ internal sealed class IslandController : IDisposable
         if (_view is not null) StopView();
 
         _view = new IslandView(
-            theme, _settings, _media, _timer, _weather, _calendar, _notes, _system, _queue,
+            theme, _settings, _media, _timer, _weather, _calendar, _notes, _system, _clipboard, _queue,
             takeKeyboard: TakeKeyboard,
-            dismissAlert: _model.DismissAlert);
+            dismissAlert: _model.DismissAlert,
+            close: _model.Close);
         _view.Area.PointerEntered += (_, e) => UpdateHover(e, touchInside: true);
         _view.Area.PointerMoved += (_, e) => UpdateHover(e, touchInside: true);
         _view.Area.PointerExited += (_, e) => UpdateHover(e, touchInside: false);
@@ -202,6 +229,7 @@ internal sealed class IslandController : IDisposable
         _view.Home.Detach();
         _view.Notes.Detach();
         _view.System.Detach();
+        _view.Clipboard.Detach();
         _view.Bars.Stop();
         _view.Banner.Bars.Stop();
         _view.TimerEar.Stop();

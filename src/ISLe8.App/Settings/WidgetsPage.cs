@@ -176,7 +176,7 @@ internal static class WidgetsPage
     }
 
     /// <summary>A card whose title says the value ("Pomodoro odak: 25 dk"), with a spinning number box.</summary>
-    private static Border Stepper(SettingsContext context, string key, int value, int minimum, int maximum, int step, Action<int> set)
+    internal static Border Stepper(SettingsContext context, string key, int value, int minimum, int maximum, int step, Action<int> set)
     {
         var title = new TextBlock { Text = L.Format(key, value), TextWrapping = TextWrapping.Wrap };
         var box = new NumberBox

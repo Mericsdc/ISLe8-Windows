@@ -100,6 +100,18 @@ public sealed class AppSettings
 
     /// <summary>A banner five minutes before a meeting (Settings › Widgets).</summary>
     public bool MeetingHeadsUp { get; set; } = true;
+
+    /// <summary>Settings › Clipboard: keep a history of what is copied.</summary>
+    public bool RecordClipboard { get; set; } = true;
+
+    /// <summary>At most this many entries, 50–1000 in steps of 50; pinned ones on top of it.</summary>
+    public int ClipboardLimit { get; set; } = 200;
+
+    /// <summary>Entries older than this many days go, 1–365; pinned ones stay.</summary>
+    public int ClipboardMaxAgeDays { get; set; } = 30;
+
+    /// <summary>Programs, by .exe name, whose copies are never recorded (password managers by default).</summary>
+    public List<string> ClipboardExcludedApps { get; set; } = [.. Clipboard.ClipboardRules.DefaultExcludedApps];
     public bool SwipeToChangeTabs { get; set; } = true;
 
     /// <summary>Kept out of screenshots, recordings and shared screens.</summary>
@@ -136,6 +148,10 @@ public sealed class AppSettings
         PomodoroWorkMinutes = Math.Clamp((int)Math.Round(PomodoroWorkMinutes / 5.0) * 5, 5, 90);
         PomodoroBreakMinutes = Math.Clamp(PomodoroBreakMinutes, 1, 30);
         WeatherCity = (WeatherCity ?? "").Trim();
+        ClipboardLimit = Math.Clamp((int)Math.Round(ClipboardLimit / 50.0) * 50, 50, 1000);
+        ClipboardMaxAgeDays = Math.Clamp(ClipboardMaxAgeDays, 1, 365);
+        ClipboardExcludedApps = (ClipboardExcludedApps ?? []).Select(app => (app ?? "").Trim()).Where(app => app.Length > 0)
+            .Distinct(StringComparer.OrdinalIgnoreCase).ToList();
         CalendarFeeds = (CalendarFeeds ?? []).Select(feed => (feed ?? "").Trim())
             .Where(feed => Uri.TryCreate(feed, UriKind.Absolute, out var uri) && uri.Scheme is "https" or "http" or "webcal")
             .Distinct(StringComparer.Ordinal).ToList();

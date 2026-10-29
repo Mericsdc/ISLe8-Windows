@@ -43,6 +43,15 @@ internal static class Glyphs
     public const string Break = "\uEC32";
     public const string Stop = "\uE71A";
     public const string Widgets = "\uECA5";
+    public const string Search = "\uE721";
+    public const string Unpin = "\uE77A";
+    public const string CheckCircle = "\uE930";
+    public const string RichText = "\uE8A5";
+    public const string Link = "\uE71B";
+    public const string Photo = "\uEB9F";
+    public const string Files = "\uE8C8";
+    public const string TextLines = "\uE8E4";
+    public const string Mail = "\uE715";
     public const string Cpu = "\uE950";
     public const string MemoryChip = "\uE964";
     public const string Drive = "\uEDA2";
