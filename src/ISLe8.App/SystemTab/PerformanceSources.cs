@@ -225,6 +225,22 @@ internal sealed unsafe partial class FrameCounter : IDisposable
     /// <summary>EVENT_TRACE_LOGFILEW on 64-bit Windows.</summary>
     private const int LogfileSize = 448;
 
+    /// <summary>The session is open: Windows let ISLe8 trace.</summary>
+    public bool Counting => _trace != InvalidTrace;
+
+    /// <summary>
+    /// Whether Windows lets this user's programs trace without asking: an administrator's ISLe8 started as
+    /// administrator, or a member of Performance Log Users (from the sign-in after joining it).
+    /// </summary>
+    public static bool Allowed()
+    {
+        var principal = new System.Security.Principal.WindowsPrincipal(System.Security.Principal.WindowsIdentity.GetCurrent());
+        return principal.IsInRole(PerformanceLogUsers) || principal.IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);
+    }
+
+    /// <summary>BUILTIN\Performance Log Users, whatever Windows' language calls it.</summary>
+    public static readonly System.Security.Principal.SecurityIdentifier PerformanceLogUsers = new("S-1-5-32-559");
+
     /// <summary>Frames a second since the last call.</summary>
     public int? TakeFps()
     {
@@ -340,6 +356,85 @@ internal sealed unsafe partial class FrameCounter : IDisposable
 
     [LibraryImport("advapi32.dll")]
     private static partial uint CloseTrace(ulong trace);
+}
+
+/// <summary>
+/// Frames a second from RivaTuner Statistics Server (MSI Afterburner's overlay), which counts every game's frames
+/// and shares them in memory any program of the user may read: no administrator, no Performance Log Users.
+/// Its own layout (RTSSSharedMemory.h): a header, then one entry per program it hooked.
+/// </summary>
+internal static unsafe partial class RivaTuner
+{
+    private const uint Signature = 0x52545353; // 'RTSS'
+
+    public static int? Fps(uint process)
+    {
+        if (process == 0) return null;
+        var mapping = OpenFileMappingW(4 /* FILE_MAP_READ */, false, "RTSSSharedMemoryV2");
+        if (mapping == 0) return null;
+        var view = (byte*)MapViewOfFile(mapping, 4, 0, 0, 0);
+        try
+        {
+            if (view == null || *(uint*)view != Signature || *(uint*)(view + 4) < 0x00020000) return null;
+            var entrySize = *(uint*)(view + 8);
+            var offset = *(uint*)(view + 12);
+            var count = Math.Min(*(uint*)(view + 16), 256u);
+            // Anyone can name a mapping so: nothing is read past what was mapped.
+            var region = new MemoryInfo();
+            if (VirtualQuery(view, &region, (nuint)sizeof(MemoryInfo)) == 0 || entrySize < 280
+                || (ulong)offset + (ulong)count * entrySize > (ulong)region.RegionSize)
+            {
+                return null;
+            }
+            for (var i = 0u; i < count; i++)
+            {
+                var entry = view + offset + i * entrySize;
+                // dwProcessID, szName[MAX_PATH], dwFlags, dwTime0, dwTime1, dwFrames
+                if (*(uint*)entry != process) continue;
+                var time0 = *(uint*)(entry + 268);
+                var time1 = *(uint*)(entry + 272);
+                var frames = *(uint*)(entry + 276);
+                return time1 > time0 ? PerformanceMath.Fps((int)frames, (time1 - time0) / 1000.0) : null;
+            }
+            return null;
+        }
+        finally
+        {
+            if (view != null) UnmapViewOfFile(view);
+            CloseHandle(mapping);
+        }
+    }
+
+    /// <summary>MEMORY_BASIC_INFORMATION.</summary>
+    [StructLayout(LayoutKind.Sequential)]
+    private struct MemoryInfo
+    {
+        public nint BaseAddress;
+        public nint AllocationBase;
+        public uint AllocationProtect;
+        public ushort PartitionId;
+        public nuint RegionSize;
+        public uint State;
+        public uint Protect;
+        public uint Type;
+    }
+
+    [LibraryImport("kernel32.dll")]
+    private static partial nuint VirtualQuery(void* address, MemoryInfo* info, nuint length);
+
+    [LibraryImport("kernel32.dll", StringMarshalling = StringMarshalling.Utf16)]
+    private static partial nint OpenFileMappingW(uint access, [MarshalAs(UnmanagedType.Bool)] bool inherit, string name);
+
+    [LibraryImport("kernel32.dll")]
+    private static partial void* MapViewOfFile(nint mapping, uint access, uint offsetHigh, uint offsetLow, nuint bytes);
+
+    [LibraryImport("kernel32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool UnmapViewOfFile(void* view);
+
+    [LibraryImport("kernel32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool CloseHandle(nint handle);
 }
 
 /// <summary>

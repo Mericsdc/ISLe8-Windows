@@ -26,10 +26,11 @@ sürümü; C# + WinUI 3, .NET 10, Native AOT, x64 ve ARM64.
   SteelSeries Arctis Nova Pro Omni ve Arctis 7+ / 7P+ / 7X+, ASUS ROG Omni Receiver alıcılarındaki cihazlar da.
 - **Sistem:** işlemci, bellek, disk, ağ hızı ve en çok işlemci kullanan süreçler.
 - **Oyunlar:** Windows'un tanıdığı bir oyun öndeyken ada hareketsiz kalır ya da gizlenir; istersen küçük adada FPS, CPU ve
-  GPU kullanımı ve sıcaklıkları.
+  GPU kullanımı ve sıcaklıkları, RAM ve saat (hangilerinin görüneceği seçilir, pill onlara göre genişler).
 - **Raf, Pano, Notlar:** sürüklenen dosyalar, pano geçmişi, notlar (Shift+Enter yeni satır).
 - **Uyarılar:** şarj, Ethernet kablosu ve düşük pil; ses ve parlaklık göstergesi (isteğe bağlı, Windows'unkinin yerine).
-- **Kişiselleştirme:** Mac'tekiyle aynı 7 tema; ada ekranın üstünde ya da görev çubuğunun üstünde solda, ortada, sağda;
+- **Kişiselleştirme:** Mac'tekiyle aynı 7 tema; ada ekranın üstünde, görev çubuğunun üstünde solda, ortada, sağda ya da görev
+  çubuğunun içinde istediğin yerde;
   kapalıyken siyah, temaya uyan ya da saydam; boştayken ince çubuk, saat, çalan şarkının adı; tam ekranda gizlenme.
   Türkçe / İngilizce.
 

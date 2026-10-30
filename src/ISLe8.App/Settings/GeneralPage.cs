@@ -36,6 +36,7 @@ internal static class GeneralPage
             context.Save();
             context.Island.ApplyGameSetting();
         }), L.Get("Settings_HideWhileGamingNote")));
+        var performance = PerformanceDetails(context);
         page.Children.Add(SettingsUi.Card(palette, L.Get("Settings_Performance"), SettingsUi.Choices(
             [L.Get("Settings_PerformanceOff"), L.Get("Settings_PerformanceGaming"), L.Get("Settings_PerformanceAlways")],
             (int)settings.PerformancePill,
@@ -44,7 +45,9 @@ internal static class GeneralPage
                 settings.PerformancePill = (Core.SystemInfo.PerformancePill)index;
                 context.Save();
                 context.Island.ApplyGameSetting();
+                performance.Visibility = index == 0 ? Visibility.Collapsed : Visibility.Visible;
             }), L.Get("Settings_PerformanceNote")));
+        page.Children.Add(performance);
         page.Children.Add(LanguageCard(context));
 
         page.Children.Add(SettingsUi.SectionHeader(L.Get("Settings_Behavior")));
@@ -187,6 +190,66 @@ internal static class GeneralPage
         MonitorChoice.Named => "Settings_ScreenNamedNote",
         _ => "Settings_ScreenPrimaryNote",
     });
+
+    // MARK: Performance
+
+    /// <summary>
+    /// Under Performance, while it is on (Windows only): what the pill shows, and, when Windows doesn't let ISLe8 count
+    /// frames, how to let it. That needs an administrator once; ISLe8 says how rather than doing it itself.
+    /// </summary>
+    private static StackPanel PerformanceDetails(SettingsContext context)
+    {
+        var settings = context.Settings;
+        var palette = context.Palette;
+        var details = new StackPanel { Visibility = settings.PerformancePill == Core.SystemInfo.PerformancePill.Off ? Visibility.Collapsed : Visibility.Visible };
+        (string, bool, Action<bool>) Chip(string key, bool on, Action<bool> set) => (L.Get(key), on, value =>
+        {
+            set(value);
+            context.Save();
+            context.Island.ApplyPerformanceSettings();
+        });
+        var chips = SettingsUi.Chips(
+        [
+            Chip("Settings_PerformanceFps", settings.PerformanceFps, on => settings.PerformanceFps = on),
+            Chip("Settings_PerformanceCpu", settings.PerformanceCpu, on => settings.PerformanceCpu = on),
+            Chip("Settings_PerformanceGpu", settings.PerformanceGpu, on => settings.PerformanceGpu = on),
+            Chip("Settings_PerformanceTemperature", settings.PerformanceTemperature, on => settings.PerformanceTemperature = on),
+            Chip("Settings_PerformanceRam", settings.PerformanceRam, on => settings.PerformanceRam = on),
+            Chip("Settings_PerformanceClock", settings.PerformanceClock, on => settings.PerformanceClock = on),
+        ]);
+        var heading = new StackPanel { Spacing = 10, Children = { new TextBlock { Text = L.Get("Settings_PerformanceShown") }, chips } };
+        details.Children.Add(SettingsUi.Card(palette, heading, new Border(), SettingsUi.Description(palette, L.Get("Settings_PerformanceShownNote"))));
+        if (!SystemTab.FrameCounter.Allowed()) details.Children.Add(FramesCard(context));
+        return details;
+    }
+
+    /// <summary>The command that puts this user in Performance Log Users, with the group's name in Windows' own language.</summary>
+    private static Border FramesCard(SettingsContext context)
+    {
+        var group = "Performance Log Users";
+        try
+        {
+            group = SystemTab.FrameCounter.PerformanceLogUsers.Translate(typeof(System.Security.Principal.NTAccount)).Value.Split('\\')[^1];
+        }
+        catch (SystemException)
+        {
+            // Windows couldn't name it: the English name, right on most installations.
+        }
+        var command = L.Format("Settings_FramesCommand", group, System.Security.Principal.WindowsIdentity.GetCurrent().Name);
+        var copy = new Button { Content = L.Get("Settings_FramesCopy") };
+        copy.Click += (_, _) =>
+        {
+            var package = new Windows.ApplicationModel.DataTransfer.DataPackage();
+            package.SetText(command);
+            Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(package);
+            copy.Content = L.Get("Settings_FramesCopied");
+        };
+        var text = new StackPanel { Spacing = 6 };
+        text.Children.Add(SettingsUi.Description(context.Palette, L.Format("Settings_FramesNote", group)));
+        text.Children.Add(new TextBlock { Text = command, FontFamily = Agents.AgentLook.Mono, FontSize = 12, IsTextSelectionEnabled = true, TextWrapping = TextWrapping.Wrap });
+        var heading = new StackPanel { Spacing = 4, Children = { new TextBlock { Text = L.Get("Settings_Frames") }, text } };
+        return SettingsUi.Card(context.Palette, heading, copy);
+    }
 
     // MARK: Language
 

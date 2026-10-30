@@ -1601,7 +1601,7 @@
     <value>On the taskbar, right</value>
   </data>
   <data name="Settings_PlacementNote" xml:space="preserve">
-    <value>On the taskbar, the island stands just above it and opens upwards, clear of the taskbar's icons.</value>
+    <value>On the taskbar: the island stands just above it and opens upwards, clear of its icons. Inside the taskbar: the closed island rests in the taskbar's strip and opens from there; set where below.</value>
   </data>
   <data name="Settings_FlushTop" xml:space="preserve">
     <value>Flush with the top edge</value>
@@ -1731,7 +1731,7 @@
     <value>Always</value>
   </data>
   <data name="Settings_PerformanceNote" xml:space="preserve">
-    <value>Frames a second (FPS), CPU and GPU use and temperatures on the small island. While on, the island stays over the game. FPS is read from Windows' event tracing, which needs an administrator or a member of "Performance Log Users". The GPU's temperature comes from its driver; the CPU's needs LibreHardwareMonitor or OpenHardwareMonitor running.</value>
+    <value>FPS, CPU and GPU use and temperatures, memory and the time on the small island; pick what shows below. While on, the island stays over the game; with a game in front, pointing at it or clicking it doesn't open it. The GPU's temperature comes from its driver; the CPU's needs LibreHardwareMonitor or OpenHardwareMonitor running.</value>
   </data>
   <data name="Settings_YieldToFluentFlyout" xml:space="preserve">
     <value>Make way for FluentFlyout</value>
@@ -1743,7 +1743,7 @@
     <value>Found: {0}</value>
   </data>
   <data name="Usage_CliMissing" xml:space="preserve">
-    <value>Not found: the {0} command-line tool isn't installed, or not in a known folder. The desktop app isn't enough; the island shows limits only for those found.</value>
+    <value>Not found: neither the {0} command-line tool nor a desktop app that carries it (Claude, Codex). The island shows limits only for those found.</value>
   </data>
   <data name="Usage_CliUntrusted" xml:space="preserve">
     <value>Not run, for safety: it is in a folder other users can write to: {0}</value>
@@ -1765,5 +1765,53 @@
   </data>
   <data name="Notifications_MoveNeedsDeveloperMode" xml:space="preserve">
     <value>The package isn't signed yet, so Windows installs it only with Developer Mode on: Windows Settings › System › For developers › Developer Mode. Come back here once it's on.</value>
+  </data>
+  <data name="Settings_PerformanceShown" xml:space="preserve">
+    <value>Shown</value>
+  </data>
+  <data name="Settings_PerformanceShownNote" xml:space="preserve">
+    <value>The pill widens to fit what you pick. FPS is the frame rate of the game in front (with no game, of the program drawing at the moment); the temperatures go beside the CPU and the GPU, the time first.</value>
+  </data>
+  <data name="Settings_PerformanceFps" xml:space="preserve">
+    <value>FPS</value>
+  </data>
+  <data name="Settings_PerformanceCpu" xml:space="preserve">
+    <value>CPU</value>
+  </data>
+  <data name="Settings_PerformanceGpu" xml:space="preserve">
+    <value>GPU</value>
+  </data>
+  <data name="Settings_PerformanceTemperature" xml:space="preserve">
+    <value>Temperature</value>
+  </data>
+  <data name="Settings_PerformanceRam" xml:space="preserve">
+    <value>RAM</value>
+  </data>
+  <data name="Settings_PerformanceClock" xml:space="preserve">
+    <value>Time</value>
+  </data>
+  <data name="Settings_Frames" xml:space="preserve">
+    <value>Permission for FPS</value>
+  </data>
+  <data name="Settings_FramesNote" xml:space="preserve">
+    <value>Windows shows frame rates only to programs running as administrator and to members of "{0}". Run this command once in a terminal opened as administrator, then sign out and back in. While MSI Afterburner's RivaTuner Statistics Server runs, FPS comes from it with no permission needed.</value>
+  </data>
+  <data name="Settings_FramesCommand" xml:space="preserve">
+    <value>net localgroup "{0}" "{1}" /add</value>
+  </data>
+  <data name="Settings_FramesCopy" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="Settings_FramesCopied" xml:space="preserve">
+    <value>Copied</value>
+  </data>
+  <data name="Settings_PlacementInTaskbar" xml:space="preserve">
+    <value>Inside the taskbar</value>
+  </data>
+  <data name="Settings_TaskbarPosition" xml:space="preserve">
+    <value>Place on the taskbar</value>
+  </data>
+  <data name="Settings_TaskbarPositionNote" xml:space="preserve">
+    <value>Where along the taskbar the island rests: 0% its left end, 100% its right end. Put it where the icons leave room; it opens from there when you point at it or click it.</value>
   </data>
 </root>

@@ -1601,7 +1601,7 @@
     <value>Görev çubuğunda, sağda</value>
   </data>
   <data name="Settings_PlacementNote" xml:space="preserve">
-    <value>Görev çubuğundayken ada onun hemen üstünde durur ve yukarı doğru açılır; görev çubuğundaki simgeleri kapatmaz.</value>
+    <value>Görev çubuğunda: ada onun hemen üstünde durur ve yukarı doğru açılır, simgeleri kapatmaz. Görev çubuğunun içinde: kapalı ada görev çubuğunun şeridinde durur ve oradan açılır; yeri aşağıdan ayarlanır.</value>
   </data>
   <data name="Settings_FlushTop" xml:space="preserve">
     <value>Ekranın üst kenarına bitişik</value>
@@ -1731,7 +1731,7 @@
     <value>Her zaman</value>
   </data>
   <data name="Settings_PerformanceNote" xml:space="preserve">
-    <value>Küçük adada saniyede kare (FPS), CPU ve GPU kullanımı ve sıcaklıkları. Açıkken ada oyunun üstünde kalır. FPS, Windows'un olay kaydından okunur: yönetici ya da "Performance Log Users" grubunda olmak gerekir. GPU sıcaklığı sürücüden gelir; CPU sıcaklığı için LibreHardwareMonitor ya da OpenHardwareMonitor açık olmalı.</value>
+    <value>Küçük adada FPS, CPU ve GPU kullanımı ve sıcaklıkları, RAM ve saat; neyin görüneceğini aşağıdan seçin. Açıkken ada oyunun üstünde kalır; oyun öndeyken üzerine gelmek ya da tıklamak adayı açmaz. GPU sıcaklığı sürücüden gelir; CPU sıcaklığı için LibreHardwareMonitor ya da OpenHardwareMonitor açık olmalı.</value>
   </data>
   <data name="Settings_YieldToFluentFlyout" xml:space="preserve">
     <value>FluentFlyout açıkken ona bırak</value>
@@ -1743,7 +1743,7 @@
     <value>Bulundu: {0}</value>
   </data>
   <data name="Usage_CliMissing" xml:space="preserve">
-    <value>Bulunamadı: {0} komut satırı aracı kurulu değil ya da bilinen bir klasörde değil. Masaüstü uygulaması yetmez; adada yalnızca bulunanların limitleri görünür.</value>
+    <value>Bulunamadı: ne {0} komut satırı aracı ne de onu içinde taşıyan masaüstü uygulaması (Claude, Codex) var. Adada yalnızca bulunanların limitleri görünür.</value>
   </data>
   <data name="Usage_CliUntrusted" xml:space="preserve">
     <value>Başka kullanıcıların da yazabildiği bir klasörde olduğu için güvenlik gereği çalıştırılmıyor: {0}</value>
@@ -1765,5 +1765,53 @@
   </data>
   <data name="Notifications_MoveNeedsDeveloperMode" xml:space="preserve">
     <value>Paket henüz imzalı olmadığından Windows onu yalnızca Geliştirici Modu açıkken kurar: Windows Ayarları › Sistem › Geliştiriciler için › Geliştirici Modu. Açtıktan sonra buraya dön.</value>
+  </data>
+  <data name="Settings_PerformanceShown" xml:space="preserve">
+    <value>Gösterilecekler</value>
+  </data>
+  <data name="Settings_PerformanceShownNote" xml:space="preserve">
+    <value>Hap, seçtiklerinize göre genişler. FPS öndeki oyunun (oyun yoksa o an çizen programın) saniyedeki karesidir; sıcaklıklar CPU ve GPU'nun yanında, saat en başta durur.</value>
+  </data>
+  <data name="Settings_PerformanceFps" xml:space="preserve">
+    <value>FPS</value>
+  </data>
+  <data name="Settings_PerformanceCpu" xml:space="preserve">
+    <value>CPU</value>
+  </data>
+  <data name="Settings_PerformanceGpu" xml:space="preserve">
+    <value>GPU</value>
+  </data>
+  <data name="Settings_PerformanceTemperature" xml:space="preserve">
+    <value>Sıcaklık</value>
+  </data>
+  <data name="Settings_PerformanceRam" xml:space="preserve">
+    <value>RAM</value>
+  </data>
+  <data name="Settings_PerformanceClock" xml:space="preserve">
+    <value>Saat</value>
+  </data>
+  <data name="Settings_Frames" xml:space="preserve">
+    <value>FPS için izin</value>
+  </data>
+  <data name="Settings_FramesNote" xml:space="preserve">
+    <value>Windows FPS'i yalnızca yönetici olarak çalışan programlara ve "{0}" grubundakilere gösterir. Bu komutu yönetici olarak açtığınız bir terminalde bir kez çalıştırın, sonra oturumu kapatıp açın. MSI Afterburner'ın RivaTuner Statistics Server'ı açıksa FPS izin gerekmeden ondan okunur.</value>
+  </data>
+  <data name="Settings_FramesCommand" xml:space="preserve">
+    <value>net localgroup "{0}" "{1}" /add</value>
+  </data>
+  <data name="Settings_FramesCopy" xml:space="preserve">
+    <value>Kopyala</value>
+  </data>
+  <data name="Settings_FramesCopied" xml:space="preserve">
+    <value>Kopyalandı</value>
+  </data>
+  <data name="Settings_PlacementInTaskbar" xml:space="preserve">
+    <value>Görev çubuğunun içinde</value>
+  </data>
+  <data name="Settings_TaskbarPosition" xml:space="preserve">
+    <value>Görev çubuğundaki yeri</value>
+  </data>
+  <data name="Settings_TaskbarPositionNote" xml:space="preserve">
+    <value>Adanın görev çubuğu boyunca nerede durduğu: %0 sol uç, %100 sağ uç. Simgelerin boş bıraktığı bir yere koyun; üzerine gelince ya da tıklayınca oradan açılır.</value>
   </data>
 </root>

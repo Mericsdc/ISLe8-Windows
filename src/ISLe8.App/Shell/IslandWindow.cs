@@ -101,17 +101,19 @@ internal sealed unsafe class IslandWindow : IDisposable
     public void Place()
     {
         _placePending = false;
-        FollowForeground(_settings.Monitor == MonitorChoice.Active);
+        WatchForeground(_settings.Monitor == MonitorChoice.Active, Layout?.InTaskbar == true);
         Monitor = Monitors.Pick(_settings, _activeMonitor);
         // The work area no longer counts the island's own strip: the island sits at the strip's outer edge.
         var workArea = Reserve(Monitor);
-        var layout = IslandLayout.Compute(Monitor.Bounds, workArea, Monitor.Scale, _expandedSize(), _settings.Placement, _settings.FlushTop);
+        var layout = IslandLayout.Compute(Monitor.Bounds, workArea, Monitor.Scale, _expandedSize(), _settings.Placement, _settings.FlushTop, _settings.TaskbarPosition);
         Win32.SetWindowPos(
             Hwnd, Win32.HWND_TOPMOST,
             layout.Window.X, layout.Window.Y, layout.Window.Width, layout.Window.Height,
             Win32.SWP_NOACTIVATE);
         _hitRegion = null;
         Layout = layout;
+        // Inside the taskbar the island has to come back above it whenever the taskbar comes forward.
+        WatchForeground(_settings.Monitor == MonitorChoice.Active, layout.InTaskbar);
         Log.Info($"placed on {Monitor.Device} {Monitor.Bounds.Width}x{Monitor.Bounds.Height} @{Monitor.Dpi} dpi: {layout.Window}");
         LayoutChanged?.Invoke(layout);
     }
@@ -176,7 +178,8 @@ internal sealed unsafe class IslandWindow : IDisposable
 
     public void Dispose()
     {
-        FollowForeground(false);
+        WatchForeground(false, false);
+        _raise?.Stop();
         Detach();
         if (_blurRegion != 0)
         {
@@ -237,7 +240,9 @@ internal sealed unsafe class IslandWindow : IDisposable
         var bounds = monitor.Bounds;
         var bottom = _settings.Placement != IslandPlacement.Top;
         var gap = !bottom && _settings.FlushTop ? 0 : IslandMetrics.TopMargin;
-        var height = _settings.ReserveTopStrip ? IslandMetrics.ReservedPixels(monitor.Scale, gap, _settings.StripFitsPill) : 0;
+        // Inside the taskbar the pill takes none of the screen from windows.
+        var height = _settings.ReserveTopStrip && _settings.Placement != IslandPlacement.InTaskbar
+            ? IslandMetrics.ReservedPixels(monitor.Scale, gap, _settings.StripFitsPill) : 0;
         var data = new APPBARDATA
         {
             cbSize = (uint)sizeof(APPBARDATA),
@@ -380,6 +385,8 @@ internal sealed unsafe class IslandWindow : IDisposable
             if (_gameWindow != 0 && _settings.PerformancePill != Core.SystemInfo.PerformancePill.Off) return;
             var foreground = Win32.GetForegroundWindow();
             if (foreground == 0 || foreground == Hwnd || IsDesktop(foreground)) return;
+            // Taking a screenshot: the island belongs in it.
+            if (CaptureTools.Owns(foreground) || CaptureTools.CoverScreen(Hwnd, Monitor.Bounds)) return;
             if (Win32.MonitorFromWindow(foreground, Win32.MONITOR_DEFAULTTONEAREST) != Monitor.Handle) return;
         }
         SetHidden(ref _hiddenForApp, opened);
@@ -400,28 +407,64 @@ internal sealed unsafe class IslandWindow : IDisposable
 
     /// <summary>
     /// Settings › Screen › Active: the island moves to the monitor of whatever window you bring
-    /// forward. Windows says when the foreground window changes, so nothing polls, and the hook is
-    /// only installed in that mode.
+    /// forward. Inside the taskbar: the taskbar coming forward (a click on it) puts itself above every
+    /// other topmost window, the pill included, so the island goes back on top. Windows says when the
+    /// foreground window changes, so nothing polls, and the hook is only installed in those modes.
     /// </summary>
-    private void FollowForeground(bool follow)
+    private void WatchForeground(bool follow, bool overTaskbar)
     {
-        if (follow == (_foregroundHook != 0)) return;
-        if (follow)
+        _followActive = follow;
+        _overTaskbar = overTaskbar;
+        if (!follow) _activeMonitor = 0;
+        var wanted = follow || overTaskbar;
+        if (wanted == (_foregroundHook != 0))
+        {
+            if (follow && _activeMonitor == 0) _activeMonitor = MonitorOf(Win32.GetForegroundWindow());
+            return;
+        }
+        if (wanted)
         {
             s_followingForeground = this;
             _foregroundHook = Win32.SetWinEventHook(
                 Win32.EVENT_SYSTEM_FOREGROUND, Win32.EVENT_SYSTEM_FOREGROUND, 0, &ForegroundProc, 0, 0,
                 Win32.WINEVENT_OUTOFCONTEXT | Win32.WINEVENT_SKIPOWNPROCESS);
-            if (_foregroundHook == 0) Log.Info("active screen: no foreground hook");
-            _activeMonitor = MonitorOf(Win32.GetForegroundWindow());
+            if (_foregroundHook == 0) Log.Info("island: no foreground hook");
+            if (follow) _activeMonitor = MonitorOf(Win32.GetForegroundWindow());
         }
         else
         {
             Win32.UnhookWinEvent(_foregroundHook);
             _foregroundHook = 0;
-            _activeMonitor = 0;
             if (s_followingForeground == this) s_followingForeground = null;
         }
+    }
+
+    private bool _followActive;
+    private bool _overTaskbar;
+    private DispatcherQueueTimer? _raise;
+
+    /// <summary>A window came forward. The taskbar raises itself as it takes the focus, and again a moment later as its flyouts settle.</summary>
+    private void ForegroundChanged(nint window)
+    {
+        if (_followActive)
+        {
+            var monitor = MonitorOf(window);
+            if (monitor != 0 && monitor != Monitor.Handle)
+            {
+                _activeMonitor = monitor;
+                RequestPlace();
+            }
+        }
+        if (!_overTaskbar || IsHiddenForFullscreen || Win32.ClassName(window) is not ("Shell_TrayWnd" or "Shell_SecondaryTrayWnd")) return;
+        BringToTop();
+        if (_raise is null)
+        {
+            _raise = _queue.CreateTimer();
+            _raise.IsRepeating = false;
+            _raise.Interval = TimeSpan.FromMilliseconds(250);
+            _raise.OnTick(BringToTop);
+        }
+        _raise.Start();
     }
 
     /// <summary>The desktop spans every monitor; for it, the monitor under the pointer that clicked it.</summary>
@@ -432,14 +475,11 @@ internal sealed unsafe class IslandWindow : IDisposable
         return Win32.MonitorFromWindow(window, Win32.MONITOR_DEFAULTTONEAREST);
     }
 
+    /// <summary>Only hands the window over: an exception escaping a native callback would end the process unlogged.</summary>
     [UnmanagedCallersOnly]
     private static void ForegroundProc(nint hook, uint @event, nint hwnd, int idObject, int idChild, uint thread, uint time)
     {
-        if (s_followingForeground is not { } window) return;
-        var monitor = MonitorOf(hwnd);
-        if (monitor == 0 || monitor == window.Monitor.Handle) return;
-        window._activeMonitor = monitor;
-        window.RequestPlace();
+        if (s_followingForeground is { } window) window._queue.Post(() => window.ForegroundChanged(hwnd));
     }
 
     [UnmanagedCallersOnly]

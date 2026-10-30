@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Security.AccessControl;
 using System.Security.Principal;
@@ -13,8 +12,8 @@ namespace ISLe8.Usage;
 /// Finding, checking and starting the vendor CLIs (UsageSpawn.swift). The Mac sandboxes them with
 /// Seatbelt; Windows has none, so every CLI runs in its own Job Object that kills it and whatever
 /// it started, with an allowlisted environment (no token or key ISLe8 itself might carry), a private
-/// empty working folder, no window, below-normal priority and a hard deadline. Only files in folders
-/// no other account can write to are ever run.
+/// empty working folder, no window (and on a desktop nobody sees, UsageChild), below-normal priority
+/// and a hard deadline. Only files in folders no other account can write to are ever run.
 /// </summary>
 internal static partial class UsageCli
 {
@@ -60,7 +59,10 @@ internal static partial class UsageCli
         return fixedFolders.Concat(fromPath).Distinct(StringComparer.OrdinalIgnoreCase);
     }
 
-    /// <summary>The executable for a vendor's CLI: a native .exe, or the one an npm shim (.cmd) starts.</summary>
+    /// <summary>
+    /// The executable for a vendor's CLI: a native .exe, or the one an npm shim (.cmd) starts; failing those, the
+    /// one a desktop app keeps for itself.
+    /// </summary>
     public static (Found Found, string? Path) Find(UsageVendor vendor)
     {
         var name = UsageVendors.Cli(vendor);
@@ -74,8 +76,60 @@ internal static partial class UsageCli
             if (target is null) continue;
             return Trusted(target) ? (Found.Ok, target) : (Found.Untrusted, target);
         }
+        foreach (var target in Bundled(vendor))
+        {
+            return Trusted(target) ? (Found.Ok, target) : (Found.Untrusted, target);
+        }
         return (Found.Missing, null);
     }
+
+    /// <summary>
+    /// The CLI inside a desktop app, newest first: Claude's Code tab keeps Claude Code under
+    /// <c>%LOCALAPPDATA%\Claude-Data\&lt;package&gt;\claude-code\&lt;version&gt;\&lt;build&gt;</c> (before that,
+    /// <c>%APPDATA%\Claude\claude-code\&lt;version&gt;</c>); the Codex app keeps codex.exe under
+    /// <c>%LOCALAPPDATA%\OpenAI\Codex\bin\&lt;build&gt;</c>, and Codex's own installer under
+    /// <c>%USERPROFILE%\.codex\packages\standalone\current\bin</c>. Antigravity's app has no agy of its own.
+    /// </summary>
+    private static IEnumerable<string> Bundled(UsageVendor vendor)
+    {
+        var local = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        var roaming = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+        IEnumerable<string> candidates = vendor switch
+        {
+            UsageVendor.Claude => Newest(Below(Path.Combine(local, "Claude-Data"), "*", "claude-code", "*", "*", "claude.exe")
+                .Concat(Below(Path.Combine(roaming, "Claude", "claude-code"), "*", "claude.exe"))),
+            UsageVendor.Codex => new[] { Path.Combine(Home, ".codex", "packages", "standalone", "current", "bin", "codex.exe") }
+                .Where(File.Exists)
+                .Concat(Newest(Below(Path.Combine(local, "OpenAI", "Codex", "bin"), "*", "codex.exe"))),
+            _ => [],
+        };
+        return candidates;
+    }
+
+    /// <summary>The files at <paramref name="root"/>\<paramref name="steps"/>, where a "*" step is any folder.</summary>
+    private static IEnumerable<string> Below(string root, params string[] steps)
+    {
+        IEnumerable<string> found = [root];
+        foreach (var step in steps.SkipLast(1))
+        {
+            found = found.SelectMany(folder =>
+            {
+                if (step != "*") return Directory.Exists(Path.Combine(folder, step)) ? [Path.Combine(folder, step)] : (IEnumerable<string>)[];
+                try
+                {
+                    return Directory.Exists(folder) ? Directory.EnumerateDirectories(folder).ToList() : [];
+                }
+                catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+                {
+                    return [];
+                }
+            });
+        }
+        return found.Select(folder => Path.Combine(folder, steps[^1])).Where(File.Exists);
+    }
+
+    /// <summary>The most recently written first: an app updating its CLI leaves the old build beside the new one for a while.</summary>
+    private static IEnumerable<string> Newest(IEnumerable<string> files) => files.OrderByDescending(File.GetLastWriteTimeUtc);
 
     /// <summary>
     /// The native program behind an npm shim, so neither cmd.exe nor node is in the way: Claude Code's
@@ -162,7 +216,7 @@ internal static partial class UsageCli
     public sealed record Output(string Text, int Code);
 
     /// <summary>The environment is an allowlist, not ISLe8's minus a denylist; the CLI's own folder goes first on PATH.</summary>
-    private static void Prepare(ProcessStartInfo info, string binary, IReadOnlyDictionary<string, string>? extra)
+    private static Dictionary<string, string> ChildEnvironment(string binary, IReadOnlyDictionary<string, string>? extra)
     {
         string[] keep =
         [
@@ -170,47 +224,45 @@ internal static partial class UsageCli
             "ComSpec", "PATHEXT", "ProgramData", "ProgramFiles", "ProgramFiles(x86)", "ProgramW6432", "CommonProgramFiles",
             "NUMBER_OF_PROCESSORS", "PROCESSOR_ARCHITECTURE", "OS",
         ];
-        var mine = Environment.GetEnvironmentVariables();
-        info.Environment.Clear();
+        var mine = System.Environment.GetEnvironmentVariables();
+        var environment = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         foreach (var key in keep)
         {
-            if (mine[key] is string value) info.Environment[key] = value;
+            if (mine[key] is string value) environment[key] = value;
         }
-        info.Environment["PATH"] = string.Join(';', Path.GetDirectoryName(binary), Environment.GetFolderPath(Environment.SpecialFolder.System), Environment.GetFolderPath(Environment.SpecialFolder.Windows));
-        info.Environment["TEMP"] = info.Environment["TMP"] = WorkDir;
-        info.Environment["NO_COLOR"] = "1";
-        info.Environment["LANG"] = "en_US.UTF-8";
-        foreach (var (key, value) in extra ?? new Dictionary<string, string>()) info.Environment[key] = value;
-        info.UseShellExecute = false;
-        info.CreateNoWindow = true;
-        info.WorkingDirectory = WorkDir;
-        info.RedirectStandardInput = info.RedirectStandardOutput = info.RedirectStandardError = true;
-        info.StandardOutputEncoding = Encoding.UTF8;
+        environment["PATH"] = string.Join(';', Path.GetDirectoryName(binary), System.Environment.GetFolderPath(System.Environment.SpecialFolder.System),
+            System.Environment.GetFolderPath(System.Environment.SpecialFolder.Windows));
+        environment["TEMP"] = environment["TMP"] = WorkDir;
+        environment["NO_COLOR"] = "1";
+        environment["LANG"] = "en_US.UTF-8";
+        foreach (var (key, value) in extra ?? new Dictionary<string, string>()) environment[key] = value;
+        return environment;
     }
 
     /// <summary>Runs to completion under a deadline. Null if it couldn't start, timed out or was cancelled.</summary>
     public static async Task<Output?> RunAsync(string binary, IEnumerable<string> arguments, TimeSpan timeout, IReadOnlyDictionary<string, string>? extra, CancellationToken cancel)
     {
-        var info = new ProcessStartInfo(binary);
-        foreach (var argument in arguments) info.ArgumentList.Add(argument);
-        Prepare(info, binary, extra);
-        using var job = Job.Create();
-        using var process = Start(info, job);
-        if (process is null) return null;
-        process.StandardInput.Close();
-        _ = process.StandardError.ReadToEndAsync(cancel);
+        using var child = UsageChild.Start(binary, arguments, ChildEnvironment(binary, extra), WorkDir);
+        if (child is null) return null;
+        child.Input.Close();
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancel);
         deadline.CancelAfter(timeout);
+        // A read waiting on a pipe doesn't hear a cancellation; ending the CLI closes the pipe.
+        using var stop = deadline.Token.Register(child.Kill);
+        _ = child.Error.ReadToEndAsync(CancellationToken.None);
         try
         {
-            var text = await ReadAllAsync(process.StandardOutput, deadline.Token);
-            await process.WaitForExitAsync(deadline.Token);
-            return new Output(text, process.ExitCode);
+            var text = await ReadAllAsync(child.Output, deadline.Token);
+            await child.WaitForExitAsync().WaitAsync(deadline.Token);
+            return deadline.IsCancellationRequested ? null : new Output(text, child.ExitCode);
         }
-        catch (OperationCanceledException)
+        catch (Exception e) when (e is OperationCanceledException or IOException)
         {
-            Kill(process);
             return null;
+        }
+        finally
+        {
+            child.Kill();
         }
     }
 
@@ -233,23 +285,20 @@ internal static partial class UsageCli
     /// </summary>
     public static async Task<JsonObject?> RpcAsync(string binary, IEnumerable<string> arguments, JsonObject initialize, string notify, string method, TimeSpan timeout, CancellationToken cancel)
     {
-        var info = new ProcessStartInfo(binary);
-        foreach (var argument in arguments) info.ArgumentList.Add(argument);
-        Prepare(info, binary, null);
-        using var job = Job.Create();
-        using var process = Start(info, job);
-        if (process is null) return null;
-        _ = process.StandardError.ReadToEndAsync(cancel);
+        using var child = UsageChild.Start(binary, arguments, ChildEnvironment(binary, null), WorkDir);
+        if (child is null) return null;
+        _ = child.Error.ReadToEndAsync(CancellationToken.None);
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancel);
         deadline.CancelAfter(timeout);
+        using var stop = deadline.Token.Register(child.Kill);
         async Task Send(JsonObject message)
         {
-            await process.StandardInput.WriteLineAsync(message.ToJsonString().AsMemory(), deadline.Token);
-            await process.StandardInput.FlushAsync(deadline.Token);
+            await child.Input.WriteLineAsync(message.ToJsonString().AsMemory(), deadline.Token);
+            await child.Input.FlushAsync(deadline.Token);
         }
         async Task<JsonObject?> Reply(int id)
         {
-            while (await process.StandardOutput.ReadLineAsync(deadline.Token) is { } line)
+            while (await child.Output.ReadLineAsync(deadline.Token) is { } line)
             {
                 try
                 {
@@ -269,112 +318,13 @@ internal static partial class UsageCli
             await Send(new JsonObject { ["jsonrpc"] = "2.0", ["id"] = 2, ["method"] = method, ["params"] = new JsonObject() });
             return (await Reply(2))?["result"] as JsonObject;
         }
-        catch (Exception e) when (e is OperationCanceledException or IOException)
+        catch (Exception e) when (e is OperationCanceledException or IOException or ObjectDisposedException)
         {
             return null;
         }
         finally
         {
-            Kill(process);
+            child.Kill();
         }
-    }
-
-    private static Process? Start(ProcessStartInfo info, Job job)
-    {
-        try
-        {
-            var process = Process.Start(info);
-            if (process is null) return null;
-            job.Assign(process);
-            try
-            {
-                process.PriorityClass = ProcessPriorityClass.BelowNormal;
-            }
-            catch (Exception e) when (e is InvalidOperationException or System.ComponentModel.Win32Exception)
-            {
-            }
-            return process;
-        }
-        catch (Exception e) when (e is System.ComponentModel.Win32Exception or InvalidOperationException)
-        {
-            return null;
-        }
-    }
-
-    private static void Kill(Process process)
-    {
-        try
-        {
-            if (!process.HasExited) process.Kill(entireProcessTree: true);
-        }
-        catch (Exception e) when (e is InvalidOperationException or System.ComponentModel.Win32Exception)
-        {
-        }
-    }
-
-    /// <summary>A Job Object that kills every process in it when its handle closes: nothing a CLI starts outlives its question.</summary>
-    private sealed partial class Job : IDisposable
-    {
-        private readonly nint _handle;
-
-        private Job(nint handle) => _handle = handle;
-
-        public static Job Create()
-        {
-            var handle = CreateJobObjectW(0, null);
-            var limits = new JOBOBJECT_EXTENDED_LIMIT_INFORMATION { BasicLimitInformation = new JOBOBJECT_BASIC_LIMIT_INFORMATION { LimitFlags = 0x2000 /* KILL_ON_JOB_CLOSE */ } };
-            unsafe
-            {
-                SetInformationJobObject(handle, 9 /* JobObjectExtendedLimitInformation */, &limits, (uint)sizeof(JOBOBJECT_EXTENDED_LIMIT_INFORMATION));
-            }
-            return new Job(handle);
-        }
-
-        public void Assign(Process process) => AssignProcessToJobObject(_handle, process.Handle);
-
-        public void Dispose()
-        {
-            if (_handle != 0) CloseHandle(_handle);
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        private struct JOBOBJECT_BASIC_LIMIT_INFORMATION
-        {
-            public long PerProcessUserTimeLimit;
-            public long PerJobUserTimeLimit;
-            public uint LimitFlags;
-            public nuint MinimumWorkingSetSize;
-            public nuint MaximumWorkingSetSize;
-            public uint ActiveProcessLimit;
-            public nuint Affinity;
-            public uint PriorityClass;
-            public uint SchedulingClass;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        private struct JOBOBJECT_EXTENDED_LIMIT_INFORMATION
-        {
-            public JOBOBJECT_BASIC_LIMIT_INFORMATION BasicLimitInformation;
-            public ulong ReadOperationCount, WriteOperationCount, OtherOperationCount, ReadTransferCount, WriteTransferCount, OtherTransferCount;
-            public nuint ProcessMemoryLimit;
-            public nuint JobMemoryLimit;
-            public nuint PeakProcessMemoryUsed;
-            public nuint PeakJobMemoryUsed;
-        }
-
-        [LibraryImport("kernel32.dll", StringMarshalling = StringMarshalling.Utf16)]
-        private static partial nint CreateJobObjectW(nint attributes, string? name);
-
-        [LibraryImport("kernel32.dll")]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        private static unsafe partial bool SetInformationJobObject(nint job, int infoClass, void* info, uint length);
-
-        [LibraryImport("kernel32.dll")]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        private static partial bool AssignProcessToJobObject(nint job, nint process);
-
-        [LibraryImport("kernel32.dll")]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        private static partial bool CloseHandle(nint handle);
     }
 }

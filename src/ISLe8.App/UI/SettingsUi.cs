@@ -181,6 +181,19 @@ internal static class SettingsUi
         return row;
     }
 
+    /// <summary>A row of buttons that stay pressed, one per thing to show; each says at once when it is pressed or let go.</summary>
+    public static StackPanel Chips(IEnumerable<(string Label, bool On, Action<bool> Toggled)> chips)
+    {
+        var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
+        foreach (var (label, on, toggled) in chips)
+        {
+            var chip = new Microsoft.UI.Xaml.Controls.Primitives.ToggleButton { Content = label, IsChecked = on, Padding = new Thickness(10, 4, 10, 5) };
+            chip.Click += (_, _) => toggled(chip.IsChecked == true);
+            row.Children.Add(chip);
+        }
+        return row;
+    }
+
     /// <summary>A switch without "On"/"Off" beside it: WinUI would write those in Windows' language, not the island's.</summary>
     public static ToggleSwitch Switch(bool on, Action<bool> toggled)
     {

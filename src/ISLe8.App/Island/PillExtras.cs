@@ -138,56 +138,85 @@ internal sealed class PillClock
 
 /// <summary>
 /// Frames, CPU and GPU across the wide pill (Settings › General › Performance; Windows only):
-/// "144 FPS   CPU %23 54°   GPU %61 64°", each figure left out when this computer can't say it.
-/// It changes once a second, when the sampler has a new sample.
+/// "21:45   144 FPS   CPU %23 54°   GPU %61 64°   RAM %48", as chosen there, each figure left out when this
+/// computer can't say it, and the pill as wide as the chosen ones need. It changes once a second, when the
+/// sampler has a new sample.
 /// </summary>
 internal sealed class PerformanceEar
 {
-    private readonly TextBlock _text = Ui.Text(11, semibold: true);
+    /// <summary>The pill's round ends, either side of the figures.</summary>
+    private const double Ends = 2 * 16;
+
+    private readonly TextBlock _text = Text();
+    /// <summary>Never shown: the figures at their widest, measured for the pill's width.</summary>
+    private readonly TextBlock _probe = Text();
+    private (Core.SystemInfo.PerformanceShow, string)? _measured;
+    private double _width;
 
     public PerformanceEar()
     {
-        _text.HorizontalAlignment = HorizontalAlignment.Center;
-        _text.VerticalAlignment = VerticalAlignment.Center;
-        _text.TextTrimming = TextTrimming.None;
-        StatusGlyphs.Tabular(_text);
-        Root = new Grid { IsHitTestVisible = false, Visibility = Visibility.Collapsed, Children = { _text } };
+        // The pill's layer leaves 5 on the left and 14 on the right for the artwork; the figures sit in the middle.
+        Root = new Grid { IsHitTestVisible = false, Visibility = Visibility.Collapsed, Margin = new Thickness(9, 0, 0, 0), Children = { _text } };
     }
 
     public Grid Root { get; }
 
     public void SetShown(bool shown) => Root.Visibility = shown ? Visibility.Visible : Visibility.Collapsed;
 
-    public void Show(Core.SystemInfo.PerformanceSample? sample, CultureInfo culture)
+    /// <summary>How wide the pill must be for what is chosen at its widest; measured once per choice.</summary>
+    public double Width(Core.SystemInfo.PerformanceShow show, CultureInfo culture)
     {
-        _text.Inlines.Clear();
-        if (sample is null) return;
-        if (sample.Fps is { } fps) Add($"{fps}", " FPS", null, labelFirst: false);
-        Add(Core.SystemInfo.PerformanceMath.Percent(sample.Cpu, culture), "CPU ", sample.CpuTemperature, labelFirst: true);
-        if (sample.Gpu is not null || sample.GpuTemperature is not null)
-        {
-            Add(sample.Gpu is { } gpu ? Core.SystemInfo.PerformanceMath.Percent(gpu, culture) : "", "GPU ", sample.GpuTemperature, labelFirst: true);
-        }
+        var key = (show, culture.Name + "/" + CultureInfo.CurrentCulture.Name);
+        if (_measured == key) return _width;
+        Fill(_probe, Core.SystemInfo.PerformanceMath.Parts(
+            Core.SystemInfo.PerformanceMath.Widest, show, frames: true, Core.SystemInfo.PerformanceMath.WidestTime(CultureInfo.CurrentCulture), culture));
+        _probe.Measure(new Windows.Foundation.Size(double.PositiveInfinity, double.PositiveInfinity));
+        _measured = key;
+        _width = Math.Ceiling(_probe.DesiredSize.Width) + Ends;
+        return _width;
     }
 
-    private void Add(string value, string label, double? degrees, bool labelFirst)
+    /// <param name="frames">A game is in front, so its frames have a place even before they are counted.</param>
+    public void Show(Core.SystemInfo.PerformanceSample? sample, Core.SystemInfo.PerformanceShow show, bool frames, CultureInfo culture)
     {
-        if (_text.Inlines.Count > 0) _text.Inlines.Add(new Microsoft.UI.Xaml.Documents.Run { Text = "   " });
-        var dim = new Microsoft.UI.Xaml.Documents.Run { Text = label, Foreground = Ui.White(0x8C) };
-        var bright = new Microsoft.UI.Xaml.Documents.Run { Text = value };
-        if (labelFirst)
+        if (sample is null)
         {
-            _text.Inlines.Add(dim);
-            _text.Inlines.Add(bright);
+            _text.Inlines.Clear();
+            return;
         }
-        else
+        // The user's own short time format, as the idle pill's clock and the taskbar show it.
+        Fill(_text, Core.SystemInfo.PerformanceMath.Parts(sample, show, frames, DateTime.Now.ToString("t", CultureInfo.CurrentCulture), culture));
+    }
+
+    private static TextBlock Text()
+    {
+        var text = Ui.Text(11, semibold: true);
+        text.HorizontalAlignment = HorizontalAlignment.Center;
+        text.VerticalAlignment = VerticalAlignment.Center;
+        text.TextTrimming = TextTrimming.None;
+        StatusGlyphs.Tabular(text);
+        return text;
+    }
+
+    private static void Fill(TextBlock text, IReadOnlyList<Core.SystemInfo.PerformancePart> parts)
+    {
+        text.Inlines.Clear();
+        foreach (var part in parts)
         {
-            _text.Inlines.Add(bright);
-            _text.Inlines.Add(dim);
-        }
-        if (degrees is { } celsius)
-        {
-            _text.Inlines.Add(new Microsoft.UI.Xaml.Documents.Run { Text = (value.Length > 0 ? " " : "") + Core.SystemInfo.PerformanceMath.Degrees(celsius) });
+            if (text.Inlines.Count > 0) text.Inlines.Add(new Microsoft.UI.Xaml.Documents.Run { Text = "   " });
+            var dim = new Microsoft.UI.Xaml.Documents.Run { Text = part.Label, Foreground = Ui.White(0x8C) };
+            var bright = new Microsoft.UI.Xaml.Documents.Run { Text = part.Value };
+            if (part.LabelFirst)
+            {
+                text.Inlines.Add(dim);
+                text.Inlines.Add(bright);
+            }
+            else
+            {
+                text.Inlines.Add(bright);
+                if (part.Label.Length > 0) text.Inlines.Add(dim);
+            }
+            if (part.Degrees is { } degrees) text.Inlines.Add(new Microsoft.UI.Xaml.Documents.Run { Text = (part.Value.Length > 0 ? " " : "") + degrees });
         }
     }
 }

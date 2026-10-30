@@ -3,6 +3,39 @@
 Her maddeyi işaretle; olmayan varsa günlükle birlikte not et (README › Günlük ve ayarlar). W1'in
 adımları en üstte, W0'ın listesi altta.
 
+## Kullanıcının ikinci listesi (0.2.9, 2026-10-31)
+
+Ekran görüntüleri: Ajanlar'da ChatGPT ve Claude Code "Bulunamadı"; Genel'de Performans göstergesi. İstenenler: hatalar,
+seçilebilen ve hapı genişleten değerler (FPS, CPU, GPU, sıcaklık, RAM, saat), oyunda üzerine gelince açılmaması, pencerede de
+FPS, "cmd hâlâ açılıyor", "ss moduna geçince kendini görünmez yapıyor", görev çubuğunun içine yerleşme.
+
+- [x] Bu makinede Claude Code `%LOCALAPPDATA%\Claude-Data\claude_pzs8sxrjxfjjc\claude-code\2.1.309\…\claude.exe`, Codex
+      `%LOCALAPPDATA%\OpenAI\Codex\bin\…\codex.exe` ve `%USERPROFILE%\.codex\packages\standalone\current\bin\codex.exe`'de.
+      Uygulamanın `claude.exe`'si ISLe8'in ortamıyla `auth status`: loggedIn.
+- [x] agy (bu makinedeki sürüm) gizli çalıştırıldı: yalnızca kendi gizli konsolu, yeni pencere yok. Hook'lar (`isle8.exe hook
+      codex`) gizli konsollu bir süreçten: pencere yok. Kullanıcının makinesindeki pencerenin kaynağı görülemedi.
+- [x] Görünmez masaüstü: yeni konsol isteyen `cmd /c start /min …` bu masaüstünde pencere açmadı, normal masaüstünde
+      `ConsoleWindowClass` açtı.
+- [x] 0.2.9 kurulu (JIT): açılışta Codex (app-server) ve Antigravity (agy) limitleri görünmez masaüstündeki CLI'lardan canlı
+      okundu (`usage\state.json`: Ok, Live).
+- [x] 369 birim testi (yeni: hapın parçaları ve sırası, FPS'in ne zaman göründüğü, görev çubuğunun içindeki yerleşim, uçlarda
+      ekranda kalma, kendini gizleyen görev çubuğu, geniş hapın genişliği); derleme uyarısız; AOT derleyicisi uyarısız (bu
+      makinede bağlayıcı yok, AOT yalnızca CI'da).
+- [x] Ayarlar › Genel'de seçim düğmeleri (FPS, CPU, GPU, Sıcaklık, RAM, Saat) dosyadaki ayarlarla aynı; UI Automation ile
+      açılıp kapatıldı. Bu hesap `Performance Log Users`'ta olduğu için FPS izni kartı gizli (doğru); kartın kendisi görülmedi.
+- [x] "Her zaman"da yalnızca Saat seçiliyken hap boş pill kadar ve saati gösteriyor ("00:52"). Ajan çalışırken hapı ajan kulağı
+      alıyor (öncelik ajanların).
+- [x] Hapın seçilenlere göre genişlemesi: tümü açıkken görev çubuğunun içinde "00:56   CPU %2 70°   GPU %2 53°   RAM %47",
+      ~393 DIP; FPS'in yeri öndeki program çizmediği için boş, metin ortada. Değerler değişirken genişlik oynamadı.
+- [x] Görev çubuğunun içinde: Görünüm › Konum'da yeni seçenek ve %25'lik yer kaydırıcısı; ada görev çubuğunun şeridinde
+      dikeyde ortalı, 3840 px ekranın %25'inde (ortası x = 960). Görev çubuğu öne gelince (Başlat düğmesine UI Automation
+      odağı) z-sırasında 49'dan 41'e çıktı, ada 37'de, üstünde kaldı.
+- [ ] Görev çubuğundaki adanın fareyle açılması (fareye dokunulmadı).
+- [x] Bu makinenin ayarlarında "Ekran görüntüsü ve ekran paylaşımında gizle" açıktı: ada hiçbir ekran görüntüsünde çıkmıyor.
+      Kullanıcının "ss moduna geçince görünmez" dediği bu ayar da olabilir.
+- [ ] Win+Shift+S'de adanın görüntüde kalması.
+- [ ] Oyunda üzerine gelince açılmaması; FPS'in `Performance Log Users` üyeliğiyle ya da RivaTuner'dan gelmesi.
+
 ## Güncellemede kapanma ve hata taraması (0.2.8, 2026-10-30)
 
 Kullanıcı: "güncelleme varsa kendini kapatıyor eski sürümde". Claude'un paket kapsayıcısında, uygulama verisi oraya

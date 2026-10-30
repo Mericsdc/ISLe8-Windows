@@ -16,7 +16,8 @@ public enum MonitorChoice
 
 /// <summary>
 /// Where the island sits (Settings › Appearance › Island; Windows only): hanging from the top of the
-/// screen as on the Mac, or standing on the taskbar at its left, centre or right, opening upwards.
+/// screen as on the Mac, standing on the taskbar at its left, centre or right, or resting inside the taskbar
+/// wherever <see cref="AppSettings.TaskbarPosition"/> says; on and in the taskbar it opens upwards.
 /// </summary>
 [JsonConverter(typeof(LenientEnumConverter<IslandPlacement>))]
 public enum IslandPlacement
@@ -25,6 +26,7 @@ public enum IslandPlacement
     TaskbarLeft,
     TaskbarCenter,
     TaskbarRight,
+    InTaskbar,
 }
 
 /// <summary>
@@ -225,8 +227,21 @@ public sealed class AppSettings
     /// <summary>Settings › General (Windows only): frames, CPU and GPU on the pill.</summary>
     public SystemInfo.PerformancePill PerformancePill { get; set; } = SystemInfo.PerformancePill.Off;
 
+    /// <summary>Settings › General › Performance › Shown (Windows only): what the pill shows, and it is as wide as they need.</summary>
+    public bool PerformanceFps { get; set; } = true;
+    public bool PerformanceCpu { get; set; } = true;
+    public bool PerformanceGpu { get; set; } = true;
+    /// <summary>The CPU's and the GPU's temperatures, beside their use.</summary>
+    public bool PerformanceTemperature { get; set; } = true;
+    public bool PerformanceRam { get; set; }
+    /// <summary>The time at the start of the performance pill, as the idle pill can show it.</summary>
+    public bool PerformanceClock { get; set; }
+
     /// <summary>Settings › Appearance › Island: where the island sits.</summary>
     public IslandPlacement Placement { get; set; } = IslandPlacement.Top;
+
+    /// <summary>Inside the taskbar: where along it the pill's middle is, 0 its left end, 1 its right.</summary>
+    public double TaskbarPosition { get; set; } = 0.25;
 
     /// <summary>At the top: no gap above the pill, its top corners square, like the Mac's notch.</summary>
     public bool FlushTop { get; set; }

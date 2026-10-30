@@ -279,6 +279,9 @@ internal sealed class IslandView
         }
     }
 
+    /// <summary>The wide pill changed width (the performance pill's figures): its content follows.</summary>
+    public void PlacePill(DipRect pill) => Place(PillLayer, pill);
+
     /// <summary>The ears show <paramref name="activity"/>: media's artwork and bars, or the timer, which ticks while <paramref name="seen"/>.</summary>
     public void ShowEar(PillActivity activity, bool seen)
     {

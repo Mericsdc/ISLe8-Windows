@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Company>LRXe8</Company>
     <Product>ISLe8</Product>
-    <Version>0.2.8</Version>
+    <Version>0.2.9</Version>
     <Copyright>Â© LRXe8</Copyright>
   </PropertyGroup>
 </Project>

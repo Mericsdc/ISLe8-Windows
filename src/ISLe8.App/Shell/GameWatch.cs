@@ -71,6 +71,8 @@ internal sealed unsafe partial class GameWatch(DispatcherQueue queue) : IDisposa
 
     private void Check(nint window, bool lookAgain)
     {
+        // A screenshot over the game: the game is still what you are playing.
+        if (window != 0 && CaptureTools.Owns(window)) return;
         _again?.Stop();
         var game = window != 0 && (IsKnownGame(window, readAgain: !lookAgain) || HasScreenToItself(window));
         if (!game && lookAgain && window != 0)
@@ -134,7 +136,7 @@ internal sealed unsafe partial class GameWatch(DispatcherQueue queue) : IDisposa
         && rect.Left <= monitor.Bounds.X && rect.Top <= monitor.Bounds.Y && rect.Right >= monitor.Bounds.Right && rect.Bottom >= monitor.Bounds.Bottom;
 
     /// <summary>The window's program, as a full path; limited access is enough, even for a game its anti-cheat guards.</summary>
-    private static string? Program(nint window)
+    public static string? Program(nint window)
     {
         if (GetWindowThreadProcessId(window, out var pid) == 0) return null;
         var process = OpenProcess(0x1000 /* PROCESS_QUERY_LIMITED_INFORMATION */, false, pid);

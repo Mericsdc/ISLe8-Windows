@@ -100,6 +100,59 @@ public sealed class PlacementTests : IDisposable
     }
 
     [Fact]
+    public void InsideTheTaskbarThePillRestsInItsMiddleWhereverItWasPut()
+    {
+        var layout = IslandLayout.Compute(Monitor, WorkArea, 1, Expanded, IslandPlacement.InTaskbar, taskbarPosition: 0.25);
+        var pill = OnScreen(layout, layout.IdlePill);
+        var open = OnScreen(layout, layout.Open(new DipSize(640, 200)));
+
+        Assert.True(layout.InTaskbar);
+        Assert.True(layout.FromBottom);
+        // The 48-pixel taskbar's middle, a quarter of the way along.
+        Assert.Equal(1032 + 48 / 2.0, pill.Y + pill.Height / 2, 3);
+        Assert.Equal(1920 * 0.25, pill.X + pill.Width / 2, 3);
+        // It opens upwards from the pill, on the screen.
+        Assert.Equal(pill.Bottom, open.Bottom, 3);
+        Assert.True(open.X <= pill.X && open.Right >= pill.Right);
+        Assert.True(layout.Window.X >= 0 && layout.Window.Right <= 1920 && layout.Window.Bottom <= 1080);
+        // The wide pill keeps the same place as it grows.
+        var compact = OnScreen(layout, layout.CompactPill);
+        Assert.True(compact.X <= pill.X && compact.Right >= pill.Right);
+    }
+
+    [Fact]
+    public void InsideTheTaskbarAtItsEndsTheIslandStaysOnTheScreen()
+    {
+        var left = IslandLayout.Compute(Monitor, WorkArea, 1, Expanded, IslandPlacement.InTaskbar, taskbarPosition: 0);
+        var right = IslandLayout.Compute(Monitor, WorkArea, 1, Expanded, IslandPlacement.InTaskbar, taskbarPosition: 1);
+
+        Assert.Equal(IslandMetrics.SideInset, OnScreen(left, left.IdlePill).X, 3);
+        Assert.Equal(1920 - IslandMetrics.SideInset, OnScreen(right, right.IdlePill).Right, 3);
+        Assert.Equal(IslandMetrics.SideInset, OnScreen(left, left.Open(new DipSize(640, 200))).X, 3);
+    }
+
+    [Fact]
+    public void ATaskbarThatHidesItselfLeavesThePillStandingOnTheScreensEdge()
+    {
+        var layout = IslandLayout.Compute(Monitor, Monitor, 1, Expanded, IslandPlacement.InTaskbar, taskbarPosition: 0.5);
+
+        Assert.False(layout.InTaskbar);
+        Assert.Equal(1080 - IslandMetrics.TopMargin, OnScreen(layout, layout.IdlePill).Bottom, 3);
+    }
+
+    [Fact]
+    public void TheWidePillCanTakeAnyWidthOnItsSide()
+    {
+        var centre = At(IslandPlacement.Top).WithCompactWidth(330);
+        var left = At(IslandPlacement.TaskbarLeft).WithCompactWidth(330);
+
+        Assert.Equal(330, centre.CompactPill.Width);
+        Assert.Equal(centre.IdlePill.X + centre.IdlePill.Width / 2, centre.CompactPill.X + centre.CompactPill.Width / 2, 3);
+        Assert.Equal(left.IdlePill.X, left.CompactPill.X);
+        Assert.Same(centre, centre.WithCompactWidth(330));
+    }
+
+    [Fact]
     public void VolumeKeysStepByTwoAndLandOnWholeSteps()
     {
         Assert.Equal(0.52, VolumeSteps.Next(0.50, up: true), 6);

@@ -208,6 +208,16 @@ internal sealed class IslandController : IDisposable
     {
         _performance.FrameProcess = _games.GameProcess;
         _model.SetPerformanceLive(_settings.PerformancePill == PerformancePill.Always || _settings.PerformancePill == PerformancePill.Gaming && _games.IsGameInFront);
+        ShowPerformance();
+    }
+
+    private void ShowPerformance() => _view.Performance.Show(_performance.Sample, PerformanceShow.Of(_settings), _games.IsGameInFront, L.Culture);
+
+    /// <summary>Settings › General › Performance: what the pill shows; it springs to its new width at once.</summary>
+    public void ApplyPerformanceSettings()
+    {
+        UpdatePerformance();
+        UpdateBars();
     }
 
     /// <summary>Settings › Appearance › Hide in screenshots and screen sharing.</summary>
@@ -310,7 +320,7 @@ internal sealed class IslandController : IDisposable
             UpdatePerformance();
             UpdateBars();
         };
-        _performance.Changed += () => _view.Performance.Show(_performance.Sample, L.Culture);
+        _performance.Changed += ShowPerformance;
         _window.Show();
         _games.Start();
         UpdatePerformance();
@@ -450,6 +460,8 @@ internal sealed class IslandController : IDisposable
     {
         // The island may have moved to another monitor (Active screen): is a game on this one?
         _window.SetGameInFront(_games.GameWindow);
+        layout = layout.WithCompactWidth(CompactWidth);
+        _placedCompactWidth = layout.CompactPill.Width;
         var state = _model.State;
         var expanded = state == IslandState.Expanded;
         var alert = state == IslandState.Alert;
@@ -482,6 +494,39 @@ internal sealed class IslandController : IDisposable
         UpdateBars();
     }
 
+    /// <summary>The window's layout with the wide pill as wide as the current activity needs.</summary>
+    private IslandLayout? Layout => _window.Layout?.WithCompactWidth(CompactWidth);
+
+    /// <summary>The performance pill is as wide as the figures chosen for it, and never narrower than the plain pill; the others keep the Mac's width.</summary>
+    private double CompactWidth => _model.Activity == PillActivity.Performance
+        ? Math.Max(IslandMetrics.IdlePillWidth, _view.Performance.Width(PerformanceShow.Of(_settings), L.Culture))
+        : IslandMetrics.CompactPillWidth;
+
+    /// <summary>The wide pill's width as last placed, so a change of figures (or a game coming) springs it to its new width.</summary>
+    private double _placedCompactWidth;
+
+    /// <summary>Puts the wide pill's content where the pill is now; true when it moved.</summary>
+    private bool PlaceCompactPill(IslandLayout layout)
+    {
+        if (Math.Abs(layout.CompactPill.Width - _placedCompactWidth) < 0.5) return false;
+        _placedCompactWidth = layout.CompactPill.Width;
+        _view.PlacePill(layout.CompactPill);
+        return true;
+    }
+
+    /// <summary>The wide pill's width changed while it rests (a figure chosen, a game come): it springs to the new one.</summary>
+    private void ResizeCompactPill()
+    {
+        if (Layout is not { } layout) return;
+        var wider = layout.CompactPill.Width > _placedCompactWidth;
+        if (!PlaceCompactPill(layout) || _model.State is not (IslandState.Pill or IslandState.Peek) || _model.Pill != PillKind.Compact) return;
+        var shape = Shape(layout, _model.State);
+        // The window region also clips what is drawn: growing takes the bigger one first, shrinking once it has settled.
+        if (wider) _window.SetHitRegion(Region(layout, _model.State));
+        _settled = false;
+        _surface.MorphTo(shape, Corner(shape, _model.State), Spring(), shadow: false, Settle, Shoulder(_model.State));
+    }
+
     /// <summary>The open island for the current tab in the current layout.</summary>
     private DipRect OpenRect(IslandLayout layout) => layout.Open(IslandSizes.Open(_settings, _model.Tab));
 
@@ -512,7 +557,7 @@ internal sealed class IslandController : IDisposable
     /// </summary>
     private void OnXamlRootChanged(XamlRoot sender, XamlRootChangedEventArgs args)
     {
-        if (_window.Layout is not { } layout || Math.Abs(sender.RasterizationScale - layout.Scale) < 0.01) return;
+        if (Layout is not { } layout || Math.Abs(sender.RasterizationScale - layout.Scale) < 0.01) return;
         Log.Info($"XAML scale {sender.RasterizationScale} differs from monitor scale {layout.Scale}; placing again");
         _window.RequestPlace();
     }
@@ -535,7 +580,7 @@ internal sealed class IslandController : IDisposable
     /// Pills and the peek are fully round at the ends; the open island follows the theme's corners.
     /// Flush with the top, the island is the Mac's notch shape and takes its bottom corners.
     /// </summary>
-    private double Corner(DipRect shape, IslandState state) => IsBar(state) ? shape.Height / 2 : _window.Layout is { Flush: true }
+    private double Corner(DipRect shape, IslandState state) => IsBar(state) ? shape.Height / 2 : Layout is { Flush: true }
         ? IslandSizes.FlushRadius(state, _model.Pill, _settings.Theme)
         : state switch
     {
@@ -547,7 +592,7 @@ internal sealed class IslandController : IDisposable
     };
 
     /// <summary>The notch shape's shoulders when flush with the top; none otherwise.</summary>
-    private double Shoulder(IslandState state) => !IsBar(state) && _window.Layout is { Flush: true } ? IslandSizes.FlushShoulder(state, _model.Pill) : 0;
+    private double Shoulder(IslandState state) => !IsBar(state) && Layout is { Flush: true } ? IslandSizes.FlushShoulder(state, _model.Pill) : 0;
 
     /// <summary>The part of the window that takes the mouse in <paramref name="state"/>, in window pixels.</summary>
     private PixelRect Region(IslandLayout layout, IslandState state)
@@ -567,7 +612,7 @@ internal sealed class IslandController : IDisposable
     }
 
     /// <summary>The part of the window that counts as "on the island" right now: only the island itself.</summary>
-    private PixelRect? HoverRegion => _window.Layout is not { } layout
+    private PixelRect? HoverRegion => Layout is not { } layout
         ? null
         : _model.State switch
         {
@@ -588,7 +633,7 @@ internal sealed class IslandController : IDisposable
 
     private void OnStateChanged(IslandState from)
     {
-        if (_window.Layout is not { } layout) return;
+        if (Layout is not { } layout) return;
         var state = _model.State;
         var shape = Shape(layout, state);
         _settled = false;
@@ -667,7 +712,7 @@ internal sealed class IslandController : IDisposable
     {
         var tab = _model.Tab;
         _view.Dock.SetSelected(tab);
-        if (_window.Layout is not { } layout) return;
+        if (Layout is not { } layout) return;
         var open = OpenRect(layout);
         var before = layout.Open(IslandSizes.Open(_settings, from));
         _view.SetOpen(open, _settings.HomeStyle, tab);
@@ -701,9 +746,10 @@ internal sealed class IslandController : IDisposable
     /// <summary>Widens or narrows the resting pill; while open, the model only remembers it for the next close.</summary>
     private void OnPillChanged()
     {
-        if (_model.State == IslandState.Expanded || _window.Layout is not { } layout) return;
+        if (_model.State == IslandState.Expanded || Layout is not { } layout) return;
         var compact = _model.Pill == PillKind.Compact;
         var shape = Shape(layout, _model.State);
+        PlaceCompactPill(layout);
 
         if (_settled && compact) _window.SetHitRegion(Region(layout, _model.State));
         _settled = false;
@@ -739,7 +785,7 @@ internal sealed class IslandController : IDisposable
         // Gone once the shape has come to rest, whatever the island became; opening from a banner or a drop included.
         if (_model.State != IslandState.Alert) _view.AlertLayer.Visibility = Visibility.Collapsed;
         if (_model.State != IslandState.DropTarget) _view.DropTarget.Root.Visibility = Visibility.Collapsed;
-        if (_model.State == IslandState.Expanded || _window.Layout is not { } layout) return;
+        if (_model.State == IslandState.Expanded || Layout is not { } layout) return;
         _settled = true;
         if (_model.State == IslandState.Pill)
         {
@@ -770,9 +816,15 @@ internal sealed class IslandController : IDisposable
     private void UpdateHover(PointerRoutedEventArgs e, bool touchInside)
     {
         var touch = e.Pointer.PointerDeviceType == PointerDeviceType.Touch;
-        var inside = touch ? touchInside : CursorOnIsland();
+        var inside = !AtRestOverGame && (touch ? touchInside : CursorOnIsland());
         if (inside != _model.IsHovering) _model.SetHovering(inside, touch);
     }
+
+    /// <summary>
+    /// A game is in front and the island rests over it (the performance pill): the mouse passing over it, or a click
+    /// meant for the game, neither swells nor opens it.
+    /// </summary>
+    private bool AtRestOverGame => _games.IsGameInFront && _model.State is IslandState.Pill or IslandState.Peek;
 
     /// <summary>
     /// Two fingers sideways on the open island switch tabs. On the shelf and the clipboard, whose
@@ -797,7 +849,7 @@ internal sealed class IslandController : IDisposable
     private void OnPointerPressed(object sender, PointerRoutedEventArgs e)
     {
         var point = e.GetCurrentPoint(_view.Area);
-        if (_model.State == IslandState.Expanded || !(point.Properties.IsLeftButtonPressed || e.Pointer.PointerDeviceType == PointerDeviceType.Touch)) return;
+        if (_model.State == IslandState.Expanded || AtRestOverGame || !(point.Properties.IsLeftButtonPressed || e.Pointer.PointerDeviceType == PointerDeviceType.Touch)) return;
         // A notification has done its job once clicked: its app comes forward (NotificationViews.swift).
         if (_model.State == IslandState.Alert && _model.Alert is NotificationAlert notification)
         {
@@ -866,7 +918,7 @@ internal sealed class IslandController : IDisposable
     private void OnAlertChanged()
     {
         _view.ShowAlert(_model.Alert, _model.PendingNotificationCount, swapped: true, _status.Network.Link);
-        if (_model.State != IslandState.Alert || _window.Layout is not { } layout) return;
+        if (_model.State != IslandState.Alert || Layout is not { } layout) return;
         var shape = AlertRect(layout);
         if (shape == _alertShape) return;
         _alertShape = shape;
@@ -962,6 +1014,7 @@ internal sealed class IslandController : IDisposable
         var state = _model.State;
         var earsSeen = state is IslandState.Pill or IslandState.Peek && _model.Pill == PillKind.Compact && !still;
         _view.ShowEar(_model.Activity, earsSeen);
+        ResizeCompactPill();
         if (playing && _settings.AudioBars && earsSeen && _model.Activity == PillActivity.Media) _view.Bars.Start();
         else _view.Bars.Stop();
         if (playing && state == IslandState.Alert && _model.Alert is NowPlayingAlert) _view.Banner.Bars.Start();

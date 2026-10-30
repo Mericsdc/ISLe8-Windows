@@ -96,7 +96,7 @@ internal static class AppearancePage
         return page;
     }
 
-    private static readonly IslandPlacement[] Placements = [IslandPlacement.Top, IslandPlacement.TaskbarLeft, IslandPlacement.TaskbarCenter, IslandPlacement.TaskbarRight];
+    private static readonly IslandPlacement[] Placements = [IslandPlacement.Top, IslandPlacement.TaskbarLeft, IslandPlacement.TaskbarCenter, IslandPlacement.TaskbarRight, IslandPlacement.InTaskbar];
 
     /// <summary>
     /// Where the island sits and what the pill shows besides the Mac's (Windows only: there is no notch
@@ -115,8 +115,19 @@ internal static class AppearancePage
             context.Island.ApplyIslandSettings();
         }), L.Get("Settings_FlushTopNote"));
         flush.Visibility = settings.Placement == IslandPlacement.Top ? Visibility.Visible : Visibility.Collapsed;
+        // Inside the taskbar the pill goes wherever its icons leave room.
+        var along = SettingsUi.Card(palette, L.Get("Settings_TaskbarPosition"), SettingsUi.SliderRow(
+            Math.Round(settings.TaskbarPosition * 100), 0, 100, 1,
+            value => Core.SystemInfo.PerformanceMath.Percent(value / 100, L.Culture),
+            value =>
+            {
+                settings.TaskbarPosition = value / 100;
+                context.Save();
+                context.Island.ApplyIslandSettings();
+            }, standard: Standard.TaskbarPosition * 100), L.Get("Settings_TaskbarPositionNote"));
+        along.Visibility = settings.Placement == IslandPlacement.InTaskbar ? Visibility.Visible : Visibility.Collapsed;
         section.Children.Add(SettingsUi.Card(palette, L.Get("Settings_Placement"), SettingsUi.Choices(
-            [L.Get("Settings_PlacementTop"), L.Get("Settings_PlacementTaskbarLeft"), L.Get("Settings_PlacementTaskbarCenter"), L.Get("Settings_PlacementTaskbarRight")],
+            [L.Get("Settings_PlacementTop"), L.Get("Settings_PlacementTaskbarLeft"), L.Get("Settings_PlacementTaskbarCenter"), L.Get("Settings_PlacementTaskbarRight"), L.Get("Settings_PlacementInTaskbar")],
             Math.Max(Array.IndexOf(Placements, settings.Placement), 0),
             index =>
             {
@@ -124,8 +135,10 @@ internal static class AppearancePage
                 context.Save();
                 context.Island.ApplyIslandSettings();
                 flush.Visibility = Placements[index] == IslandPlacement.Top ? Visibility.Visible : Visibility.Collapsed;
+                along.Visibility = Placements[index] == IslandPlacement.InTaskbar ? Visibility.Visible : Visibility.Collapsed;
             }), L.Get("Settings_PlacementNote")));
         section.Children.Add(flush);
+        section.Children.Add(along);
         // Windows has no menu bar for the island to sit in, as the Mac's notch does; a strip like the
         // taskbar's can keep one free: the pill and its swell, just the pill, or none.
         var strip = !settings.ReserveTopStrip ? 2 : settings.StripFitsPill ? 1 : 0;

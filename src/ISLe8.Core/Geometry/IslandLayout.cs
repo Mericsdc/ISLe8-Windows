@@ -89,8 +89,14 @@ public sealed record IslandLayout
     /// <summary>On the taskbar: the island stands on its bottom edge and opens upwards.</summary>
     public bool FromBottom { get; init; }
 
-    /// <summary>Which side of <see cref="Area"/> the island keeps to as it grows: -1 left, 0 centre, 1 right.</summary>
-    public int Align { get; init; }
+    /// <summary>
+    /// Where across <see cref="Area"/> the island keeps as it grows: 0 its left side, 0.5 its middle, 1 its right
+    /// side; inside the taskbar, anywhere between, so the pill stays where it was put.
+    /// </summary>
+    public double Align { get; init; } = 0.5;
+
+    /// <summary>Inside the taskbar: the pill rests in the middle of the taskbar's band, below the work area.</summary>
+    public bool InTaskbar { get; init; }
 
     /// <summary>Flush with the top of the screen: the shape runs off the top, so its top corners are square.</summary>
     public bool Flush { get; init; }
@@ -109,12 +115,18 @@ public sealed record IslandLayout
     }
 
     /// <summary>Where a shape <paramref name="width"/> wide starts across <see cref="Area"/>.</summary>
-    private double X(double width) => Align switch
+    private double X(double width) => (Area.Width - width) * Align;
+
+    /// <summary>
+    /// The same layout with the wide pill <paramref name="width"/> wide: the performance pill is as wide as the
+    /// figures chosen for it (Settings › General › Performance; Windows only).
+    /// </summary>
+    public IslandLayout WithCompactWidth(double width)
     {
-        < 0 => 0,
-        > 0 => Area.Width - width,
-        _ => (Area.Width - width) / 2,
-    };
+        width = Math.Min(width, Area.Width);
+        if (Math.Abs(width - CompactPill.Width) < 0.5) return this;
+        return this with { CompactPill = new DipRect(X(width), CompactPill.Y, width, CompactPill.Height) };
+    }
 
     /// <summary>
     /// The open island at <paramref name="size"/> (one tab's, <see cref="IslandSizes.Open"/>): hanging
@@ -173,19 +185,25 @@ public sealed record IslandLayout
     /// <param name="workArea">The monitor's work area; a taskbar docked at the top pushes the island below it.</param>
     /// <param name="scale">The monitor's DPI / 96.</param>
     /// <param name="expanded">The open island's preferred size; shrunk to fit small screens.</param>
-    /// <param name="placement">At the top, or on the taskbar (the work area's bottom) at its left, centre or right.</param>
+    /// <param name="placement">At the top, on the taskbar (the work area's bottom) at its left, centre or right, or inside it.</param>
     /// <param name="flushTop">At the top: no gap above the pill.</param>
-    public static IslandLayout Compute(PixelRect monitor, PixelRect workArea, double scale, DipSize expanded, IslandPlacement placement = IslandPlacement.Top, bool flushTop = false)
+    /// <param name="taskbarPosition">Inside the taskbar: where the pill's middle is, 0 the screen's left edge, 1 its right.</param>
+    public static IslandLayout Compute(PixelRect monitor, PixelRect workArea, double scale, DipSize expanded, IslandPlacement placement = IslandPlacement.Top, bool flushTop = false, double taskbarPosition = 0.5)
     {
         if (!(scale > 0)) scale = 1;
         var fromBottom = placement != IslandPlacement.Top;
         var flush = flushTop && !fromBottom;
         var gap = flush ? 0 : IslandMetrics.TopMargin;
+        // Inside the taskbar the pill rests in the middle of its band. A taskbar that hides itself, or stands at the side or
+        // the top, leaves no band at the bottom: the island then stands on the work area's edge, as on the taskbar.
+        var band = (monitor.Bottom - Math.Min(workArea.Bottom, monitor.Bottom)) / scale;
+        var inside = placement == IslandPlacement.InTaskbar && band >= IslandMetrics.PillHeight * 0.75;
+        var sink = inside ? gap + (band + IslandMetrics.PillHeight) / 2 : 0;
         var align = placement switch
         {
-            IslandPlacement.TaskbarLeft => -1,
+            IslandPlacement.TaskbarLeft => 0,
             IslandPlacement.TaskbarRight => 1,
-            _ => 0,
+            _ => 0.5,
         };
 
         var top = Math.Max(workArea.Y, monitor.Y);
@@ -208,12 +226,26 @@ public sealed record IslandLayout
         var inset = Math.Min(IslandMetrics.SideInset, Math.Max(canvas.Width - width, 0));
         var (windowX, areaX) = align switch
         {
-            < 0 => (left, inset),
-            > 0 => (right - windowWidth, canvas.Width - inset - width),
+            _ when placement == IslandPlacement.InTaskbar => (0, 0.0),
+            0 => (left, inset),
+            1 => (right - windowWidth, canvas.Width - inset - width),
             _ when fromBottom => (left + (right - left - windowWidth) / 2, (canvas.Width - width) / 2),
             _ => (monitor.X + (monitor.Width - windowWidth) / 2, (canvas.Width - width) / 2),
         };
-        var windowY = fromBottom ? Math.Min(workArea.Bottom, monitor.Bottom) - windowHeight : top;
+        if (placement == IslandPlacement.InTaskbar)
+        {
+            // The open island is centred on the pill, as far as the screen allows; the pill keeps its place within it.
+            var middle = monitor.X + Math.Clamp(taskbarPosition, 0, 1) * monitor.Width;
+            var widthPixels = width * scale;
+            var lowest = monitor.X + IslandMetrics.SideInset * scale;
+            var highest = monitor.Right - IslandMetrics.SideInset * scale - widthPixels;
+            var areaLeft = highest < lowest ? monitor.X + (monitor.Width - widthPixels) / 2 : Math.Clamp(middle - widthPixels / 2, lowest, highest);
+            windowX = (int)Math.Round(Math.Clamp(areaLeft - (canvas.Width - width) / 2 * scale, monitor.X, Math.Max(monitor.X, monitor.Right - windowWidth)));
+            areaX = (areaLeft - windowX) / scale;
+            var pillMiddle = (middle - areaLeft) / scale;
+            align = width > IslandMetrics.IdlePillWidth ? Math.Clamp((pillMiddle - IslandMetrics.IdlePillWidth / 2) / (width - IslandMetrics.IdlePillWidth), 0, 1) : 0.5;
+        }
+        var windowY = fromBottom ? Math.Min(Math.Min(workArea.Bottom, monitor.Bottom) + Pixels(sink, scale), monitor.Bottom) - windowHeight : top;
         var area = fromBottom
             ? new DipRect(areaX, canvas.Height - gap - height, width, gap + height)
             : new DipRect(areaX, 0, width, gap + height);
@@ -221,8 +253,7 @@ public sealed record IslandLayout
         DipRect Pill(double pillWidth)
         {
             pillWidth = Math.Min(pillWidth, width);
-            var x = align switch { < 0 => 0, > 0 => width - pillWidth, _ => (width - pillWidth) / 2 };
-            return new DipRect(x, pillY, pillWidth, IslandMetrics.PillHeight);
+            return new DipRect((width - pillWidth) * align, pillY, pillWidth, IslandMetrics.PillHeight);
         }
 
         return new IslandLayout
@@ -236,6 +267,7 @@ public sealed record IslandLayout
             Expanded = new DipRect(0, fromBottom ? 0 : gap, width, height),
             FromBottom = fromBottom,
             Align = align,
+            InTaskbar = inside,
             Flush = flush,
         };
     }

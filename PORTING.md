@@ -113,6 +113,13 @@ Windows'ta ikisi de serbest, bu yüzden kullanıcı isteğiyle eklendi. Hepsinin
 - **Konum:** ekranın üstü (varsayılan) ya da görev çubuğunun üstünde solda, ortada, sağda. Görev çubuğundayken pill çalışma
   alanının altından 6 DIP yukarıda durur, ada yukarı doğru açılır (yaylar ve boyutlar aynı); köşede ekran kenarından 16 DIP içeride,
   o kenara yaslanarak büyür. Banner'larda boş pill satırı yok (0.2.7, aşağıda "Windows'a özgü: oyunlar…"). Görev çubuğundaki simgeleri kapatmaz.
+- **Görev çubuğunun içinde** (0.2.9, kullanıcı isteği: "görev çubuğunun içine ama konumu ayarlanabilir olsun, görev
+  çubuğundan adayı açayım"): kapalı ada görev çubuğunun şeridinin ortasında durur (çalışma alanının altıyla ekranın altı
+  arası), yeri **Görev çubuğundaki yeri** kaydırıcısıyla %0–100 (pill'in ortası, varsayılan %25). Açılınca pill'in alt
+  kenarından yukarı doğru, ekran kenarından 16 DIP içeride kalarak büyür; geniş pill ve banner'lar pill'in yerini korur
+  (`IslandLayout.Align` artık 0–1 arası bir oran). Şerit ayrılmaz. Görev çubuğuna tıklanınca görev çubuğu kendini en üste
+  alır; ada bunu `EVENT_SYSTEM_FOREGROUND` ile duyar ve hemen ve 250 ms sonra yeniden en üste çıkar. Kendini gizleyen ya da
+  yanda/üstte duran görev çubuğunda şerit yok: ada çalışma alanının kenarında durur.
 - **Üst kenara bitişik:** pill'in üstünde boşluk yok; ada Mac'in notch şekli olur (IslandShape.swift): üst kenara iki içbükey
   omuzla akar (boşta 0, geniş pill ve peek 6, banner 8, açık ada 10 DIP) ve alt köşeleri Mac'teki gibi yuvarlanır (boşta 9, geniş pill
   12, peek 14, banner 20, açık ada temanınki). Omuzlar, köşesine çember ortalanmış kalın bir halka olarak çizilip kareye kırpılır (bu
@@ -452,6 +459,16 @@ Her modülde: Mac dosyaları → Windows karşılığı → önemli davranışla
 - **Windows'ta yapılan (2026-10-29):**
   - **Bulma:** PATH'e körü körüne güvenilmez. Sabit kurulum yerleri (`%USERPROFILE%\.local\bin`, `%LOCALAPPDATA%\agy\bin`,
     `%APPDATA%\npm`, bun/volta/pnpm) ve kullanıcının PATH'inde yalnızca profil ya da Program Files altındaki klasörler.
+    0.2.9'dan beri bunlarda yoksa masaüstü uygulamalarının kendi kopyası (en yenisi): Claude'un Code sekmesininki
+    `%LOCALAPPDATA%\Claude-Data\<paket>\claude-code\<sürüm>\<yapı>\claude.exe` (önce `%APPDATA%\Claude\claude-code`),
+    Codex uygulamasınınki `%LOCALAPPDATA%\OpenAI\Codex\bin\<yapı>\codex.exe`, Codex kurucusununki
+    `%USERPROFILE%\.codex\packages\standalone\current\bin\codex.exe`. Kullanıcı ikisini de "Bulunamadı" görüyordu; uygulamanın
+    `claude.exe`'si ISLe8'in ortamıyla oturumu görüyor (`auth status`: loggedIn). Antigravity uygulamasında agy yok.
+  - **Pencere yok** (0.2.9): kullanıcı "cmd hâlâ açılıyor" dedi. CLI'lar artık `CreateProcess` ile ISLe8'in görünmeyen kendi
+    masaüstünde (`WinSta0\ISLe8-cli`), askıda başlar ve Job'a girdikten sonra devam eder (önce Job'a başladıktan sonra
+    giriyordu, o arada başlattıkları dışarıda kalabilirdi). Yalnızca üç boru ucu miras alınır. Deneme: yeni konsol isteyen
+    `start /min` bu masaüstünde pencere açmadı, normal masaüstünde `ConsoleWindowClass` açtı. Süre dolunca Job sonlandırılır;
+    bekleyen okuma boru kapanınca biter.
     npm kısayolu (`.cmd`) cmd.exe ya da node olmadan, gösterdiği yerel ikiliye çözülür: Claude Code paketindeki
     `claude.exe`, Codex'in platform paketindeki `codex.exe`.
   - **Güven:** Mac'teki sahiplik/izin denetiminin karşılığı ACL denetimi. Dosya, klasörü (DLL yerleştirilebilecek yer) ve üstündeki
@@ -698,6 +715,10 @@ Bir kullanıcının geri bildirimiyle eklendi; Mac'te karşılıkları yok.
   - **Genel › Oyun oynarken gizle** (varsayılan açık): ada, oyunun ekranında tam ekrandaki gibi gizlenir ve uyarılar bekletilmez.
 - **Performans göstergesi** (Genel; Kapalı / Oyun oynarken / Her zaman): geniş pill'de FPS, CPU ve GPU kullanımı ve sıcaklıkları.
   - Açıkken ada oyunun üstünde kalır; değerler saniyede bir, yalnızca gösterge görünürken alınır.
+  - **Gösterilecekler** (0.2.9): FPS, CPU, GPU, Sıcaklık, RAM, Saat düğmeleri; varsayılan ilk dördü. Pill seçilenlerin en geniş
+    hâline göre genişler (`PerformanceMath.Widest` ölçülür, değerler değişince oynamaz), boş pill'den dar olmaz. Saat en başta,
+    kullanıcının kısa saat biçiminde. RAM: `GlobalMemoryStatusEx`, Görev Yöneticisi'nin kullanılan payı.
+  - Oyun öndeyken pill'in üzerine gelmek ya da tıklamak adayı açmaz, büyütmez (0.2.9, kullanıcı: "oyundayken açılmamalı").
   - **CPU:** `GetSystemTimes`.
   - **GPU:** `GPU Engine(*engtype_3D)\Utilization Percentage` (PDH, İngilizce adıyla). Her bağdaştırıcının süreçleri
     toplanır; Görev Yöneticisi gibi en meşgul bağdaştırıcı gösterilir.
@@ -708,6 +729,15 @@ Bir kullanıcının geri bildirimiyle eklendi; Mac'te karşılıkları yok.
   - **FPS:** ISLe8'in kendi ETW oturumu (`ISLe8 frames`). Yalnızca DXGI `Present_Start` (42) ve D3D9 `Present_Start` (1)
     olayları, öndeki oyunun süreci için sayılır. Oturumu yalnızca bir yönetici ya da "Performance Log Users" üyesi
     açabilir; değilse FPS gösterilmez. Doğrulama: bir Direct3D programında 370–530 FPS.
+  - 0.2.9: oyun yoksa öndeki programın kareleri sayılır (pencerede, Game Bar'ın tanımadığı oyunlar da), yalnızca çiziyorsa
+    gösterilir. ETW'ye izin yoksa ve RivaTuner Statistics Server açıksa onun paylaşılan belleğinden (`RTSSSharedMemoryV2`,
+    yönetici gerekmez; eşlenen bölgenin dışı okunmaz). İzin yoksa Ayarlar'da grubun Windows dilindeki adıyla
+    `net localgroup "…" "…" /add` komutu ve Kopyala düğmesi; ISLe8 kendisi yükseltilmiş komut çalıştırmaz (Defender'ın
+    0.2.7'deki yanlış alarmından sonra bu kalıptan kaçınıldı).
+- **Ekran görüntüsü** (0.2.9, kullanıcı: "ss moduna geçince kendini direkt görünmez yapıyor"): Win+Shift+S'nin ve ekran
+  görüntüsü araçlarının (Ekran Alıntısı Aracı, ShareX, Lightshot, Greenshot, Snagit, Game Bar, PowerToys …) ekranı kaplayan
+  penceresi tam ekran uygulama ya da oyunun gidişi sayılmaz; ada görüntüde kalır (`CaptureTools`). Kabuk bildirimi aracın
+  penceresi odak almadan gelebildiği için ekranı kaplayan en üstteki pencereye de bakılır.
 - **Kapalı ada** (Görünüm › Ada; Siyah / Temaya uysun / Saydam):
   - Mac'te kapalı ada çentikle bir olsun diye hep siyah. "Temaya uysun" açık adanın rengini, gradyanını ve camını kullanır.
   - "Saydam" siyahın %30'unu bırakır; beyaz içerik okunur, görev çubuğu ya da masaüstü arkadan görünür.
@@ -719,8 +749,9 @@ Bir kullanıcının geri bildirimiyle eklendi; Mac'te karşılıkları yok.
 - **FluentFlyout** (Sistem › FluentFlyout açıkken ona bırak, varsayılan açık): FluentFlyout ses ve medya tuşlarında kendi
   penceresini gösteriyor. FluentFlyout.exe çalışırken ada ses göstergesini ve yeni şarkı bildirimini göstermez.
 - **Ajanlar › Kullanım limitleri:** her CLI'ın kartı bulunup bulunmadığını gösterir: yolu; "bulunamadı" (yalnızca masaüstü
-  uygulaması yetmez); ya da başka kullanıcıların yazabildiği bir klasörde olduğu için çalıştırılmadığını. Adada yalnızca
-  bulunanların limitleri vardı; neden diğerlerinin görünmediği söylenmiyordu.
+  uygulaması yetmez, 0.2.7; 0.2.9'dan beri Claude ve Codex uygulamalarının kendi kopyası da bulunur, §3.13); ya da başka
+  kullanıcıların yazabildiği bir klasörde olduğu için çalıştırılmadığını. Adada yalnızca bulunanların limitleri vardı; neden
+  diğerlerinin görünmediği söylenmiyordu.
 
 ## 4. DESIGN.md §4 ile farklar
 
