@@ -251,8 +251,8 @@ public class AgentTests
     public void BannersAndTheTimeoutKeepToTheMac()
     {
         var approval = new AgentApproval(1, "s", AgentKind.Claude, "p", "Bash", default);
-        Assert.Equal(new DipSize(440, 132), IslandSizes.Alert(new ApprovalAlert(approval)));
-        Assert.Equal(new DipSize(400, 82), IslandSizes.Alert(new AgentDoneAlert(new AgentSession("s", AgentKind.Claude, "p", default))));
+        Assert.Equal(new DipSize(440, 106), IslandSizes.Alert(new ApprovalAlert(approval)));
+        Assert.Equal(new DipSize(400, 56), IslandSizes.Alert(new AgentDoneAlert(new AgentSession("s", AgentKind.Claude, "p", default))));
         Assert.Equal(TimeSpan.FromSeconds(15), AlertDurations.Approval);
         var settings = new AppSettings { AgentApprovalTimeout = 400 };
         settings.Normalize();

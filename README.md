@@ -23,12 +23,15 @@ sürümü; C# + WinUI 3, .NET 10, Native AOT, x64 ve ARM64.
 - **AI:** Claude Code ve Codex'in ne yaptığı, adım adım; izin isteklerine adadan Onayla / Reddet. Codex, Claude ve
   Antigravity'nin kalan kotası her servisin kendi CLI'sinden okunur; parola ya da token okunmaz.
 - **Cihazlar:** bu bilgisayarın ve Bluetooth cihazlarının pili (AirPods'ta iki kulaklık ve kutu ayrı); Razer,
-  SteelSeries Arctis Nova Pro Omni ve ASUS ROG Omni Receiver alıcılarındaki cihazlar da.
+  SteelSeries Arctis Nova Pro Omni ve Arctis 7+ / 7P+ / 7X+, ASUS ROG Omni Receiver alıcılarındaki cihazlar da.
 - **Sistem:** işlemci, bellek, disk, ağ hızı ve en çok işlemci kullanan süreçler.
-- **Raf, Pano, Notlar:** sürüklenen dosyalar, pano geçmişi, notlar.
+- **Oyunlar:** Windows'un tanıdığı bir oyun öndeyken ada hareketsiz kalır ya da gizlenir; istersen küçük adada FPS, CPU ve
+  GPU kullanımı ve sıcaklıkları.
+- **Raf, Pano, Notlar:** sürüklenen dosyalar, pano geçmişi, notlar (Shift+Enter yeni satır).
 - **Uyarılar:** şarj, Ethernet kablosu ve düşük pil; ses ve parlaklık göstergesi (isteğe bağlı, Windows'unkinin yerine).
 - **Kişiselleştirme:** Mac'tekiyle aynı 7 tema; ada ekranın üstünde ya da görev çubuğunun üstünde solda, ortada, sağda;
-  boştayken saat, çalan şarkının adı, tam ekranda gizlenme. Türkçe / İngilizce.
+  kapalıyken siyah, temaya uyan ya da saydam; boştayken ince çubuk, saat, çalan şarkının adı; tam ekranda gizlenme.
+  Türkçe / İngilizce.
 
 ## İndir ve çalıştır
 
@@ -38,6 +41,10 @@ sürümü; C# + WinUI 3, .NET 10, Native AOT, x64 ve ARM64.
 3. Windows "bilgisayarınızı korudu" derse: **Ek bilgi › Yine de çalıştır** (uygulama henüz imzalı değil).
 
 Gereken: Windows 10 2004+ ya da Windows 11.
+
+**Bildirim aynası için kurulu sürüm:** Windows başka uygulamaların bildirimlerini yalnızca kurulu (paketli) uygulamalara
+okutur. Zip'ten açılan ISLe8'de **Ayarlar › Bildirimler › Kurulu sürüme geç**: paket henüz imzasız olduğundan önce
+Windows Ayarları › Sistem › Geliştiriciler için › **Geliştirici Modu**'nu açman gerekir. Sonra **Kur ve geç**; ayarlar kalır.
 
 **Güncelleme:** ISLe8 yeni sürümü günde bir kez GitHub'a sorar. **Ayarlar › Genel › Güncellemeler**'de ya da bildirim
 alanı simgesinin menüsünde **Güncelle**: indirir, SHA-256'sını denetler, kendini değiştirip yeniden açılır; ayarlar kalır.

@@ -27,6 +27,20 @@ public enum IslandPlacement
     TaskbarRight,
 }
 
+/// <summary>
+/// How the island looks while closed (Windows only). The Mac's is always black, to match the notch; here
+/// it can take the theme, or let the taskbar or desktop show through.
+/// </summary>
+[JsonConverter(typeof(LenientEnumConverter<ClosedLook>))]
+public enum ClosedLook
+{
+    Black,
+    /// <summary>The open island's theme, glass and gradients included.</summary>
+    Theme,
+    /// <summary>Translucent: a light dark tint behind the pill's content.</summary>
+    Clear,
+}
+
 /// <summary>How much Home shows; the Mac's names. Shown as Wide, Compact and Minimal ("Pano" is a tab).</summary>
 [JsonConverter(typeof(LenientEnumConverter<HomeStyle>))]
 public enum HomeStyle
@@ -180,6 +194,12 @@ public sealed class AppSettings
     /// <summary>ISLe8 takes the volume keys, so Windows' own volume HUD stays away (the Mac's replaceSystemHUD, off by default).</summary>
     public bool ReplaceSystemHud { get; set; }
 
+    /// <summary>
+    /// Settings › System (Windows only): while FluentFlyout runs, its volume and media flyouts speak for the keys,
+    /// so the island shows no volume HUD and no new-song banner of its own; two at once was the clash.
+    /// </summary>
+    public bool YieldToFluentFlyout { get; set; } = true;
+
     /// <summary>Settings › System › Battery: plugged in, unplugged, and the battery at 20 % and 10 %.</summary>
     public bool ShowBatteryAlerts { get; set; } = true;
 
@@ -196,6 +216,15 @@ public sealed class AppSettings
     /// <summary>Settings › General: a full-screen app (a game, a video, a presentation) hides the island.</summary>
     public bool HideInFullscreen { get; set; } = true;
 
+    /// <summary>
+    /// Settings › General (Windows only): a game Windows recognises, even in a window, hides the island on its monitor.
+    /// Whatever this says, nothing on the island moves while a game is in front.
+    /// </summary>
+    public bool HideWhileGaming { get; set; } = true;
+
+    /// <summary>Settings › General (Windows only): frames, CPU and GPU on the pill.</summary>
+    public SystemInfo.PerformancePill PerformancePill { get; set; } = SystemInfo.PerformancePill.Off;
+
     /// <summary>Settings › Appearance › Island: where the island sits.</summary>
     public IslandPlacement Placement { get; set; } = IslandPlacement.Top;
 
@@ -204,6 +233,11 @@ public sealed class AppSettings
 
     /// <summary>The idle pill shows the time.</summary>
     public bool ShowIdleClock { get; set; }
+
+    /// <summary>The idle pill is a thin bar until the pointer comes (<see cref="Geometry.IslandLayout.Bar"/>).</summary>
+    public bool IdleBar { get; set; }
+
+    public ClosedLook ClosedLook { get; set; } = ClosedLook.Black;
 
     /// <summary>While music plays, the wide pill shows the song's title between the artwork and the bars, scrolling if it is long.</summary>
     public bool ShowPillTitle { get; set; }

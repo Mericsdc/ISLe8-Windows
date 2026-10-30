@@ -1,6 +1,7 @@
 using ISLe8.Core.Notifications;
 using ISLe8.Localization;
 using ISLe8.Notifications;
+using ISLe8.Shell;
 using ISLe8.UI;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
@@ -39,6 +40,7 @@ internal static class NotificationsPage
         retry.Click += (_, _) => service.ApplySettings();
         var access = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Children = { status, allow, windows, retry } };
         page.Children.Add(SettingsUi.Card(palette, L.Get("Notifications_Access"), access, L.Get("Notifications_AccessNote")));
+        if (!AppPackage.IsInstalled) page.Children.Add(MoveCard(context));
 
         page.Children.Add(SettingsUi.Gap());
         page.Children.Add(SettingsUi.Card(palette, L.Get("Notifications_Focus"), SettingsUi.Switch(settings.RespectFocus, on =>
@@ -108,5 +110,47 @@ internal static class NotificationsPage
                 context.Save();
             })));
         }
+    }
+
+    /// <summary>
+    /// The zip's ISLe8 can't read notifications; this card moves it to the installed one (Windows only):
+    /// Developer Mode first, then the package from the latest release (<see cref="Updater.MoveToPackageAsync"/>).
+    /// </summary>
+    private static Border MoveCard(SettingsContext context)
+    {
+        var updater = context.Island.Updater;
+        var state = SettingsUi.Description(context.Palette, "");
+        var developer = new Button { Content = L.Get("Notifications_DeveloperMode") };
+        developer.Click += async (_, _) => await Windows.System.Launcher.LaunchUriAsync(new Uri("ms-settings:developers"));
+        var move = new Button { Content = L.Get("Notifications_MoveToPackage"), Style = (Style)Application.Current.Resources["AccentButtonStyle"] };
+        void Refresh()
+        {
+            var busy = updater.State is Shell.UpdateState.Checking or Shell.UpdateState.Downloading or Shell.UpdateState.Installing;
+            var ready = Updater.DeveloperModeOn;
+            developer.Visibility = ready ? Visibility.Collapsed : Visibility.Visible;
+            move.IsEnabled = ready && !busy;
+            state.Text = updater.State switch
+            {
+                Shell.UpdateState.Downloading => L.Format("Update_Downloading", (int)(updater.Progress * 100)),
+                Shell.UpdateState.Installing or Shell.UpdateState.Checking => L.Get("Notifications_Moving"),
+                Shell.UpdateState.Failed when updater.Problem is { } problem => problem,
+                _ => L.Get(ready ? "Notifications_MoveReady" : "Notifications_MoveNeedsDeveloperMode"),
+            };
+        }
+        move.Click += async (_, _) =>
+        {
+            Refresh();
+            if (Updater.DeveloperModeOn) await updater.MoveToPackageAsync();
+        };
+        developer.Click += (_, _) => Refresh();
+        updater.Changed += Refresh;
+        var buttons = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Children = { developer, move } };
+        var card = SettingsUi.Card(context.Palette, L.Get("Notifications_Install"), buttons, state);
+        card.Unloaded += (_, _) => updater.Changed -= Refresh;
+        // Back from Windows Settings with Developer Mode on, the card says so.
+        card.GotFocus += (_, _) => Refresh();
+        card.PointerEntered += (_, _) => Refresh();
+        Refresh();
+        return card;
     }
 }

@@ -104,7 +104,7 @@ public class BannerAndHomeTests
         Wait(2500);
 
         Assert.Equal([true, false], growing);
-        Assert.Equal(new DipSize(340, 78), IslandSizes.Alert(Song));
+        Assert.Equal(new DipSize(340, 52), IslandSizes.Alert(Song));
     }
 
     // MARK: Home

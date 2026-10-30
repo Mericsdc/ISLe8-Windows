@@ -14,6 +14,8 @@ using ISLe8.Core.Weather;
 using ISLe8.Interop;
 using ISLe8.Core.Motion;
 using ISLe8.Core.Settings;
+using ISLe8.Core.Status;
+using ISLe8.Core.SystemInfo;
 using ISLe8.Core.Theming;
 using ISLe8.Localization;
 using ISLe8.Agents;
@@ -72,6 +74,8 @@ internal sealed class IslandController : IDisposable
     private readonly Usage.UsageService _usage;
     private readonly SystemStatus _status;
     private readonly MemoryTrim _trim;
+    private readonly GameWatch _games;
+    private readonly PerformanceSampler _performance;
     private readonly Updater _updater;
     private HotKey? _clipboardKey;
     private nint _foregroundBeforeKeyboard;
@@ -104,6 +108,8 @@ internal sealed class IslandController : IDisposable
         _devices = new DeviceService(_queue, clock);
         _status = new SystemStatus(_settings, _devices, _queue);
         _trim = new MemoryTrim(_queue);
+        _games = new GameWatch(_queue);
+        _performance = new PerformanceSampler(_queue);
         _updater = new Updater(_settings, () => _store.Save(_settings), _queue, () => ((App)Application.Current).Quit());
         _agents = new AgentHub(_settings, clock);
         _agentServer = new AgentServer(_agents, _queue);
@@ -187,6 +193,21 @@ internal sealed class IslandController : IDisposable
 
     /// <summary>Settings › General › Hide in full screen.</summary>
     public void ApplyFullscreenSetting() => _window.ApplyFullscreenSetting();
+
+    /// <summary>Settings › General › Hide while gaming changed.</summary>
+    public void ApplyGameSetting()
+    {
+        _window.SetGameInFront(_games.GameWindow);
+        UpdatePerformance();
+        UpdateBars();
+    }
+
+    /// <summary>The performance pill is wanted: always, or while a game is in front (Settings › General; Windows only).</summary>
+    private void UpdatePerformance()
+    {
+        _performance.FrameProcess = _games.GameProcess;
+        _model.SetPerformanceLive(_settings.PerformancePill == PerformancePill.Always || _settings.PerformancePill == PerformancePill.Gaming && _games.IsGameInFront);
+    }
 
     /// <summary>Settings › Appearance › Hide in screenshots and screen sharing.</summary>
     public void ApplyCapture() => _window.SetExcludedFromCapture(_settings.HideFromScreenCapture);
@@ -282,7 +303,16 @@ internal sealed class IslandController : IDisposable
         ApplyCapture();
         _window.LayoutChanged += ApplyLayout;
         _window.FullscreenChanged += _ => UpdateBars();
+        _games.Changed += () =>
+        {
+            _window.SetGameInFront(_games.GameWindow);
+            UpdatePerformance();
+            UpdateBars();
+        };
+        _performance.Changed += () => _view.Performance.Show(_performance.Sample, L.Culture);
         _window.Show();
+        _games.Start();
+        UpdatePerformance();
         // Once starting up (the usage CLIs, the first layout) is over.
         _trim.Schedule();
         _updater.Start();
@@ -293,6 +323,8 @@ internal sealed class IslandController : IDisposable
 
     public void Dispose()
     {
+        _games.Dispose();
+        _performance.Run(false);
         _outsideClicks.Dispose();
         _clipboardKey?.Dispose();
         _notifications.Dispose();
@@ -429,6 +461,7 @@ internal sealed class IslandController : IDisposable
         _view.SetDropTarget(layout.Open(IslandSizes.DropTarget));
         _surface.SetLayout(layout);
         _surface.JumpTo(shape, Corner(shape, state), shadow: expanded, Shoulder(state));
+        _surface.SetClosedLook(_settings.ClosedLook);
         _surface.SetOpen(expanded || alert || dropTarget, animate: false);
         _window.SetHitRegion(Region(layout, state));
         _outline.Reset(layout.OpenRegion(open));
@@ -489,14 +522,17 @@ internal sealed class IslandController : IDisposable
         IslandState.Alert => AlertRect(layout),
         IslandState.DropTarget => layout.Open(IslandSizes.DropTarget),
         IslandState.Peek => layout.Peek(_model.Pill),
-        _ => layout.Pill(_model.Pill),
+        _ => IsBar(state) ? layout.Bar() : layout.Pill(_model.Pill),
     };
+
+    /// <summary>The idle pill rests as a thin bar (Settings › Appearance › Island; Windows only).</summary>
+    private bool IsBar(IslandState state) => _settings.IdleBar && state == IslandState.Pill && _model.Pill == PillKind.Idle;
 
     /// <summary>
     /// Pills and the peek are fully round at the ends; the open island follows the theme's corners.
     /// Flush with the top, the island is the Mac's notch shape and takes its bottom corners.
     /// </summary>
-    private double Corner(DipRect shape, IslandState state) => _window.Layout is { Flush: true }
+    private double Corner(DipRect shape, IslandState state) => IsBar(state) ? shape.Height / 2 : _window.Layout is { Flush: true }
         ? IslandSizes.FlushRadius(state, _model.Pill, _settings.Theme)
         : state switch
     {
@@ -508,7 +544,7 @@ internal sealed class IslandController : IDisposable
     };
 
     /// <summary>The notch shape's shoulders when flush with the top; none otherwise.</summary>
-    private double Shoulder(IslandState state) => _window.Layout is { Flush: true } ? IslandSizes.FlushShoulder(state, _model.Pill) : 0;
+    private double Shoulder(IslandState state) => !IsBar(state) && _window.Layout is { Flush: true } ? IslandSizes.FlushShoulder(state, _model.Pill) : 0;
 
     /// <summary>The part of the window that takes the mouse in <paramref name="state"/>, in window pixels.</summary>
     private PixelRect Region(IslandLayout layout, IslandState state)
@@ -685,7 +721,7 @@ internal sealed class IslandController : IDisposable
     {
         var wanted = _settings.ShowIdleClock;
         _view.Clock.SetRunning(wanted);
-        var shown = wanted && _model.State is IslandState.Pill or IslandState.Peek && _model.Pill == PillKind.Idle;
+        var shown = wanted && (_model.State == IslandState.Peek || _model.State == IslandState.Pill && !_settings.IdleBar) && _model.Pill == PillKind.Idle;
         if (!animate)
         {
             IslandSurface.SetOpacity(_view.Clock.Root, shown ? 1 : 0);
@@ -789,7 +825,7 @@ internal sealed class IslandController : IDisposable
         if (_model.State == IslandState.Alert) _view.Banner.Refresh();
         LoadArtwork();
         _model.SetLive(now?.IsPlaying == true);
-        if (_trackChanges.Update(now) && _settings.ShowTrackChangeAlert && !_window.IsHiddenForFullscreen)
+        if (_trackChanges.Update(now) && _settings.ShowTrackChangeAlert && !_window.IsHiddenForFullscreen && !YieldsToFluentFlyout(true))
         {
             _model.ShowAlert(new NowPlayingAlert(), AlertDurations.NowPlaying);
         }
@@ -856,7 +892,7 @@ internal sealed class IslandController : IDisposable
         };
         _status.Hud += value =>
         {
-            if (!_window.IsHiddenForFullscreen) _model.ShowHud(value);
+            if (!_window.IsHiddenForFullscreen && !YieldsToFluentFlyout(value.Kind == HudKind.Volume)) _model.ShowHud(value);
         };
         _status.Changed += () =>
         {
@@ -871,6 +907,9 @@ internal sealed class IslandController : IDisposable
         _window.AddMessageHandler(_status.Brightness.OnMessage);
         _status.Start();
     }
+
+    /// <summary>FluentFlyout runs and Settings › System leaves the keys to it; <paramref name="applies"/>: a volume HUD or a song banner.</summary>
+    private bool YieldsToFluentFlyout(bool applies) => applies && _settings.YieldToFluentFlyout && OtherFlyouts.FluentFlyoutRunning();
 
     // MARK: Keyboard
 
@@ -914,9 +953,11 @@ internal sealed class IslandController : IDisposable
     /// </summary>
     private void UpdateBars()
     {
-        var playing = _media.Current?.IsPlaying == true && !_window.IsHiddenForFullscreen;
+        // Over a game nothing moves, hidden or not: the compositor would draw the island every frame over it.
+        var still = _window.IsHiddenForFullscreen || _games.IsGameInFront;
+        var playing = _media.Current?.IsPlaying == true && !still;
         var state = _model.State;
-        var earsSeen = state is IslandState.Pill or IslandState.Peek && _model.Pill == PillKind.Compact && !_window.IsHiddenForFullscreen;
+        var earsSeen = state is IslandState.Pill or IslandState.Peek && _model.Pill == PillKind.Compact && !still;
         _view.ShowEar(_model.Activity, earsSeen);
         if (playing && _settings.AudioBars && earsSeen && _model.Activity == PillActivity.Media) _view.Bars.Start();
         else _view.Bars.Stop();
@@ -925,6 +966,9 @@ internal sealed class IslandController : IDisposable
         // The title scrolls only while the wide pill can be seen; otherwise it waits where it started.
         var title = _settings.ShowPillTitle && _media.Current is { Title: { Length: > 0 } name } ? name : null;
         _view.PillTitle.Show(title, running: earsSeen && _model.Activity == PillActivity.Media && title is not null);
+        // The performance pill is meant for over a game: it samples whenever it can be seen.
+        _performance.Run(state is IslandState.Pill or IslandState.Peek && _model.Pill == PillKind.Compact
+            && _model.Activity == PillActivity.Performance && !_window.IsHiddenForFullscreen);
     }
 
     private async void LoadArtwork()

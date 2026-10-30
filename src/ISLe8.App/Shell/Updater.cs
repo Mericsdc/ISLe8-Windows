@@ -169,6 +169,94 @@ internal sealed class Updater
         }
     }
 
+    /// <summary>
+    /// Windows lets an unsigned package in only with Developer Mode on (Settings › System › For developers),
+    /// which is what <see cref="MoveToPackageAsync"/> needs.
+    /// </summary>
+    public static bool DeveloperModeOn
+    {
+        get
+        {
+            using var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock");
+            return key?.GetValue("AllowDevelopmentWithoutDevLicense") is int on && on != 0;
+        }
+    }
+
+    /// <summary>
+    /// Settings › Notifications, on the zip's ISLe8 (Windows only): the latest release's package is downloaded and
+    /// checked like an update, unpacked to stay in the data folder, and registered by a script once this ISLe8
+    /// quits; the installed ISLe8 then starts, with the same settings and history (they live in the data folder
+    /// for both). The zip's own login entry goes, so only the installed one starts at login. On failure the zip's
+    /// ISLe8 starts again and says why.
+    /// </summary>
+    public async Task MoveToPackageAsync()
+    {
+        if (AppPackage.IsInstalled || State is UpdateState.Checking or UpdateState.Downloading or UpdateState.Installing) return;
+        Set(UpdateState.Checking);
+        var folder = Path.Combine(AppPaths.DataFolder, "updates");
+        try
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, UpdateRules.LatestRelease);
+            request.Headers.Accept.ParseAdd("application/vnd.github+json");
+            using var response = await Http.SendAsync(request);
+            response.EnsureSuccessStatusCode();
+            var rid = RuntimeInformation.ProcessArchitecture == Architecture.Arm64 ? "win-arm64" : "win-x64";
+            if (UpdateRules.Parse(await response.Content.ReadAsStringAsync()) is not { } release
+                || UpdateRules.AssetFor(release, rid, packaged: true) is not { } asset || !UpdateRules.IsTrusted(asset.Url))
+            {
+                Fail(Localization.L.Format("Update_NoFile", "latest"));
+                return;
+            }
+            if (Directory.Exists(folder)) Directory.Delete(folder, recursive: true);
+            Directory.CreateDirectory(folder);
+            var zip = Path.Combine(folder, asset.Name);
+            Set(UpdateState.Downloading, progress: 0);
+            await DownloadAsync(asset, zip);
+            if (asset.Sha256 is { } expected)
+            {
+                await using var file = File.OpenRead(zip);
+                if (Convert.ToHexStringLower(await SHA256.HashDataAsync(file)) != expected) throw new IOException(Localization.L.Get("Update_BadFile"));
+            }
+            Set(UpdateState.Installing);
+            var unpacked = Path.Combine(folder, "new");
+            await Task.Run(() => ZipFile.ExtractToDirectory(zip, unpacked));
+            var source = Directory.Exists(Path.Combine(unpacked, "ISLe8")) ? Path.Combine(unpacked, "ISLe8") : unpacked;
+            if (!File.Exists(Path.Combine(source, "AppxManifest.xml"))) throw new IOException(Localization.L.Get("Update_BadFile"));
+            var script = Path.Combine(folder, "move.ps1");
+            await File.WriteAllTextAsync(script, MoveScript, System.Text.Encoding.UTF8);
+            await File.WriteAllLinesAsync(Path.Combine(folder, "move.txt"),
+                [Environment.ProcessId.ToString(System.Globalization.CultureInfo.InvariantCulture), source, Path.Combine(AppPaths.DataFolder, "package"),
+                 Path.Combine(AppPaths.DataFolder, "update.log"), Path.Combine(AppContext.BaseDirectory, "ISLe8.exe"), LoginItem.Name]);
+            Log.Info($"package: {release.Tag} downloaded, handing over to move.ps1");
+            HandOver(script, packaged: false);
+            _quit();
+        }
+        catch (Exception e) when (e is HttpRequestException or TaskCanceledException or IOException or UnauthorizedAccessException or InvalidDataException or System.ComponentModel.Win32Exception)
+        {
+            Log.Error(e, "package");
+            Fail(e.Message);
+        }
+    }
+
+    /// <summary>Waits for the zip's ISLe8 to quit, puts the package in place, registers it and starts it; on failure, the zip's ISLe8 again.</summary>
+    private const string MoveScript = """
+        $ErrorActionPreference = 'Stop'
+        $Wait, $Source, $Target, $Log, $Zip, $RunName = Get-Content (Join-Path $PSScriptRoot 'move.txt') -Encoding UTF8
+        try { Wait-Process -Id ([int]$Wait) -Timeout 30 -ErrorAction SilentlyContinue } catch { }
+        Start-Sleep -Milliseconds 500
+        try {
+            if (Test-Path $Target) { Remove-Item $Target -Recurse -Force }
+            Move-Item $Source $Target
+            Add-AppxPackage -Register (Join-Path $Target 'AppxManifest.xml')
+            Remove-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run' -Name $RunName -ErrorAction SilentlyContinue
+            $family = (Get-AppxPackage com.lrxe8.isle8 | Where-Object InstallLocation -eq $Target | Select-Object -First 1).PackageFamilyName
+            Start-Process "shell:AppsFolder\$family!App"
+        } catch {
+            Add-Content $Log $_.Exception.Message
+            Start-Process $Zip
+        }
+        """;
+
     private async Task DownloadAsync(ReleaseAsset asset, string path)
     {
         using var response = await Http.GetAsync(asset.Url, HttpCompletionOption.ResponseHeadersRead);

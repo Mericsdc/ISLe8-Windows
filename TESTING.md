@@ -3,9 +3,9 @@
 Her maddeyi işaretle; olmayan varsa günlükle birlikte not et (README › Günlük ve ayarlar). W1'in
 adımları en üstte, W0'ın listesi altta.
 
-## Bir kullanıcının geri bildirimi (0.2.7 adayı, 2026-10-30)
+## Bir kullanıcının geri bildirimi (0.2.7, 2026-10-30)
 
-16 madde geldi. Düzeltilenler ve denenenler:
+16 madde geldi; kullanıcı Mac'e dokunmadan hepsinin Windows'ta düzeltilmesini istedi. Düzeltilenler ve denenenler:
 
 - [x] Notlar: Shift+Enter yeni satır, Enter ekler; `\r` kayıtta `\n` (birim testi).
 - [x] Notlar: yazarken imlecin çıkması adayı kapatmıyor, başka yere tıklamak kapatıyor (model testleri).
@@ -19,6 +19,23 @@ adımları en üstte, W0'ın listesi altta.
 - [x] Ölçüm: ajan çalışırken (pill'deki çubuklar ve nabız) ISLe8'in kompozisyon iş parçacığı (`dwmcorei.dll`) tek çekirdeğin
       ~%12'sini kullanıyor (müzik çubukları da aynı türden döngü). Pencereli oyunlarda bu kare kare çizim
       ve terminal penceresi (0.2.6'da düzeldi) en olası sebepler.
+- [x] Oyun algılama: Game Bar'ın listesinde bu makinede 8 oyun var (GTA V, FiveM, RuneScape…; PowerShell ile okundu), yol karşılaştırması birim
+      testinde. Oyun öndeyken çubuklar, nabız ve kayan başlık duruyor (`UpdateBars`, derleme temiz).
+- [ ] Oyun öndeyken gizlenme ve geri gelme canlı (bir oyun açılmadı).
+- [x] Performans göstergesi kaynakları bu makinede (perfprobe): GPU %30–35 (RTX 4080, LUID 0x112AF), GPU 72,6°C (nvidia-smi
+      72–73°C), işlemci yongası 83°C (entegre GPU), FPS 370–530 (DXGI kullanan bir program; kullanıcı "Performance Log
+      Users" grubunda). LibreHardwareMonitor açık değildi, o yol denenmedi.
+- [ ] Performans göstergesi adada canlı (ayar açılıp bakılmadı).
+- [x] Ses göstergesi tek satır, 260 DIP (birim testi); banner'larda boş pill satırı yok, müzik bildirimi 340×52 (birim testleri).
+- [ ] Ses göstergesi ve banner'lar ekranda (bakılmadı).
+- [x] Kapalı ada Siyah / Temaya uysun / Saydam, boştayken ince çubuk (çubuk geometrisi birim testinde, derleme temiz).
+- [ ] Kapalı ada görünümleri ve ince çubuk canlı (bakılmadı).
+- [x] FluentFlyout açıkken ses göstergesi ve yeni şarkı bildirimi gösterilmiyor (kod; FluentFlyout bu makinede yok).
+- [ ] FluentFlyout ile canlı; kullanıcının "video araması" dediği görüntü hâlâ bilinmiyor (ekran görüntüsü istendi).
+- [x] Ajanlar › Kullanım limitleri her CLI için bulundu / bulunamadı / güvenilmeyen klasör yazıyor (derleme temiz).
+- [x] Zip'ten kurulu sürüme geçiş kartı (Geliştirici Modu denetimi, paket indirme ve `move.ps1`; derleme temiz).
+- [ ] Zip'ten kurulu sürüme geçiş uçtan uca (bu makinede kurulu sürüm var, zip'ten denenmedi).
+- [x] Boşta, ajan çalışırken: CPU %0,29 (24 çekirdeğin toplamı), JIT yapı.
 
 ## agy'nin açıp kapattığı terminal penceresi (0.2.6, 2026-10-30)
 

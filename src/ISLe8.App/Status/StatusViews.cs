@@ -64,15 +64,20 @@ internal static class StatusGlyphs
 }
 
 /// <summary>
-/// Volume or brightness in the ears (SystemViews.swift, HUDAlertView): the icon on the left of the
-/// pill's middle, a level bar and its percentage on the right.
+/// Volume or brightness (SystemViews.swift, HUDAlertView): the icon, a level bar and its percentage.
+/// The Mac puts the icon and the bar either side of the notch; here they share one row (PORTING.md §3.2).
 /// </summary>
 internal sealed class HudEars
 {
-    /// <summary>The right ear: 6 in, the bar, 6, the 34-wide percentage, 12 to the edge.</summary>
-    private const double BarWidth = IslandSizes.HudEarWidth - 6 - 6 - 34 - 12;
+    private const double Inset = 14;
+    private const double Spacing = 10;
+    private const double IconWidth = 18;
+    private const double PercentWidth = 34;
 
-    private readonly FontIcon _icon = new() { FontSize = 13, FontWeight = FontWeights.SemiBold, Foreground = Ui.White(0xFF), HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
+    /// <summary>What is left of the row for the bar.</summary>
+    private const double BarWidth = IslandSizes.HudWidth - 2 * Inset - IconWidth - PercentWidth - 2 * Spacing;
+
+    private readonly FontIcon _icon = new() { FontSize = 13, FontWeight = FontWeights.SemiBold, Foreground = Ui.White(0xFF), Width = IconWidth, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
     private readonly Border _fill = new() { Height = 5, CornerRadius = new CornerRadius(2.5), Background = Ui.White(0xFF), HorizontalAlignment = HorizontalAlignment.Left, Width = 0 };
     private readonly TextBlock _percent = Ui.Text(11, semibold: true);
     private readonly Storyboard _grow = new();
@@ -85,7 +90,7 @@ internal sealed class HudEars
 
     public HudEars()
     {
-        _percent.Width = 34;
+        _percent.Width = PercentWidth;
         _percent.TextAlignment = TextAlignment.Right;
         _percent.VerticalAlignment = VerticalAlignment.Center;
         StatusGlyphs.Tabular(_percent);
@@ -102,27 +107,22 @@ internal sealed class HudEars
             VerticalAlignment = VerticalAlignment.Center,
             Children = { _fill },
         };
-        var level = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            Spacing = 6,
-            Padding = new Thickness(6, 0, 12, 0),
-            Children = { track, _percent },
-        };
         Root = new Grid
         {
             Height = IslandSizes.HeaderHeight,
             VerticalAlignment = VerticalAlignment.Top,
-            Padding = new Thickness(IslandSizes.EarShoulder, 0, IslandSizes.EarShoulder, 0),
+            Padding = new Thickness(Inset, 0, Inset, 0),
+            ColumnSpacing = Spacing,
             ColumnDefinitions =
             {
-                new ColumnDefinition { Width = new GridLength(IslandSizes.HudEarWidth) },
+                new ColumnDefinition { Width = GridLength.Auto },
                 new ColumnDefinition(),
-                new ColumnDefinition { Width = new GridLength(IslandSizes.HudEarWidth) },
+                new ColumnDefinition { Width = GridLength.Auto },
             },
-            Children = { _icon, level },
+            Children = { _icon, track, _percent },
         };
-        Grid.SetColumn(level, 2);
+        Grid.SetColumn(track, 1);
+        Grid.SetColumn(_percent, 2);
     }
 
     public Grid Root { get; }

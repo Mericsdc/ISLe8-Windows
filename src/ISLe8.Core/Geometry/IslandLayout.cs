@@ -10,6 +10,8 @@ public enum PillActivity
     Timer,
     /// <summary>An agent working or waiting, or a script's activity (PORTING.md §3.12).</summary>
     Agent,
+    /// <summary>Frames, CPU and GPU (Settings › General › Performance; Windows only).</summary>
+    Performance,
 }
 
 public enum PillKind
@@ -41,6 +43,9 @@ public static class IslandMetrics
     public const double PillHeight = 32;
     public const double IdlePillWidth = 200;
     public const double CompactPillWidth = 260;
+    /// <summary>The idle pill as a thin bar (<see cref="IslandLayout.Bar"/>).</summary>
+    public const double BarWidth = 140;
+    public const double BarHeight = 6;
     /// <summary>Room around the open island for its shadow (blur 24 + offset 8).</summary>
     public const double ShadowMargin = 36;
 
@@ -91,6 +96,17 @@ public sealed record IslandLayout
     public bool Flush { get; init; }
 
     public DipRect Pill(PillKind kind) => kind == PillKind.Compact ? CompactPill : IdlePill;
+
+    /// <summary>
+    /// Settings › Appearance › Island › Thin bar (Windows only): the idle pill drawn as a short bar in its middle,
+    /// at its top edge, or halfway down on the taskbar. The pill's whole size still takes the pointer.
+    /// </summary>
+    public DipRect Bar()
+    {
+        var pill = IdlePill;
+        var y = FromBottom ? pill.Y + (pill.Height - IslandMetrics.BarHeight) / 2 : pill.Y;
+        return new DipRect(pill.X + (pill.Width - IslandMetrics.BarWidth) / 2, y, IslandMetrics.BarWidth, IslandMetrics.BarHeight);
+    }
 
     /// <summary>Where a shape <paramref name="width"/> wide starts across <see cref="Area"/>.</summary>
     private double X(double width) => Align switch

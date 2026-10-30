@@ -70,12 +70,16 @@ internal sealed unsafe class IslandWindow : IDisposable
     public nint Hwnd { get; }
     public MonitorInfo Monitor { get; private set; }
     public IslandLayout? Layout { get; private set; }
-    public bool IsHiddenForFullscreen { get; private set; }
+    /// <summary>Out of the way of a full-screen app or, with Hide while gaming, a game in front on its monitor.</summary>
+    public bool IsHiddenForFullscreen => _hiddenForApp || _hiddenForGame;
+
+    private bool _hiddenForApp;
+    private bool _hiddenForGame;
 
     /// <summary>After every placement: start, a monitor or DPI change, new display settings.</summary>
     public event Action<IslandLayout>? LayoutChanged;
 
-    /// <summary>A full-screen app came up on the island's monitor (true) or went away (false).</summary>
+    /// <summary>The island was hidden for a full-screen app or a game (true) or came back (false).</summary>
     public event Action<bool>? FullscreenChanged;
 
     public void Show()
@@ -347,27 +351,36 @@ internal sealed unsafe class IslandWindow : IDisposable
     /// <summary>Settings › General › Hide in full screen turned off while hidden: the island comes back now.</summary>
     public void ApplyFullscreenSetting()
     {
-        if (!_settings.HideInFullscreen && IsHiddenForFullscreen) OnFullscreenApp(false);
+        if (!_settings.HideInFullscreen) SetHidden(ref _hiddenForApp, false);
     }
+
+    /// <summary>
+    /// A game came to the front (its window) or left it (0): with Hide while gaming on, the island
+    /// steps aside while the game is on its monitor, unless the performance pill is wanted over it (Windows only).
+    /// </summary>
+    public void SetGameInFront(nint game) =>
+        SetHidden(ref _hiddenForGame, game != 0 && _settings.HideWhileGaming && _settings.PerformancePill == Core.SystemInfo.PerformancePill.Off
+            && Win32.MonitorFromWindow(game, Win32.MONITOR_DEFAULTTONEAREST) == Monitor.Handle);
 
     private void OnFullscreenApp(bool opened)
     {
         if (opened)
         {
-            if (!_settings.HideInFullscreen || IsHiddenForFullscreen) return;
+            if (!_settings.HideInFullscreen || _hiddenForApp) return;
             var foreground = Win32.GetForegroundWindow();
             if (foreground == 0 || foreground == Hwnd || IsDesktop(foreground)) return;
             if (Win32.MonitorFromWindow(foreground, Win32.MONITOR_DEFAULTTONEAREST) != Monitor.Handle) return;
-            IsHiddenForFullscreen = true;
-            Win32.ShowWindow(Hwnd, Win32.SW_HIDE);
-            FullscreenChanged?.Invoke(true);
         }
-        else if (IsHiddenForFullscreen)
-        {
-            IsHiddenForFullscreen = false;
-            Win32.ShowWindow(Hwnd, Win32.SW_SHOWNOACTIVATE);
-            FullscreenChanged?.Invoke(false);
-        }
+        SetHidden(ref _hiddenForApp, opened);
+    }
+
+    private void SetHidden(ref bool reason, bool hidden)
+    {
+        var was = IsHiddenForFullscreen;
+        reason = hidden;
+        if (IsHiddenForFullscreen == was) return;
+        Win32.ShowWindow(Hwnd, IsHiddenForFullscreen ? Win32.SW_HIDE : Win32.SW_SHOWNOACTIVATE);
+        FullscreenChanged?.Invoke(IsHiddenForFullscreen);
     }
 
     /// <summary>The desktop and the taskbar also count as "full screen" to the shell.</summary>

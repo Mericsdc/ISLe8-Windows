@@ -1,6 +1,7 @@
 using System.Numerics;
 using ISLe8.Core.Geometry;
 using ISLe8.Core.Motion;
+using ISLe8.Core.Settings;
 using ISLe8.Core.Theming;
 using ISLe8.UI;
 using Microsoft.UI.Composition;
@@ -19,6 +20,8 @@ namespace ISLe8.Island;
 internal sealed class IslandSurface
 {
     private const float ShadowOpacity = 0.55f;
+    /// <summary>How much of the black a see-through closed pill keeps, so its white content stays readable.</summary>
+    private const float ClearTint = 0.3f;
 
     private readonly Compositor _compositor;
     private readonly CompositionRoundedRectangleGeometry _shapeGeometry;
@@ -43,6 +46,7 @@ internal sealed class IslandSurface
     private int _morphs;
     private int _crossfades;
     private bool _open;
+    private ClosedLook _closedLook;
 
     /// <param name="backgroundHost">Fills the window; the shape and its shadow are drawn into it.</param>
     /// <param name="area">The island column; its content is clipped to the shape.</param>
@@ -372,15 +376,23 @@ internal sealed class IslandSurface
     }
 
     /// <summary>
-    /// Open (or a banner): the theme over the black; glass alone lets the black go. Closed: black,
-    /// whatever the theme, so the pill matches the screen's top edge.
+    /// Open (or a banner): the theme over the black; glass alone lets the black go. Closed: black, so the pill
+    /// matches the screen's top edge, unless Settings › Appearance asks for the theme or a see-through pill.
     /// </summary>
     public void SetOpen(bool open, bool animate)
     {
         _open = open;
         var glass = _theme.Material == IslandMaterial.Glass;
-        Animate(_themeVisual, open ? 1 : 0, animate);
-        Animate(_shapeVisual, open && glass ? 0 : 1, animate);
+        var themed = open || _closedLook == ClosedLook.Theme;
+        Animate(_themeVisual, themed ? 1 : 0, animate);
+        Animate(_shapeVisual, themed && glass ? 0 : !open && _closedLook == ClosedLook.Clear ? ClearTint : 1, animate);
+    }
+
+    /// <summary>Settings › Appearance › Closed island (Windows only).</summary>
+    public void SetClosedLook(ClosedLook look)
+    {
+        _closedLook = look;
+        SetOpen(_open, animate: false);
     }
 
     private void Animate(Visual visual, float to, bool animate)

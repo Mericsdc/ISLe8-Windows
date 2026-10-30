@@ -30,6 +30,21 @@ internal static class GeneralPage
             context.Save();
             context.Island.ApplyFullscreenSetting();
         }), L.Get("Settings_HideInFullscreenNote")));
+        page.Children.Add(SettingsUi.Card(palette, L.Get("Settings_HideWhileGaming"), SettingsUi.Switch(settings.HideWhileGaming, on =>
+        {
+            settings.HideWhileGaming = on;
+            context.Save();
+            context.Island.ApplyGameSetting();
+        }), L.Get("Settings_HideWhileGamingNote")));
+        page.Children.Add(SettingsUi.Card(palette, L.Get("Settings_Performance"), SettingsUi.Choices(
+            [L.Get("Settings_PerformanceOff"), L.Get("Settings_PerformanceGaming"), L.Get("Settings_PerformanceAlways")],
+            (int)settings.PerformancePill,
+            index =>
+            {
+                settings.PerformancePill = (Core.SystemInfo.PerformancePill)index;
+                context.Save();
+                context.Island.ApplyGameSetting();
+            }), L.Get("Settings_PerformanceNote")));
         page.Children.Add(LanguageCard(context));
 
         page.Children.Add(SettingsUi.SectionHeader(L.Get("Settings_Behavior")));

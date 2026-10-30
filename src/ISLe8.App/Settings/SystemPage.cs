@@ -38,6 +38,11 @@ internal static class SystemPage
             context.Save();
             context.Island.ApplyStatusSettings();
         }), L.Get("Settings_ReplaceSystemHudNote")));
+        page.Children.Add(SettingsUi.Card(palette, L.Get("Settings_YieldToFluentFlyout"), SettingsUi.Switch(settings.YieldToFluentFlyout, on =>
+        {
+            settings.YieldToFluentFlyout = on;
+            context.Save();
+        }), L.Get("Settings_YieldToFluentFlyoutNote")));
 
         page.Children.Add(SettingsUi.SectionHeader(L.Get("Settings_Battery")));
         page.Children.Add(SettingsUi.Card(palette, L.Get("Settings_BatteryAlerts"), SettingsUi.Switch(settings.ShowBatteryAlerts, on =>

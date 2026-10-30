@@ -217,16 +217,16 @@ public class StatusTests
     // MARK: On the island
 
     [Fact]
-    public void EarsAreThePillsHeightAndAsWideAsTheMacs()
+    public void EarsAreThePillsHeightAndTheHudOneRow()
     {
         var hud = IslandSizes.Alert(new HudAlert(Volume(0.5)));
         var status = IslandSizes.Alert(new BatteryAlert(new BatteryEvent(BatteryEventKind.PluggedIn, 61)));
         var low = IslandSizes.Alert(new BatteryAlert(new BatteryEvent(BatteryEventKind.Low, 20)));
 
-        Assert.Equal(new DipSize(IslandMetrics.IdlePillWidth + 2 * 92 + 2 * 6, IslandMetrics.PillHeight), hud);
+        Assert.Equal(new DipSize(260, IslandMetrics.PillHeight), hud);
         Assert.Equal(new DipSize(IslandMetrics.IdlePillWidth + 2 * 104 + 2 * 6, IslandMetrics.PillHeight), status);
         Assert.Equal(status, IslandSizes.Alert(new WiredAlert(false, NetworkLink.Wifi)));
-        Assert.Equal(new DipSize(340, IslandMetrics.PillHeight + 46), low);
+        Assert.Equal(new DipSize(340, 52), low);
     }
 
     [Fact]
@@ -285,8 +285,8 @@ public class StatusTests
         _model.ShowAlert(new BatteryAlert(new BatteryEvent(BatteryEventKind.Low, 20)), AlertDurations.Battery);
         _model.ShowHud(Volume(0.4));
         Assert.IsType<HudAlert>(_model.Alert);
-        // 340 wide banner to 396 wide ears.
-        Assert.True(_model.IsGrowing);
+        // The 340 wide banner narrows to the 260 wide HUD.
+        Assert.False(_model.IsGrowing);
 
         _model.ShowAlert(new BatteryAlert(new BatteryEvent(BatteryEventKind.Low, 19)), AlertDurations.Battery);
         Assert.IsType<BatteryAlert>(_model.Alert);

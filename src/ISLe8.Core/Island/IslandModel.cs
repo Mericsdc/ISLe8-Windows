@@ -67,6 +67,7 @@ public sealed class IslandModel
     private IDisposable? _shrinkTimer;
     private bool _mediaActive;
     private bool _timerActive;
+    private bool _performanceActive;
     private bool _agentActive;
     private IDisposable? _alertTimer;
     private IDisposable? _pendingTimer;
@@ -532,6 +533,13 @@ public sealed class IslandModel
         UpdateActivity();
     }
 
+    /// <summary>The performance pill is wanted now (Windows only): below an agent, above media and the timer.</summary>
+    public void SetPerformanceLive(bool live)
+    {
+        _performanceActive = live;
+        UpdateActivity();
+    }
+
     /// <summary>A tab from the dock. The island stays open and, in the wide and compact layouts, the same size.</summary>
     public void Select(IslandTab tab)
     {
@@ -587,10 +595,13 @@ public sealed class IslandModel
         return -1;
     }
 
-    /// <summary>The ear goes to the activity with the highest priority (IslandModule.swift): agents 55, media 50, timer 40.</summary>
+    /// <summary>
+    /// The ear goes to the activity with the highest priority (IslandModule.swift): agents 55, media 50, timer 40.
+    /// The performance pill, asked for in Settings, comes after agents.
+    /// </summary>
     private void UpdateActivity()
     {
-        var activity = _agentActive ? PillActivity.Agent : _mediaActive ? PillActivity.Media : _timerActive ? PillActivity.Timer : PillActivity.None;
+        var activity = _agentActive ? PillActivity.Agent : _performanceActive ? PillActivity.Performance : _mediaActive ? PillActivity.Media : _timerActive ? PillActivity.Timer : PillActivity.None;
         var pill = activity == PillActivity.None ? PillKind.Idle : PillKind.Compact;
         if (activity == Activity && pill == Pill) return;
         if (pill != Pill) IsGrowing = pill == PillKind.Compact;

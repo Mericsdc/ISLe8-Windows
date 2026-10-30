@@ -135,3 +135,59 @@ internal sealed class PillClock
         _timer.Start();
     }
 }
+
+/// <summary>
+/// Frames, CPU and GPU across the wide pill (Settings › General › Performance; Windows only):
+/// "144 FPS   CPU %23 54°   GPU %61 64°", each figure left out when this computer can't say it.
+/// It changes once a second, when the sampler has a new sample.
+/// </summary>
+internal sealed class PerformanceEar
+{
+    private readonly TextBlock _text = Ui.Text(11, semibold: true);
+
+    public PerformanceEar()
+    {
+        _text.HorizontalAlignment = HorizontalAlignment.Center;
+        _text.VerticalAlignment = VerticalAlignment.Center;
+        _text.TextTrimming = TextTrimming.None;
+        StatusGlyphs.Tabular(_text);
+        Root = new Grid { IsHitTestVisible = false, Visibility = Visibility.Collapsed, Children = { _text } };
+    }
+
+    public Grid Root { get; }
+
+    public void SetShown(bool shown) => Root.Visibility = shown ? Visibility.Visible : Visibility.Collapsed;
+
+    public void Show(Core.SystemInfo.PerformanceSample? sample, CultureInfo culture)
+    {
+        _text.Inlines.Clear();
+        if (sample is null) return;
+        if (sample.Fps is { } fps) Add($"{fps}", " FPS", null, labelFirst: false);
+        Add(Core.SystemInfo.PerformanceMath.Percent(sample.Cpu, culture), "CPU ", sample.CpuTemperature, labelFirst: true);
+        if (sample.Gpu is not null || sample.GpuTemperature is not null)
+        {
+            Add(sample.Gpu is { } gpu ? Core.SystemInfo.PerformanceMath.Percent(gpu, culture) : "", "GPU ", sample.GpuTemperature, labelFirst: true);
+        }
+    }
+
+    private void Add(string value, string label, double? degrees, bool labelFirst)
+    {
+        if (_text.Inlines.Count > 0) _text.Inlines.Add(new Microsoft.UI.Xaml.Documents.Run { Text = "   " });
+        var dim = new Microsoft.UI.Xaml.Documents.Run { Text = label, Foreground = Ui.White(0x8C) };
+        var bright = new Microsoft.UI.Xaml.Documents.Run { Text = value };
+        if (labelFirst)
+        {
+            _text.Inlines.Add(dim);
+            _text.Inlines.Add(bright);
+        }
+        else
+        {
+            _text.Inlines.Add(bright);
+            _text.Inlines.Add(dim);
+        }
+        if (degrees is { } celsius)
+        {
+            _text.Inlines.Add(new Microsoft.UI.Xaml.Documents.Run { Text = (value.Length > 0 ? " " : "") + Core.SystemInfo.PerformanceMath.Degrees(celsius) });
+        }
+    }
+}

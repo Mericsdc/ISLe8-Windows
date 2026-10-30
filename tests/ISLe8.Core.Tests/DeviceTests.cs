@@ -166,7 +166,7 @@ public class DeviceTests
     public void ADeviceBannerHasTheMacsSizeAndTime()
     {
         var alert = new DeviceAlert(Device("m", 80), IsLow: false);
-        Assert.Equal(new DipSize(420, 88), IslandSizes.Alert(alert));
+        Assert.Equal(new DipSize(420, 62), IslandSizes.Alert(alert));
         Assert.Equal(TimeSpan.FromSeconds(4), DeviceAlertDurations.Connected);
         Assert.Equal(TimeSpan.FromSeconds(5), DeviceAlertDurations.Low);
         var settings = new AppSettings();

@@ -1691,4 +1691,79 @@
   <data name="Agents_RequestMore" xml:space="preserve">
     <value>There's more ({0} lines) · see it all in the AI tab</value>
   </data>
+  <data name="Settings_HideWhileGaming" xml:space="preserve">
+    <value>Hide while gaming</value>
+  </data>
+  <data name="Settings_HideWhileGamingNote" xml:space="preserve">
+    <value>When a program Windows knows as a game is in front, even in a window, the island hides on that screen. Even with this off, nothing on the island moves while a game is in front, so it costs the game no frames.</value>
+  </data>
+  <data name="Settings_ClosedLook" xml:space="preserve">
+    <value>Closed island</value>
+  </data>
+  <data name="Settings_ClosedBlack" xml:space="preserve">
+    <value>Black</value>
+  </data>
+  <data name="Settings_ClosedTheme" xml:space="preserve">
+    <value>Follow the theme</value>
+  </data>
+  <data name="Settings_ClosedClear" xml:space="preserve">
+    <value>See-through</value>
+  </data>
+  <data name="Settings_ClosedLookNote" xml:space="preserve">
+    <value>Black, like the Mac's notch. Follow the theme takes the open island's colour and glass. See-through lets the taskbar or desktop behind show; it suits an island on the taskbar.</value>
+  </data>
+  <data name="Settings_IdleBar" xml:space="preserve">
+    <value>Thin bar when idle</value>
+  </data>
+  <data name="Settings_IdleBarNote" xml:space="preserve">
+    <value>With nothing going on the island shrinks to a thin bar, and opens when the pointer comes. The space around the bar takes the pointer too.</value>
+  </data>
+  <data name="Settings_Performance" xml:space="preserve">
+    <value>Performance on the pill</value>
+  </data>
+  <data name="Settings_PerformanceOff" xml:space="preserve">
+    <value>Off</value>
+  </data>
+  <data name="Settings_PerformanceGaming" xml:space="preserve">
+    <value>While gaming</value>
+  </data>
+  <data name="Settings_PerformanceAlways" xml:space="preserve">
+    <value>Always</value>
+  </data>
+  <data name="Settings_PerformanceNote" xml:space="preserve">
+    <value>Frames a second (FPS), CPU and GPU use and temperatures on the small island. While on, the island stays over the game. FPS is read from Windows' event tracing, which needs an administrator or a member of "Performance Log Users". The GPU's temperature comes from its driver; the CPU's needs LibreHardwareMonitor or OpenHardwareMonitor running.</value>
+  </data>
+  <data name="Settings_YieldToFluentFlyout" xml:space="preserve">
+    <value>Make way for FluentFlyout</value>
+  </data>
+  <data name="Settings_YieldToFluentFlyoutNote" xml:space="preserve">
+    <value>FluentFlyout shows its own flyout on the volume and media keys too. While it runs, the island shows no volume HUD and no new-song banner, so the two don't overlap.</value>
+  </data>
+  <data name="Usage_CliFound" xml:space="preserve">
+    <value>Found: {0}</value>
+  </data>
+  <data name="Usage_CliMissing" xml:space="preserve">
+    <value>Not found: the {0} command-line tool isn't installed, or not in a known folder. The desktop app isn't enough; the island shows limits only for those found.</value>
+  </data>
+  <data name="Usage_CliUntrusted" xml:space="preserve">
+    <value>Not run, for safety: it is in a folder other users can write to: {0}</value>
+  </data>
+  <data name="Notifications_Install" xml:space="preserve">
+    <value>Switch to the installed version</value>
+  </data>
+  <data name="Notifications_DeveloperMode" xml:space="preserve">
+    <value>Turn on Developer Mode</value>
+  </data>
+  <data name="Notifications_MoveToPackage" xml:space="preserve">
+    <value>Install and switch</value>
+  </data>
+  <data name="Notifications_Moving" xml:space="preserve">
+    <value>Installing…</value>
+  </data>
+  <data name="Notifications_MoveReady" xml:space="preserve">
+    <value>Reading notifications needs the installed ISLe8. The latest release's package is downloaded, checked and installed; your settings and history stay as they are. You can delete this zip folder afterwards.</value>
+  </data>
+  <data name="Notifications_MoveNeedsDeveloperMode" xml:space="preserve">
+    <value>The package isn't signed yet, so Windows installs it only with Developer Mode on: Windows Settings › System › For developers › Developer Mode. Come back here once it's on.</value>
+  </data>
 </root>

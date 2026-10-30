@@ -100,13 +100,22 @@ internal static class AgentsPage
             }
             heading.Children.Add(new TextBlock { Text = UsageVendors.Product(vendor), VerticalAlignment = VerticalAlignment.Center });
             heading.Children.Add(new TextBlock { Text = $"({UsageVendors.Cli(vendor)})", FontFamily = AgentLook.Mono, Foreground = palette.SecondaryText, VerticalAlignment = VerticalAlignment.Center });
+            // Only the CLIs found show on the island; here each says whether it was, and why not.
+            var (found, path) = UsageCli.Find(vendor);
+            var where = SettingsUi.Description(palette, found switch
+            {
+                UsageCli.Found.Ok => L.Format("Usage_CliFound", path ?? ""),
+                UsageCli.Found.Untrusted => L.Format("Usage_CliUntrusted", path ?? ""),
+                _ => L.Format("Usage_CliMissing", UsageVendors.Cli(vendor)),
+            });
+            if (found != UsageCli.Found.Ok) where.Foreground = new SolidColorBrush(Colors.DarkOrange);
             details.Children.Add(SettingsUi.Card(palette, heading, SettingsUi.Switch(!settings.UsageDisabledVendors.Contains(id), on =>
             {
                 settings.UsageDisabledVendors.Remove(id);
                 if (!on) settings.UsageDisabledVendors.Add(id);
                 context.Save();
                 context.Island.ApplyUsageSettings();
-            })));
+            }), where));
         }
         details.Children.Add(SettingsUi.Card(palette, L.Get("Usage_Saver"), SettingsUi.Switch(settings.UsageSaverMode, on =>
         {

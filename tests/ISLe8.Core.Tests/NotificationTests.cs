@@ -133,8 +133,8 @@ public class NotificationTests
     [Fact]
     public void NotificationsAndMeetingsGetTheBiggerBanner()
     {
-        Assert.Equal(new DipSize(400, 106), IslandSizes.Alert(new NotificationAlert(Mail(1))));
-        Assert.Equal(new DipSize(340, 78), IslandSizes.Alert(new NowPlayingAlert()));
+        Assert.Equal(new DipSize(400, 80), IslandSizes.Alert(new NotificationAlert(Mail(1))));
+        Assert.Equal(new DipSize(340, 52), IslandSizes.Alert(new NowPlayingAlert()));
     }
 
     [Fact]

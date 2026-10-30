@@ -1691,4 +1691,79 @@
   <data name="Agents_RequestMore" xml:space="preserve">
     <value>Devamı var ({0} satır) · tamamı AI sekmesinde</value>
   </data>
+  <data name="Settings_HideWhileGaming" xml:space="preserve">
+    <value>Oyun oynarken gizle</value>
+  </data>
+  <data name="Settings_HideWhileGamingNote" xml:space="preserve">
+    <value>Windows'un oyun olarak tanıdığı bir program pencerede bile öndeyken ada o ekranda gizlenir. Kapalıyken de oyun öndeyken adada hiçbir şey hareket etmez, oyunun karelerine yük olmasın diye.</value>
+  </data>
+  <data name="Settings_ClosedLook" xml:space="preserve">
+    <value>Kapalı ada</value>
+  </data>
+  <data name="Settings_ClosedBlack" xml:space="preserve">
+    <value>Siyah</value>
+  </data>
+  <data name="Settings_ClosedTheme" xml:space="preserve">
+    <value>Temaya uysun</value>
+  </data>
+  <data name="Settings_ClosedClear" xml:space="preserve">
+    <value>Saydam</value>
+  </data>
+  <data name="Settings_ClosedLookNote" xml:space="preserve">
+    <value>Siyah, Mac'teki çentik gibi. Temaya uyan, açık adanın rengini ve camını alır. Saydam, arkadaki görev çubuğunu ya da masaüstünü gösterir; görev çubuğundaki adaya yakışır.</value>
+  </data>
+  <data name="Settings_IdleBar" xml:space="preserve">
+    <value>Boştayken ince çubuk</value>
+  </data>
+  <data name="Settings_IdleBarNote" xml:space="preserve">
+    <value>Bir şey olmadığında ada ince bir çubuğa iner; imleç gelince açılır. Çubuğun çevresi de imleci alır.</value>
+  </data>
+  <data name="Settings_Performance" xml:space="preserve">
+    <value>Performans göstergesi</value>
+  </data>
+  <data name="Settings_PerformanceOff" xml:space="preserve">
+    <value>Kapalı</value>
+  </data>
+  <data name="Settings_PerformanceGaming" xml:space="preserve">
+    <value>Oyun oynarken</value>
+  </data>
+  <data name="Settings_PerformanceAlways" xml:space="preserve">
+    <value>Her zaman</value>
+  </data>
+  <data name="Settings_PerformanceNote" xml:space="preserve">
+    <value>Küçük adada saniyede kare (FPS), CPU ve GPU kullanımı ve sıcaklıkları. Açıkken ada oyunun üstünde kalır. FPS, Windows'un olay kaydından okunur: yönetici ya da "Performance Log Users" grubunda olmak gerekir. GPU sıcaklığı sürücüden gelir; CPU sıcaklığı için LibreHardwareMonitor ya da OpenHardwareMonitor açık olmalı.</value>
+  </data>
+  <data name="Settings_YieldToFluentFlyout" xml:space="preserve">
+    <value>FluentFlyout açıkken ona bırak</value>
+  </data>
+  <data name="Settings_YieldToFluentFlyoutNote" xml:space="preserve">
+    <value>FluentFlyout da ses ve medya tuşlarında kendi penceresini gösterir. Açıkken ada ses göstergesini ve yeni şarkı bildirimini göstermez, ikisi üst üste binmez.</value>
+  </data>
+  <data name="Usage_CliFound" xml:space="preserve">
+    <value>Bulundu: {0}</value>
+  </data>
+  <data name="Usage_CliMissing" xml:space="preserve">
+    <value>Bulunamadı: {0} komut satırı aracı kurulu değil ya da bilinen bir klasörde değil. Masaüstü uygulaması yetmez; adada yalnızca bulunanların limitleri görünür.</value>
+  </data>
+  <data name="Usage_CliUntrusted" xml:space="preserve">
+    <value>Başka kullanıcıların da yazabildiği bir klasörde olduğu için güvenlik gereği çalıştırılmıyor: {0}</value>
+  </data>
+  <data name="Notifications_Install" xml:space="preserve">
+    <value>Kurulu sürüme geç</value>
+  </data>
+  <data name="Notifications_DeveloperMode" xml:space="preserve">
+    <value>Geliştirici Modu'nu aç</value>
+  </data>
+  <data name="Notifications_MoveToPackage" xml:space="preserve">
+    <value>Kur ve geç</value>
+  </data>
+  <data name="Notifications_Moving" xml:space="preserve">
+    <value>Kuruluyor…</value>
+  </data>
+  <data name="Notifications_MoveReady" xml:space="preserve">
+    <value>Bildirimleri okumak için ISLe8'in kurulu sürümü gerekir. Son sürümün paketi indirilir, denetlenir ve kurulur; ayarların ve geçmişin aynen kalır. Sonra bu zip klasörünü silebilirsin.</value>
+  </data>
+  <data name="Notifications_MoveNeedsDeveloperMode" xml:space="preserve">
+    <value>Paket henüz imzalı olmadığından Windows onu yalnızca Geliştirici Modu açıkken kurar: Windows Ayarları › Sistem › Geliştiriciler için › Geliştirici Modu. Açtıktan sonra buraya dön.</value>
+  </data>
 </root>

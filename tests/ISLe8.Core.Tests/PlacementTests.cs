@@ -168,4 +168,29 @@ public sealed class PlacementTests : IDisposable
         public string? IdOf(string path) => null;
         public string? PathOf(string id) => null;
     }
+
+    [Fact]
+    public void TheThinBarSitsInThePillsMiddleAtItsTopOrHalfwayDownOnTheTaskbar()
+    {
+        var top = At(IslandPlacement.Top);
+        var bar = top.Bar();
+        Assert.Equal((140, 6), (bar.Width, bar.Height));
+        Assert.Equal(top.IdlePill.Y, bar.Y);
+        Assert.Equal(top.IdlePill.X + top.IdlePill.Width / 2, bar.X + bar.Width / 2, 3);
+
+        var taskbar = At(IslandPlacement.TaskbarCenter);
+        Assert.Equal(taskbar.IdlePill.Y + taskbar.IdlePill.Height / 2, taskbar.Bar().Y + 3, 3);
+    }
+
+    [Fact]
+    public void AGameIsWhatGameBarRecognised()
+    {
+        var games = Games.Set([@"D:\Games\NFS WORLD\nfsw.exe", "  ", null, @"""C:\Program Files\Epic Games\GTAV\GTA5.exe"""]);
+
+        Assert.Equal(2, games.Count);
+        Assert.True(Games.IsGame(@"d:\games\nfs world\NFSW.EXE", games));
+        Assert.True(Games.IsGame(@"C:\Program Files\Epic Games\GTAV\GTA5.exe", games));
+        Assert.False(Games.IsGame(@"C:\Program Files\Google\Chrome\Application\chrome.exe", games));
+        Assert.False(Games.IsGame(null, games));
+    }
 }

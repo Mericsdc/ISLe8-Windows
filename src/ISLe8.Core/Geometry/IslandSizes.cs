@@ -68,21 +68,30 @@ public static class IslandSizes
     /// <summary>
     /// A banner: the wide pill plus 60, at least 340, and the pill's row plus 46 for its content;
     /// notifications and meetings, with more to say, the pill plus 200, at least 400, and the row
-    /// plus 74 (IslandModel.swift, size(for: .alert)). Its top row stays empty, as the notch's does on the Mac.
+    /// plus 74 (IslandModel.swift, size(for: .alert)). On the Mac the pill's row stays empty under the notch; with no
+    /// notch here that row was only a black band (at the bottom on the taskbar), so a banner is its content and
+    /// <see cref="BannerInset"/> (PORTING.md §2).
     /// </summary>
     public static DipSize Alert(IslandAlert alert) => alert switch
     {
-        HudAlert => new(Notch + 2 * HudEarWidth + 2 * EarShoulder, HeaderHeight),
+        HudAlert => new(HudWidth, HeaderHeight),
         _ when alert.IsStatus() => new(Notch + 2 * StatusEarWidth + 2 * EarShoulder, HeaderHeight),
-        NotificationAlert or MeetingAlert => new(Math.Max(400, Notch + 200), HeaderHeight + 74),
-        DeviceAlert => new(Math.Max(420, Notch + 220), HeaderHeight + 56),
-        ApprovalAlert => new(Math.Max(440, Notch + 240), HeaderHeight + 100),
-        AgentDoneAlert => new(Math.Max(400, Notch + 200), HeaderHeight + 50),
-        _ => new(Math.Max(IslandMetrics.CompactPillWidth + 60, 340), HeaderHeight + 46),
+        NotificationAlert or MeetingAlert => new(Math.Max(400, Notch + 200), BannerInset + 74),
+        DeviceAlert => new(Math.Max(420, Notch + 220), BannerInset + 56),
+        ApprovalAlert => new(Math.Max(440, Notch + 240), BannerInset + 100),
+        AgentDoneAlert => new(Math.Max(400, Notch + 200), BannerInset + 50),
+        _ => new(Math.Max(IslandMetrics.CompactPillWidth + 60, 340), BannerInset + 46),
     };
 
-    /// <summary>Wider ears for volume and brightness, so the level bar and its percentage have room (IslandModel.swift, hudEarWidth).</summary>
-    public const double HudEarWidth = 92;
+    /// <summary>What a banner adds to its content row, in place of the pill's row: 5 above it and 5 below, less the 4 the row had below.</summary>
+    public const double BannerInset = 6;
+
+    /// <summary>
+    /// Volume and brightness in one row a little wider than the pill: the icon, the bar, the figure. The Mac puts
+    /// them in ears either side of the notch (IslandModel.swift, hudEarWidth 92); with no notch here that left an
+    /// empty black middle and a HUD twice the size it needs.
+    /// </summary>
+    public const double HudWidth = 260;
 
     /// <summary>Ears for "charging" and "LAN": the island widens sideways to say it, as on iPhone (statusEarWidth).</summary>
     public const double StatusEarWidth = 104;

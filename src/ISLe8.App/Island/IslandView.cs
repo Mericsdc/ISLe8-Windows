@@ -109,6 +109,8 @@ internal sealed class IslandView
         PillTitle = new PillTitle();
         PillTitle.Root.Margin = new Thickness(22 + 8, 0, AudioBars.Width + 8, 0);
         PillLayer.Children.Add(PillTitle.Root);
+        Performance = new PerformanceEar();
+        PillLayer.Children.Add(Performance.Root);
         Clock = new PillClock(queue);
 
         Home = new HomeView(media, status, timer, weather, calendar, settings, theme, queue, takeKeyboard);
@@ -172,30 +174,30 @@ internal sealed class IslandView
         };
 
         Banner = new MediaBanner(media, theme);
-        Banner.Root.Margin = new Thickness(14, 0, 14, 4);
+        Banner.Root.Margin = new Thickness(14, 5, 14, 5);
         TimerBanner = new TimerBanner();
-        TimerBanner.Root.Margin = new Thickness(14, 0, 14, 4);
+        TimerBanner.Root.Margin = new Thickness(14, 5, 14, 5);
         Grid.SetRow(TimerBanner.Root, 1);
         MeetingBanner = new MeetingBanner(dismissAlert);
-        MeetingBanner.Root.Margin = new Thickness(14, 0, 14, 4);
+        MeetingBanner.Root.Margin = new Thickness(14, 5, 14, 5);
         Grid.SetRow(MeetingBanner.Root, 1);
         NotificationBanner = new NotificationBanner(notifications);
-        NotificationBanner.Root.Margin = new Thickness(14, 0, 14, 4);
+        NotificationBanner.Root.Margin = new Thickness(14, 5, 14, 5);
         Grid.SetRow(NotificationBanner.Root, 1);
         DeviceBanner = new DeviceBanner();
-        DeviceBanner.Root.Margin = new Thickness(14, 0, 14, 4);
+        DeviceBanner.Root.Margin = new Thickness(14, 5, 14, 5);
         Grid.SetRow(DeviceBanner.Root, 1);
         ApprovalBanner = new ApprovalBanner(theme, decide);
-        ApprovalBanner.Root.Margin = new Thickness(14, 0, 14, 6);
+        ApprovalBanner.Root.Margin = new Thickness(14, 5, 14, 6);
         Grid.SetRow(ApprovalBanner.Root, 1);
         AgentDoneBanner = new AgentDoneBanner();
-        AgentDoneBanner.Root.Margin = new Thickness(14, 0, 14, 4);
+        AgentDoneBanner.Root.Margin = new Thickness(14, 5, 14, 5);
         Grid.SetRow(AgentDoneBanner.Root, 1);
         UsageBanner = new Usage.UsageBanner(theme);
-        UsageBanner.Root.Margin = new Thickness(14, 0, 14, 4);
+        UsageBanner.Root.Margin = new Thickness(14, 5, 14, 5);
         Grid.SetRow(UsageBanner.Root, 1);
         BatteryBanner = new BatteryBanner();
-        BatteryBanner.Root.Margin = new Thickness(14, 0, 14, 4);
+        BatteryBanner.Root.Margin = new Thickness(14, 5, 14, 5);
         Grid.SetRow(BatteryBanner.Root, 1);
         // The ears fill the pill's row; the row below stays empty.
         HudEars = new HudEars();
@@ -257,6 +259,7 @@ internal sealed class IslandView
     public TimerEar TimerEar { get; }
     public AudioBars Bars { get; }
     public PillTitle PillTitle { get; }
+    public PerformanceEar Performance { get; }
     public PillClock Clock { get; }
 
     public void ApplyLayout(IslandLayout layout, DipRect open, HomeStyle style, IslandTab tab)
@@ -265,14 +268,14 @@ internal sealed class IslandView
         Place(PillLayer, layout.CompactPill);
         Place(Clock.Root, layout.IdlePill);
         SetOpen(open, style, tab);
-        // On the taskbar a banner's empty pill row is at its bottom, where the pill was.
-        var bottom = layout.FromBottom;
-        AlertLayer.RowDefinitions[0].Height = bottom ? new GridLength(1, GridUnitType.Star) : new GridLength(IslandSizes.HeaderHeight);
-        AlertLayer.RowDefinitions[1].Height = bottom ? new GridLength(IslandSizes.HeaderHeight) : new GridLength(1, GridUnitType.Star);
+        // No empty pill row in a banner (IslandSizes.Alert): the ears fill the pill's height, a banner's content all of it.
+        AlertLayer.RowDefinitions[0].Height = new GridLength(0);
+        AlertLayer.RowDefinitions[1].Height = new GridLength(1, GridUnitType.Star);
         foreach (var child in AlertLayer.Children)
         {
             var ear = child == HudEars.Root || child == StatusEars.Root;
-            Grid.SetRow((FrameworkElement)child, ear == bottom ? 1 : 0);
+            Grid.SetRow((FrameworkElement)child, ear ? 0 : 1);
+            Grid.SetRowSpan((FrameworkElement)child, ear ? 2 : 1);
         }
     }
 
@@ -283,6 +286,7 @@ internal sealed class IslandView
         PillTitle.Root.Visibility = activity is PillActivity.Media or PillActivity.None && _settings.ShowPillTitle ? Visibility.Visible : Visibility.Collapsed;
         TimerEar.SetShown(activity == PillActivity.Timer, seen);
         AgentEar.SetShown(activity == PillActivity.Agent, seen);
+        Performance.SetShown(activity == PillActivity.Performance);
     }
 
     /// <summary>

@@ -139,6 +139,21 @@ internal static class AppearancePage
                 context.Save();
                 context.Island.PlaceIsland();
             }), L.Get("Settings_ReserveStripNote")));
+        section.Children.Add(SettingsUi.Card(palette, L.Get("Settings_ClosedLook"), SettingsUi.Choices(
+            [L.Get("Settings_ClosedBlack"), L.Get("Settings_ClosedTheme"), L.Get("Settings_ClosedClear")],
+            (int)settings.ClosedLook,
+            index =>
+            {
+                settings.ClosedLook = (ClosedLook)index;
+                context.Save();
+                context.Island.ApplyIslandSettings();
+            }), L.Get("Settings_ClosedLookNote")));
+        section.Children.Add(SettingsUi.Card(palette, L.Get("Settings_IdleBar"), SettingsUi.Switch(settings.IdleBar, on =>
+        {
+            settings.IdleBar = on;
+            context.Save();
+            context.Island.ApplyIslandSettings();
+        }), L.Get("Settings_IdleBarNote")));
         section.Children.Add(SettingsUi.Card(palette, L.Get("Settings_IdleClock"), SettingsUi.Switch(settings.ShowIdleClock, on =>
         {
             settings.ShowIdleClock = on;

@@ -112,7 +112,7 @@ Windows'ta ikisi de serbest, bu yüzden kullanıcı isteğiyle eklendi. Hepsinin
 
 - **Konum:** ekranın üstü (varsayılan) ya da görev çubuğunun üstünde solda, ortada, sağda. Görev çubuğundayken pill çalışma
   alanının altından 6 DIP yukarıda durur, ada yukarı doğru açılır (yaylar ve boyutlar aynı); köşede ekran kenarından 16 DIP içeride,
-  o kenara yaslanarak büyür. Banner'larda boş pill satırı altta kalır. Görev çubuğundaki simgeleri kapatmaz.
+  o kenara yaslanarak büyür. Banner'larda boş pill satırı yok (0.2.7, aşağıda "Windows'a özgü: oyunlar…"). Görev çubuğundaki simgeleri kapatmaz.
 - **Üst kenara bitişik:** pill'in üstünde boşluk yok; ada Mac'in notch şekli olur (IslandShape.swift): üst kenara iki içbükey
   omuzla akar (boşta 0, geniş pill ve peek 6, banner 8, açık ada 10 DIP) ve alt köşeleri Mac'teki gibi yuvarlanır (boşta 9, geniş pill
   12, peek 14, banner 20, açık ada temanınki). Omuzlar, köşesine çember ortalanmış kalın bir halka olarak çizilip kareye kırpılır (bu
@@ -186,6 +186,8 @@ Her modülde: Mac dosyaları → Windows karşılığı → önemli davranışla
   - **Harici monitör:** DDC/CI (`dxva2`), yalnızca kısayol tuşuyla; sorgu yok.
 - **Davranış:**
   - Gösterge kulaklarda: solda simge, sağda seviye çubuğu ve yüzde ("%62", İngilizcede "62%"); kulak genişliği 92.
+    **Windows (0.2.7):** çentik olmadığından kulakların arası boş siyah bir şerit kalıyordu (gösterge ~400 DIP, "alakasız
+    büyük"); simge, çubuk ve yüzde artık tek satırda, 260 DIP genişliğinde (`IslandSizes.HudWidth`).
   - **Parlaklık göstergesi yalnızca parlaklık tuşuyla açılır.** Mac son 1,2 sn içinde bir NX_SYSDEFINED (medya/parlaklık tuşu) olayı olup olmadığına bakıyor (`CGEventSource.secondsSinceLastEventType`, izin gerektirmez). Otomatik parlaklık, ekranın kararması ve uyanması göstermez. Windows: Raw Input ile HID tüketici sayfasındaki parlaklık artır/azalt kullanımları (0x6F/0x70) dinlenir; değişiklik o tuşu izlemiyorsa gösterge açılmaz.
   - Ada açıkken gösterge çıkmaz.
 - **Not:** Windows'un kendi ses göstergesini gizlemenin desteklenen bir yolu yok; pencere bulup gizleme gibi kırılgan yöntemler kullanılmaz. Mac'teki gibi tuşları ISLe8 karşılarsa gösterge hiç çıkmaz (aşağıda, 2026-10-30).
@@ -377,6 +379,12 @@ Her modülde: Mac dosyaları → Windows karşılığı → önemli davranışla
     "zamanlanmışları algılayamaz" notu Windows'ta geçerli değil; zamanlanmış ve odak oturumuyla açılanı da görüyor.
   - Erişim satırı Mac'teki "Tam Disk Erişimi" yerine Windows'un izni: "İzin ver…", reddedildiyse "Windows ayarları…"
     (Gizlilik › Bildirimler), zip sürümünde "Kurulu sürüm gerekiyor". Açıklama Windows'a göre yazıldı.
+  - **Zip'ten kurulu sürüme geçiş (0.2.7):** zip'teki ISLe8'in Bildirimler sayfasında "Kurulu sürüme geç" kartı var. Paket
+    henüz imzasız olduğundan Windows Geliştirici Modu ister; kapalıysa kart Windows Ayarları › Geliştiriciler için sayfasını
+    açar. Açıksa son sürümün `-package.zip`'i güncelleme gibi indirilir, SHA-256 ile denetlenir ve
+    `%LOCALAPPDATA%\LRXe8\ISLe8\package` klasörüne açılır. Zip ISLe8 kapanınca `move.ps1` paketi kaydeder, zip'in `Run`
+    girdisini siler ve kurulu ISLe8'i başlatır. Ayarlar ve geçmiş aynı veri klasöründe olduğu için kalır. Hata olursa zip
+    ISLe8 yeniden açılır ve nedeni gösterir.
   - Uygulamalar AppUserModelID ile tutuluyor (Mac'te bundle ID); listede Windows'un verdiği ad ve simge.
   - Tıklama gönderen uygulamanın açık penceresini öne getiriyor; çalışan bir tarayıcıyı yeniden başlatmak yeni
     pencere açacağı için önce açık pencere aranıyor. Bildirimin kendi eylemi (ör. Gmail'de o e-postayı açmak)
@@ -649,6 +657,45 @@ dosyaları yerine koyduktan sonra böyle yarıda öldü (`PROC_THREAD_ATTRIBUTE_
 kaldırmadı). 0.2.2'den beri kurulu ISLe8'de betiği Görev Zamanlayıcı başlatır (tek seferlik "ISLe8 update" görevi, kullanıcı
 olarak, sınırlı yetkiyle; betik görevi siler). Betik her adımı `updates\apply.log`'a yazar. Kurulu ISLe8 için
 Release'te `ISLe8-<sürüm>-<rid>-package.zip` (scripts/package.ps1). İmzalı .msix ve App Installer W6'da.
+
+### Windows'a özgü: oyunlar, performans göstergesi, kapalı ada (0.2.7, 2026-10-30)
+
+Bir kullanıcının geri bildirimiyle eklendi; Mac'te karşılıkları yok.
+
+- **Oyun öndeyken:**
+  - Öndeki pencerenin programı, Windows'un oyun saydığı programlardansa (Game Bar'ın
+    `HKCU\System\GameConfigStore\Children\*\MatchedExeFullPath` listesi) ya da Windows bir Direct3D programının ekranı tek
+    başına tuttuğunu söylüyorsa (`SHQueryUserNotificationState` = `QUNS_RUNNING_D3D_FULL_SCREEN`), oyun öndedir.
+  - Öndeki pencerenin değişimi `EVENT_SYSTEM_FOREGROUND` ile gelir; sorgu yok. Listeye yeni yazılan bir oyun 4 sn sonra
+    bir kez daha aranır.
+  - Oyun öndeyken adada hiçbir şey hareket etmez: müzik ve ajan çubukları, nabız ve kayan başlık durur. Ölçüm: bu döngüler
+    ISLe8'in kompozisyon iş parçacığında (`dwmcorei.dll`) ekranın yenileme hızında kare çizdiriyor, tek çekirdeğin ~%12'si.
+  - **Genel › Oyun oynarken gizle** (varsayılan açık): ada, oyunun ekranında tam ekrandaki gibi gizlenir ve uyarılar bekletilmez.
+- **Performans göstergesi** (Genel; Kapalı / Oyun oynarken / Her zaman): geniş pill'de FPS, CPU ve GPU kullanımı ve sıcaklıkları.
+  - Açıkken ada oyunun üstünde kalır; değerler saniyede bir, yalnızca gösterge görünürken alınır.
+  - **CPU:** `GetSystemTimes`.
+  - **GPU:** `GPU Engine(*engtype_3D)\Utilization Percentage` (PDH, İngilizce adıyla). Her bağdaştırıcının süreçleri
+    toplanır; Görev Yöneticisi gibi en meşgul bağdaştırıcı gösterilir.
+  - **GPU sıcaklığı:** o bağdaştırıcının sürücüsünden (`D3DKMTQueryAdapterInfo`, `KMTQAITYPE_ADAPTERPERFDATA`).
+    RTX 4080 Laptop'ta 72,6°C ölçüldü, nvidia-smi ile aynı.
+  - **CPU sıcaklığı:** Windows'un kendi sensörü yok. LibreHardwareMonitor ya da OpenHardwareMonitor açıksa onların WMI
+    sınıfından okunur, yoksa dizüstünün entegre GPU'sundan (`HybridIntegrated`; işlemciyle aynı yonga, 83°C).
+  - **FPS:** ISLe8'in kendi ETW oturumu (`ISLe8 frames`). Yalnızca DXGI `Present_Start` (42) ve D3D9 `Present_Start` (1)
+    olayları, öndeki oyunun süreci için sayılır. Oturumu yalnızca bir yönetici ya da "Performance Log Users" üyesi
+    açabilir; değilse FPS gösterilmez. Doğrulama: bir Direct3D programında 370–530 FPS.
+- **Kapalı ada** (Görünüm › Ada; Siyah / Temaya uysun / Saydam):
+  - Mac'te kapalı ada çentikle bir olsun diye hep siyah. "Temaya uysun" açık adanın rengini, gradyanını ve camını kullanır.
+  - "Saydam" siyahın %30'unu bırakır; beyaz içerik okunur, görev çubuğu ya da masaüstü arkadan görünür.
+- **Boştayken ince çubuk** (Görünüm › Ada): boş pill 140×6 bir çubuk olarak çizilir. Üstte pill'in üst kenarında, görev
+  çubuğunda ortasında durur. İmleç pill'in tamamında algılanır; saat çubukta gösterilmez.
+- **Banner'larda boş pill satırı yok:** Mac'te banner'ın üst satırı çentiğin altında boş kalıyor. Windows'ta bu satır siyah
+  bir bant oluyordu; görev çubuğunda en alta düştüğünden müzik bildiriminin altında fazla boşluk görünüyordu. Artık banner,
+  içeriği ve üstte/altta 5'er DIP'ten ibaret (`IslandSizes.BannerInset`).
+- **FluentFlyout** (Sistem › FluentFlyout açıkken ona bırak, varsayılan açık): FluentFlyout ses ve medya tuşlarında kendi
+  penceresini gösteriyor. FluentFlyout.exe çalışırken ada ses göstergesini ve yeni şarkı bildirimini göstermez.
+- **Ajanlar › Kullanım limitleri:** her CLI'ın kartı bulunup bulunmadığını gösterir: yolu; "bulunamadı" (yalnızca masaüstü
+  uygulaması yetmez); ya da başka kullanıcıların yazabildiği bir klasörde olduğu için çalıştırılmadığını. Adada yalnızca
+  bulunanların limitleri vardı; neden diğerlerinin görünmediği söylenmiyordu.
 
 ## 4. DESIGN.md §4 ile farklar
 
