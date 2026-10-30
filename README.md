@@ -1,59 +1,55 @@
 # ISLe8 for Windows
 
-by **LRXe8**. macOS'taki ISLe8'in Windows sürümü: ekranın üst ortasında duran, üzerine gelince yay
-animasyonuyla aşağı doğru açılan bir "Dynamic Island". C# + WinUI 3, .NET 10, Native AOT.
+by **LRXe8**. Windows 10 / 11 için Dynamic Island: ekranın üst ortasında duran, üzerine gelince yay animasyonuyla açılan
+bir ada. Müzik, takvim, hava durumu, AI ajanları, cihaz pilleri ve sistem durumu tek yerde. macOS'taki ISLe8'in Windows
+sürümü; C# + WinUI 3, .NET 10, Native AOT, x64 ve ARM64.
 
-**Durum: W0 (iskelet).** Pill, hover'da açılma, DPI ölçekleme, monitör seçimi, tam ekranda gizlenme,
-medya (SMTC), 7 tema, Türkçe/İngilizce. İlk kez Windows 11'de çalıştırıldı ve düzeltildi
-(2026-10-26); neyin denendiği [TESTING.md](TESTING.md)'de. Plan ve mimari: [DESIGN.md](DESIGN.md).
+![ISLe8 for Windows](docs/screenshots/overview.png)
 
----
+<table>
+  <tr>
+    <td><img src="docs/screenshots/island.png" alt="Kapalı ve açık hâl"></td>
+    <td><img src="docs/screenshots/agents.png" alt="AI sekmesi"></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/devices.png" alt="Cihazlar sekmesi"></td>
+    <td><img src="docs/screenshots/system.png" alt="Sistem sekmesi"></td>
+  </tr>
+</table>
+
+## Özellikler
+
+- **Home:** takvim, çalan şarkı (Spotify, tarayıcı, Apple Music…, Windows'un medya oturumundan), hava durumu, zamanlayıcı.
+- **AI:** Claude Code ve Codex'in ne yaptığı, adım adım; izin isteklerine adadan Onayla / Reddet. Codex, Claude ve
+  Antigravity'nin kalan kotası her servisin kendi CLI'sinden okunur; parola ya da token okunmaz.
+- **Cihazlar:** bu bilgisayarın ve Bluetooth cihazlarının pili (AirPods'ta iki kulaklık ve kutu ayrı); Razer,
+  SteelSeries Arctis Nova Pro Omni ve ASUS ROG Omni Receiver alıcılarındaki cihazlar da.
+- **Sistem:** işlemci, bellek, disk, ağ hızı ve en çok işlemci kullanan süreçler.
+- **Raf, Pano, Notlar:** sürüklenen dosyalar, pano geçmişi, notlar.
+- **Uyarılar:** şarj, Ethernet kablosu ve düşük pil; ses ve parlaklık göstergesi (isteğe bağlı, Windows'unkinin yerine).
+- **Kişiselleştirme:** Mac'tekiyle aynı 7 tema; ada ekranın üstünde ya da görev çubuğunun üstünde solda, ortada, sağda;
+  boştayken saat, çalan şarkının adı, tam ekranda gizlenme. Türkçe / İngilizce.
 
 ## İndir ve çalıştır
 
-1. [Releases](https://github.com/Mericsdc/ISLe8-Windows/releases/latest) sayfasından işlemcine uyan
-   zip'i indir: çoğu bilgisayar için **win-x64**, Snapdragon / ARM bilgisayarlar için **win-arm64**.
-2. Zip'i bir klasöre çıkar (ör. `Belgeler\ISLe8`) ve **ISLe8.exe**'yi çalıştır. Kurulum ya da .NET
-   gerekmez.
-3. Windows "Windows kişisel bilgisayarınızı korudu" derse: **Ek bilgi › Yine de çalıştır**. Uygulama
-   henüz imzalı değil (imzalama W6'da).
+1. [Releases](https://github.com/Mericsdc/ISLe8-Windows/releases/latest) sayfasından zip'i indir: çoğu bilgisayar için
+   **win-x64**, Snapdragon / ARM için **win-arm64**.
+2. Bir klasöre çıkar ve **ISLe8.exe**'yi çalıştır. Kurulum ya da .NET gerekmez.
+3. Windows "bilgisayarınızı korudu" derse: **Ek bilgi › Yine de çalıştır** (uygulama henüz imzalı değil).
 
 Gereken: Windows 10 2004+ ya da Windows 11.
 
-**Güncelleme:** ISLe8 yeni sürümü kendisi bulur (günde bir kez GitHub'a sorar). **Ayarlar › Genel › Güncellemeler**'de
-ya da bildirim alanı simgesinin menüsünde **Güncelle**'ye basınca dosya indirilir, SHA-256'sı denetlenir, ISLe8 kapanır,
-yeni sürüm aynı klasöre konur ve ISLe8 yeniden açılır; ayarlar ve geçmiş kalır. Zip'ten açılan ISLe8 klasörünü, kurulu
-(paketli) ISLe8 paketini günceller (`*-package.zip`; Geliştirici Modu açık olmalı, kurulumdaki gibi).
+**Güncelleme:** ISLe8 yeni sürümü günde bir kez GitHub'a sorar. **Ayarlar › Genel › Güncellemeler**'de ya da bildirim
+alanı simgesinin menüsünde **Güncelle**: indirir, SHA-256'sını denetler, kendini değiştirip yeniden açılır; ayarlar kalır.
 
 ### Kullanım
 
-- İmleci üstteki pill'in üstünde bir an tut ya da pill'e tıkla: ada açılır. Üstünden geçip giden imleç
-  açmaz. İmleç çıkınca ya da başka bir yere tıklayınca kapanır.
-- Müzik çalarken (Spotify, tarayıcı, Medya Oynatıcı, Apple Music…) pill genişler; şarkı değişince kısa
-  bir banner çıkar (**Ayarlar › Medya**). Açık adanın Home'unda sütunlar var: takvim, çalan şarkı, hava
-  durumu, zamanlayıcı; hangileri ve hangi sırayla **Ayarlar › Düzen › Home sütunları**'nda.
-- Açık adanın altındaki dock'ta sekmeler var: Home, Raf, Pano, AI (henüz boş), Cihazlar, Notlar, Sistem.
-  Cihazlar'da bu bilgisayarın ve bağlı Bluetooth cihazlarının pilleri (AirPods'ta iki kulaklık ve kutu ayrı).
-  Dokunmatik yüzeyde iki parmakla yana kaydırmak da sekme değiştirir. Sağ üstte sabitle ve ayarlar düğmeleri.
-- Sağ tık: **Açık tut**, **Ayarlar…**, **Tema**, **Ekran**, **Dil**, **ISLe8'den çık**.
-- Bildirim alanındaki kapsül simgesi: tıklayınca Ayarlar açılır, sağ tıklayınca **Ayarlar…** ve
-  **ISLe8'den çık**. Windows 11 yeni simgeleri görev çubuğundaki **^** okunun altına koyar; oradan
-  görev çubuğuna sürükleyebilirsin. ISLe8 çalışırken yeniden açmak da Ayarlar'ı açar.
-- **Adayı kendine göre:** ekranın üstünde (isteğe bağlı kenara bitişik, Mac'teki çentik gibi) ya da görev çubuğunun üstünde solda,
-  ortada, sağda; boştayken saat, müzik çalarken ortada kayan şarkı adı; tam ekranda gizlenip gizlenmeyeceği ve büyütülen
-  pencereler için şerit (**Ayarlar › Görünüm › Ada**, **Genel**).
-- **Pil, kablo ve ses:** şarja takınca ve çıkarınca, Ethernet kablosu girip çıkınca ada iPhone'daki gibi iki yana açılır;
-  pil %20 ve %10'a inince uyarır. Ses ve (dizüstünde, parlaklık tuşlarıyla) parlaklık değişince kulaklarda seviye çubuğu.
-  Başlıkta pil, LAN ve şarj olurken pile giren güç (**Ayarlar › Sistem**, **Görünüm › Başlık çubuğu**). İsteğe bağlı olarak
-  ses tuşlarını ISLe8 karşılar, Windows'un kendi ses göstergesi çıkmaz.
-- **AI sekmesi:** Claude Code ve Codex'in ne yaptığı, adım adım; izin isteklerine adadan Onayla / Reddet. Yanında (ya da
-  altında) Codex, Claude ve Antigravity'nin kalan kotası: her servisin kendi CLI'sine sorulur (`codex`, `claude`, `agy`),
-  ISLe8 parola, token ya da çerez okumaz (**Ayarlar › Ajanlar › Kullanım limitleri**; LimitBar'dan, MIT). Bağlamak için
-  **Ayarlar › Ajanlar › Bağla** (kendiliğinden bağlanmaz). Komut satırından: `isle8 ping`, `isle8 open agents`,
-  `isle8 activity start --id derleme --title "Derleme" --progress 0.4` (kurulu sürümde her terminalde `isle8`; zip'te
+- Pill'in üstünde imleci bir an tut ya da tıkla: ada açılır; imleç çıkınca ya da başka yere tıklayınca kapanır.
+- Sağ tık: **Açık tut**, **Ayarlar…**, **Tema**, **Ekran**, **Dil**, **ISLe8'den çık**. Bildirim alanındaki simge de
+  Ayarlar'ı açar.
+- Girişte başlatmak için: **Ayarlar › Genel › Girişte başlat**.
+- Komut satırı: `isle8 open agents`, `isle8 activity start --id derleme --title "Derleme" --progress 0.4` (zip'te
   klasördeki `isle8-cli.exe`).
-- Oturum açılınca kendiliğinden başlasın: **Ayarlar › Genel › Girişte başlat**. ISLe8'in klasörünü
-  taşırsan kayıt bir sonraki açılışta yeni yere döner.
 
 ### Günlük ve ayarlar
 
