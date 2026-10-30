@@ -29,6 +29,16 @@ internal sealed class UsageService : IDisposable
         ["DISABLE_ERROR_REPORTING"] = "1",
     };
 
+    /// <summary>
+    /// agy otherwise updates itself on a run: it downloads the new build and starts a copy of itself in a
+    /// console of its own, a terminal window that comes and goes; the job then kills it before the swap,
+    /// so it began again every poll. On the Mac the sandbox keeps it from writing its own folder.
+    /// </summary>
+    private static readonly IReadOnlyDictionary<string, string> AgyEnvironment = new Dictionary<string, string>
+    {
+        ["AGY_CLI_DISABLE_AUTO_UPDATE"] = "1",
+    };
+
     /// <summary>Settings files ignored (so none of their hooks run, ISLe8's own included), no MCP server, no transcript.</summary>
     private static readonly string[] ClaudeIsolation =
         ["--restricted", "--strict-mcp-config", "--no-session-persistence", "--settings", """{"disableAllHooks":true,"language":"English"}"""];
@@ -411,7 +421,7 @@ internal sealed class UsageService : IDisposable
     private static async Task<UsageSnapshot?> GeminiAsync(string agy, DateTimeOffset now, Action asking, CancellationToken cancel)
     {
         asking();
-        var output = await UsageCli.RunAsync(agy, ["-p", "/quota", "--output-format", "json", "--print-timeout", "30s"], TimeSpan.FromSeconds(40), null, cancel);
+        var output = await UsageCli.RunAsync(agy, ["-p", "/quota", "--output-format", "json", "--print-timeout", "30s"], TimeSpan.FromSeconds(40), AgyEnvironment, cancel);
         if (cancel.IsCancellationRequested) return null;
         return output is null ? UsageSnapshot.Status(UsageVendor.Gemini, UsageState.Failed, UsageError.Timeout) : UsageParse.Gemini(output.Text, output.Code, now);
     }

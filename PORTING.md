@@ -423,7 +423,10 @@ Her modülde: Mac dosyaları → Windows karşılığı → önemli davranışla
 - **Kaynaklar:**
   - **Codex:** app-server + oturum kayıtları `%USERPROFILE%\.codex\sessions`, `FileSystemWatcher` ile anında.
   - **Claude:** `claude -p /usage --output-format json --max-turns 1` + izolasyon bayrakları. Bayraklar: `--restricted --strict-mcp-config --no-session-persistence --settings {"disableAllHooks":true,"language":"English"}`. **Hook'lar kapalı**; aksi halde ISLe8'in kendi hook'ları tetiklenir.
-  - **Antigravity:** `agy -p /quota`.
+  - **Antigravity:** `agy -p /quota`, Windows'ta `AGY_CLI_DISABLE_AUTO_UPDATE=1` ile (0.2.6). Yoksa agy her çalışmada kendini
+    günceller: yeni sürümü (~70 MB) indirir, kendinin bir kopyasını yeni bir konsolda başlatır; Windows Terminal penceresi bir
+    an açılıp kapanıyordu. İş bitince Job onu değiştirmeden öldürdüğü için bu her sorguda (5 dk) baştan başlıyordu. Mac'te
+    Seatbelt agy'nin kendi klasörüne yazmasını engellediği için güncelleme sessizce başarısız olur; sonuç aynı.
 - **Güvenlik:**
   - Token, çerez ya da kimlik bilgisi asla okunmaz.
   - Seatbelt Windows'ta yok. Her CLI kendi Job Object'inde çalışır (`KILL_ON_JOB_CLOSE`), izin listeli ortam değişkenleri ve boş geçici bir çalışma klasörüyle, süre sınırıyla, `CREATE_NO_WINDOW` ile.

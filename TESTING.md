@@ -3,6 +3,21 @@
 Her maddeyi işaretle; olmayan varsa günlükle birlikte not et (README › Günlük ve ayarlar). W1'in
 adımları en üstte, W0'ın listesi altta.
 
+## agy'nin açıp kapattığı terminal penceresi (0.2.6, 2026-10-30)
+
+Canlı geri bildirim: "belirli aralıklarla CMD açılıp kapanıyor". Sistem genelinde yeni konsol pencereleri ve süreç zinciri 25 dk
+kaydedildi (40 ms aralıkla).
+
+- [x] Sebep: 17:18:41'de `ISLe8 > agy -p /quota > agy > agy`; en alttaki yeni konsol istedi, Windows Terminal penceresi açıldı.
+      Aynı saniyede `%LOCALAPPDATA%\agy\bin\.new` (~70 MB) yazıldı: agy'nin kendi kendini güncellemesi. Job, soru bitince onu
+      değiştirmeden öldürüyordu.
+- [x] `claude -p /usage` ve `claude auth status` ISLe8'in ortamıyla: alt süreçler (reg, where, git) kendi gizli konsollarında,
+      pencere yok.
+- [x] Düzeltmeden sonra `agy`, `AGY_CLI_DISABLE_AUTO_UPDATE=1` ile: tek süreç, pencere yok, `.new` değişmedi. Değişkenin
+      adı agy 1.4.10'un ikilisinden ("failed to check for updates" iletisinin yanında).
+- [ ] Bir gün boyunca ISLe8 açıkken terminal penceresi hiç çıkmıyor (güncelleme denetimi her çalışmada değil; anlık olarak
+      zorlanamadı).
+
 ## AI sekmesi ve isle8 komutu (2026-10-29)
 
 Paketli Release JIT (`install.ps1 -NoAot`). Hook olayları, plan, adım süreleri, onay/zaman aşımı/vazgeçme, betik
