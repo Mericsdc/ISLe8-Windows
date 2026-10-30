@@ -1681,4 +1681,10 @@
   <data name="Settings_StripNone" xml:space="preserve">
     <value>Start at the very top</value>
   </data>
+  <data name="Agents_RequestLines" xml:space="preserve">
+    <value>{0} lines; approving covers all of them</value>
+  </data>
+  <data name="Agents_RequestMore" xml:space="preserve">
+    <value>There's more ({0} lines) · see it all in the AI tab</value>
+  </data>
 </root>

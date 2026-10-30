@@ -232,7 +232,8 @@ internal sealed class IslandController : IDisposable
         _agents.IslandCommand += (action, tab) =>
         {
             if (action == "close") _model.Close();
-            else _model.Open(IslandTabs.Parse(tab));
+            // Hidden behind a full-screen app, it would open unseen.
+            else if (!_window.IsHiddenForFullscreen) _model.Open(IslandTabs.Parse(tab));
         };
         // The answer is what was last read (DevicesChip.summary).
         _agents.DevicesQuery = () => _devices.Devices.Select(BatteryColors.Summary).ToList();
@@ -272,6 +273,8 @@ internal sealed class IslandController : IDisposable
         // Ctrl+Alt+V opens the clipboard from anywhere, its search ready for typing (PORTING.md §3.9).
         _clipboardKey = new HotKey(_window.Hwnd, 0x4953, 0x56, () =>
         {
+            // Not over a full-screen game or video: the island is hidden there, and its search would take the keyboard from it.
+            if (_window.IsHiddenForFullscreen) return;
             _model.Toggle(IslandTab.Clipboard);
             if (_model.State == IslandState.Expanded) _view.Clipboard.FocusSearch();
         });
@@ -573,6 +576,7 @@ internal sealed class IslandController : IDisposable
         {
             _view.SetDropTarget(shape);
             _view.DropTarget.Root.Visibility = Visibility.Visible;
+            _view.DropTarget.Root.IsHitTestVisible = true;
             _surface.Fade(_view.DropTarget.Root, 1, MotionTimings.ContentDelay, MotionTimings.ContentFadeIn);
             _surface.Fade(_view.PillLayer, 0, TimeSpan.Zero, MotionTimings.ContentFadeOut);
         }
@@ -581,8 +585,17 @@ internal sealed class IslandController : IDisposable
             _view.ExpandedLayer.IsHitTestVisible = false;
             _surface.Reveal(_view.ExpandedLayer, show: false);
         }
-        if (from == IslandState.Alert) _surface.Fade(_view.AlertLayer, 0, TimeSpan.Zero, MotionTimings.ContentFadeOut);
-        if (from == IslandState.DropTarget) _surface.Fade(_view.DropTarget.Root, 0, TimeSpan.Zero, MotionTimings.ContentFadeOut);
+        // A layer on its way out takes no more clicks, even while it fades over the open island.
+        if (from == IslandState.Alert)
+        {
+            _view.AlertLayer.IsHitTestVisible = false;
+            _surface.Fade(_view.AlertLayer, 0, TimeSpan.Zero, MotionTimings.ContentFadeOut);
+        }
+        if (from == IslandState.DropTarget)
+        {
+            _view.DropTarget.Root.IsHitTestVisible = false;
+            _surface.Fade(_view.DropTarget.Root, 0, TimeSpan.Zero, MotionTimings.ContentFadeOut);
+        }
         if (state == IslandState.Pill && from is IslandState.Expanded or IslandState.Alert or IslandState.DropTarget && _model.Pill == PillKind.Compact)
         {
             _surface.Fade(_view.PillLayer, 1, MotionTimings.ContentDelay, MotionTimings.ContentFadeIn);
@@ -675,6 +688,9 @@ internal sealed class IslandController : IDisposable
     /// <summary>The shape came to rest. Back at the pill, the player leaves the tree and the mouse region shrinks to it.</summary>
     private void Settle()
     {
+        // Gone once the shape has come to rest, whatever the island became; opening from a banner or a drop included.
+        if (_model.State != IslandState.Alert) _view.AlertLayer.Visibility = Visibility.Collapsed;
+        if (_model.State != IslandState.DropTarget) _view.DropTarget.Root.Visibility = Visibility.Collapsed;
         if (_model.State == IslandState.Expanded || _window.Layout is not { } layout) return;
         _settled = true;
         if (_model.State == IslandState.Pill)
@@ -682,8 +698,6 @@ internal sealed class IslandController : IDisposable
             _view.ExpandedLayer.Visibility = Visibility.Collapsed;
             _trim.Schedule();
         }
-        if (_model.State != IslandState.Alert) _view.AlertLayer.Visibility = Visibility.Collapsed;
-        if (_model.State != IslandState.DropTarget) _view.DropTarget.Root.Visibility = Visibility.Collapsed;
         _window.SetHitRegion(Region(layout, _model.State));
         UpdateBars();
     }

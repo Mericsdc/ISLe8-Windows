@@ -1681,4 +1681,10 @@
   <data name="Settings_StripNone" xml:space="preserve">
     <value>Ekranın en üstünden başlasın</value>
   </data>
+  <data name="Agents_RequestLines" xml:space="preserve">
+    <value>{0} satır; onay hepsi için geçerli</value>
+  </data>
+  <data name="Agents_RequestMore" xml:space="preserve">
+    <value>Devamı var ({0} satır) · tamamı AI sekmesinde</value>
+  </data>
 </root>

@@ -143,6 +143,23 @@ public sealed class ShelfStore
         }
     }
 
+    /// <summary>The <c>FilesFolder&lt;guid&gt;</c> folder holding <paramref name="path"/>, or null when it is anywhere else.</summary>
+    public string? CopyFolderOf(string path)
+    {
+        try
+        {
+            var folder = Path.GetDirectoryName(Path.GetFullPath(path));
+            var parent = folder is null ? null : Path.GetDirectoryName(folder);
+            return parent is not null && string.Equals(parent.TrimEnd('\\'), Path.GetFullPath(FilesFolder).TrimEnd('\\'), StringComparison.OrdinalIgnoreCase)
+                ? folder
+                : null;
+        }
+        catch (Exception e) when (e is ArgumentException or NotSupportedException or PathTooLongException)
+        {
+            return null;
+        }
+    }
+
     private string? MakeCopy(string path)
     {
         var folder = Path.Combine(FilesFolder, Guid.NewGuid().ToString("N"));
@@ -168,13 +185,17 @@ public sealed class ShelfStore
         foreach (var folder in Directory.GetDirectories(source)) CopyFolder(folder, Path.Combine(destination, Path.GetFileName(folder)));
     }
 
-    private static void DeleteCopies(IEnumerable<ShelfItem> items)
+    /// <summary>
+    /// A copy's own folder (<c>FilesFolder&lt;guid&gt;</c>) and nothing else: a path that has moved, or
+    /// was edited, outside ISLe8's files is never deleted, whatever its item says.
+    /// </summary>
+    private void DeleteCopies(IEnumerable<ShelfItem> items)
     {
         foreach (var item in items.Where(item => item.IsCopy))
         {
             try
             {
-                if (Path.GetDirectoryName(item.Path) is { } folder && Directory.Exists(folder)) Directory.Delete(folder, recursive: true);
+                if (CopyFolderOf(item.Path) is { } folder && Directory.Exists(folder)) Directory.Delete(folder, recursive: true);
             }
             catch (Exception e) when (e is IOException or UnauthorizedAccessException)
             {
@@ -198,7 +219,8 @@ public sealed class ShelfStore
                 }
                 else if (item.FileId is { } id && _locator.PathOf(id) is { } moved)
                 {
-                    _items.Add(item with { Path = moved });
+                    // A copy the user moved out of ISLe8's files is theirs now: kept, but no longer deleted with the item.
+                    _items.Add(item with { Path = moved, IsCopy = item.IsCopy && CopyFolderOf(moved) is not null });
                 }
             }
         }

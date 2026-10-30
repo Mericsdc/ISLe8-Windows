@@ -111,6 +111,31 @@ public sealed class ShelfTests : IDisposable
         Assert.Equal(new DipSize(460, 144), IslandSizes.DropTarget);
     }
 
+    [Fact]
+    public void ACopyMovedOutOfTheShelfsFilesIsNeverDeleted()
+    {
+        var store = Store();
+        store.Add([File("photo.png")], copy: true);
+        var copy = store.Items[0].Path;
+        Assert.NotNull(store.CopyFolderOf(copy));
+        // The user takes the copy out (Show in folder, then drag it to Desktop).
+        var desktop = Path.Combine(_root, "Desktop");
+        Directory.CreateDirectory(desktop);
+        var moved = Path.Combine(desktop, "photo.png");
+        System.IO.File.Move(copy, moved);
+        System.IO.File.WriteAllText(Path.Combine(desktop, "other.txt"), "keep");
+        _locator.Moves[copy] = moved;
+
+        var reopened = Store();
+        var item = Assert.Single(reopened.Items);
+        Assert.Equal(moved, item.Path);
+        Assert.False(item.IsCopy);
+        reopened.Remove(item.Id);
+        Assert.True(System.IO.File.Exists(moved));
+        Assert.True(System.IO.File.Exists(Path.Combine(desktop, "other.txt")));
+        Assert.Null(reopened.CopyFolderOf(moved));
+    }
+
     /// <summary>Stands in for NTFS file IDs: a file's id is the path it was added from.</summary>
     private sealed class Locator : IFileLocator
     {

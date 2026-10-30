@@ -35,6 +35,21 @@ aktivitesi, kulak önceliği, açılış sekmesi ve hook kurulumu Core testlerin
 
 - [ ] İkinci satır: kullanımdan sonra bellek yine 80 MB'ın üstünde (Raf ölçümündeki açık madde). W6'nın ölçüm turunda bakılacak.
 
+## Denetimden düzeltmeler (0.2.4, 2026-10-30)
+
+Salt-okunur kod denetiminin kritik ve yüksek bulguları. Core testleri 345'ten 347'ye (raf silme sınırı, onayın tam metni).
+
+- [x] **Girişte başlamıyordu:** görev açıktı (State 2) ama Windows açılışta ISLe8'i hiç başlatmadı (olay günlüklerinde iz yok); aynı
+      açılışta ChatGPT'nin görevi çalıştı. Fark: `windows.startupTask` uzantısında `Executable`/`EntryPoint` yoktu. Eklendi; kurulu
+      bildirimde görünüyor. [ ] Yeniden başlatınca ISLe8'in kendiliğinden açıldığı kullanıcıda doğrulanacak.
+- [x] Raftan kaldırma yalnızca `FilesFolder<guid>` klasörünü silebilir; dışarı taşınan kopya artık kopya sayılmıyor (test).
+- [x] Onay kartında isteğin tamamı (komutun her satırı, tam yol, diğer araçlarda bütün alanlar; 4000 karaktere kadar, kaydırılabilir);
+      banner kesilen isteği "Devamı var (N satır)" diye belirtiyor (test).
+- [x] Banner ya da bırakma hedefinden çıkan katman o anda tıklama almıyor ve şekil oturunca gizleniyor (açık adaya geçişte de).
+- [x] Tam ekranda gizliyken Ctrl+Alt+V ve `isle8 open` yok sayılıyor.
+- [x] Medya: aynı uygulamanın iki oturumu (iki tarayıcı sekmesi) artık oturum kimliğiyle ayrılıyor; kapanan sekmede takılmıyor.
+- [ ] Medya: iki sekmede oynatıp birini kapatma (canlı).
+
 ## Büyütülen pencereler ve şerit (0.2.3, 2026-10-30)
 
 - [ ] Görünüm › Ada › Büyütülen pencereler: üç seçenek; "hemen altından" büyütülmüş tarayıcının sekmeleri pill'in altına yapışıyor,

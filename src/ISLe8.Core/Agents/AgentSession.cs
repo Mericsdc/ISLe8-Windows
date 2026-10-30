@@ -145,8 +145,18 @@ public sealed class AgentSession(string id, AgentKind agent, string project, Dat
     public int? TurnSeconds => TurnStarted is { } started && TurnEnded is { } ended ? (int)Math.Round((ended - started).TotalSeconds) : null;
 }
 
-/// <summary>A tool call waiting for a yes or no; the hook that asked is still connected (<see cref="Id"/>).</summary>
-public sealed record AgentApproval(int Id, string SessionId, AgentKind Agent, string Project, string Tool, AgentAction Detail);
+/// <summary>
+/// A tool call waiting for a yes or no; the hook that asked is still connected (<see cref="Id"/>).
+/// <paramref name="Request"/> is all of it (<see cref="AgentText.Request"/>): Approve allows exactly
+/// that, so the AI tab shows it whole, not only the one-line <paramref name="Detail"/>.
+/// </summary>
+public sealed record AgentApproval(int Id, string SessionId, AgentKind Agent, string Project, string Tool, AgentAction Detail, string Request = "")
+{
+    /// <summary>The request has more than its first line, or a line too long for the summary.</summary>
+    public bool IsLongerThanDetail => Request.Contains('\n') || Request.Length > 120;
+
+    public int RequestLines => Request.Length == 0 ? 0 : Request.Count(c => c == '\n') + 1;
+}
 
 /// <summary>Something a script put on the island with <c>isle8 activity</c>.</summary>
 public sealed class ScriptActivity(string id)
@@ -191,6 +201,35 @@ public static class AgentText
                 return new(ActionKind.Tool, detail.Length == 0 ? tool : $"{tool}: {detail}");
         }
     }
+
+    /// <summary>The most an approval shows; past it the AI tab says so and the terminal has the rest.</summary>
+    public const int RequestLimit = 4000;
+
+    /// <summary>
+    /// Everything a tool call will do, for an approval: a command whole, every line of it; a file's full
+    /// path; a patch's text; for anything else each of its fields. Shown as it is, up to <see cref="RequestLimit"/>.
+    /// </summary>
+    public static string Request(string? tool, JsonElement input)
+    {
+        tool ??= "?";
+        var text = tool switch
+        {
+            "Bash" or "shell" or "exec_command" or "local_shell" => String(input, "command")
+                ?? (Property(input, "command") is { ValueKind: JsonValueKind.Array } parts
+                    ? string.Join(' ', parts.EnumerateArray().Where(part => part.ValueKind == JsonValueKind.String).Select(part => part.GetString()))
+                    : ""),
+            "Read" or "Write" or "Edit" or "MultiEdit" => String(input, "file_path") ?? "",
+            "NotebookEdit" => String(input, "notebook_path") ?? "",
+            "apply_patch" => String(input, "input") ?? String(input, "patch") ?? Fields(input),
+            _ => Fields(input),
+        };
+        text = text.Replace("\r\n", "\n").TrimEnd();
+        return text.Length > RequestLimit ? text[..(RequestLimit - 1)] + "…" : text;
+    }
+
+    /// <summary>Each field as "name: value", strings as they are and anything else as JSON.</summary>
+    private static string Fields(JsonElement input) => input.ValueKind != JsonValueKind.Object ? input.GetRawText()
+        : string.Join("\n", input.EnumerateObject().Select(item => $"{item.Name}: {(item.Value.ValueKind == JsonValueKind.String ? item.Value.GetString() : item.Value.GetRawText())}"));
 
     /// <summary>The agent's to-do list, when this call writes one.</summary>
     public static List<AgentPlanItem>? Plan(string tool, JsonElement input)

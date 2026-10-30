@@ -254,7 +254,7 @@ public sealed class AgentHub
                 });
                 break;
             case "PermissionRequest" when _settings.AgentApprovalsOnIsland:
-                var approval = new AgentApproval(connection, sessionId, agent, project, tool, AgentText.Describe(tool, input));
+                var approval = new AgentApproval(connection, sessionId, agent, project, tool, AgentText.Describe(tool, input), AgentText.Request(tool, input));
                 Touch(session => session.Status = AgentStatus.WaitingApproval);
                 _approvals.Add(approval);
                 _replies[connection] = reply;

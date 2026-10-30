@@ -516,8 +516,35 @@ internal sealed class AgentsTabView
         var stack = new StackPanel
         {
             Spacing = 8,
-            Children = { Row(AgentLook.Icon(approval.Agent, 18), who, waiting), detail, AgentLook.ApprovalButtons(_theme, approval, _decide) },
+            Children = { Row(AgentLook.Icon(approval.Agent, 18), who, waiting), detail },
         };
+        // Approve allows all of it, so all of it is shown: every line of a command, a file's full path.
+        if (approval.Request.Length > 0)
+        {
+            if (approval.RequestLines > 1)
+            {
+                var lines = Ui.Text(10, semibold: true);
+                lines.Text = L.Format("Agents_RequestLines", approval.RequestLines);
+                lines.Foreground = new SolidColorBrush(AgentLook.Orange);
+                stack.Children.Add(lines);
+            }
+            stack.Children.Add(new ScrollViewer
+            {
+                MaxHeight = 120,
+                HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                Content = new TextBlock
+                {
+                    Text = approval.Request,
+                    FontFamily = AgentLook.Mono,
+                    FontSize = 11,
+                    Foreground = Ui.White(0xD9),
+                    TextWrapping = TextWrapping.Wrap,
+                    IsTextSelectionEnabled = true,
+                },
+            });
+        }
+        stack.Children.Add(AgentLook.ApprovalButtons(_theme, approval, _decide));
         var card = Tiles.Tile(_theme, stack, new Thickness(10));
         card.BorderBrush = new SolidColorBrush(Color.FromArgb(0x73, AgentLook.Orange.R, AgentLook.Orange.G, AgentLook.Orange.B));
         card.BorderThickness = new Thickness(1);
@@ -587,16 +614,21 @@ internal sealed class ApprovalBanner(IslandTheme theme, Action<AgentApproval, bo
             FontSize = 11,
             Foreground = Ui.White(0xFF),
             TextWrapping = TextWrapping.Wrap,
-            MaxLines = 2,
+            MaxLines = approval.IsLongerThanDetail ? 1 : 2,
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
-        Root.Children.Clear();
-        Root.Children.Add(new StackPanel
+        var stack = new StackPanel { Spacing = 6, VerticalAlignment = VerticalAlignment.Center, Children = { heading, detail } };
+        // The banner has room for a line; when the request is longer it says so, and the AI tab shows it all.
+        if (approval.IsLongerThanDetail)
         {
-            Spacing = 6,
-            VerticalAlignment = VerticalAlignment.Center,
-            Children = { heading, detail, AgentLook.ApprovalButtons(theme, approval, decide) },
-        });
+            var more = Ui.Text(10, semibold: true);
+            more.Text = L.Format("Agents_RequestMore", approval.RequestLines);
+            more.Foreground = new SolidColorBrush(AgentLook.Orange);
+            stack.Children.Add(more);
+        }
+        stack.Children.Add(AgentLook.ApprovalButtons(theme, approval, decide));
+        Root.Children.Clear();
+        Root.Children.Add(stack);
     }
 }
 

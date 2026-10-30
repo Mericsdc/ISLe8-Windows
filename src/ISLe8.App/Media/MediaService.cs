@@ -29,6 +29,8 @@ internal sealed class MediaService : IDisposable
     private List<GlobalSystemMediaTransportControlsSession> _sessions = [];
     private GlobalSystemMediaTransportControlsSession? _session;
     private string _appId = "";
+    /// <summary>More than one live session has the followed one's app id (two browser tabs playing).</summary>
+    private bool _appHasTwins;
     private bool _disposed;
 
     private string _title = "";
@@ -192,7 +194,11 @@ internal sealed class MediaService : IDisposable
 
         var index = MediaRules.PickSession(summaries, current);
         var chosen = index < 0 ? null : alive[index];
-        if (chosen is null ? _session is null : _session is not null && summaries[index].AppId == _appId) return false;
+        _appHasTwins = summaries.Count(summary => summary.AppId == _appId) > 1;
+        // The same session, not just the same app: two tabs of one browser are two sessions, and a
+        // closed tab's session must give way even when another tab of that browser plays on.
+        var followedAlive = _session is not null && alive.Any(session => ReferenceEquals(session, _session));
+        if (chosen is null ? _session is null : ReferenceEquals(chosen, _session) || followedAlive && !_appHasTwins && summaries[index].AppId == _appId) return false;
         Attach(chosen);
         return true;
     }
@@ -252,7 +258,7 @@ internal sealed class MediaService : IDisposable
         {
             try
             {
-                if (_session is { } current && sender.SourceAppUserModelId == _appId) action(current);
+                if (_session is { } current && IsFollowed(sender)) action(current);
             }
             catch (Exception e)
             {
@@ -261,13 +267,17 @@ internal sealed class MediaService : IDisposable
             }
         });
 
+    /// <summary>The event is the followed session's: the same object, or, when its app has only that one session, the same app.</summary>
+    private bool IsFollowed(GlobalSystemMediaTransportControlsSession sender) =>
+        ReferenceEquals(sender, _session) || !_appHasTwins && sender.SourceAppUserModelId == _appId;
+
     /// <summary>Any session played or paused: it may take over; if it is the followed one, its state is read.</summary>
     private void OnPlaybackChanged(GlobalSystemMediaTransportControlsSession sender)
     {
         try
         {
             if (Follow()) return;
-            if (_session is not { } current || sender.SourceAppUserModelId != _appId) return;
+            if (_session is not { } current || !IsFollowed(sender)) return;
             var wasPlaying = IsPlaying;
             var playedFor = Current;
             ReadPlayback(current);

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Package
   xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
@@ -10,7 +10,7 @@
   IgnorableNamespaces="uap uap3 uap5 desktop4 desktop6 rescap">
 
   <!-- Publisher must match the signing certificate's subject (README: "MSIX imzalama"). -->
-  <Identity Name="com.lrxe8.isle8" Publisher="CN=LRXe8" Version="0.2.3.0" />
+  <Identity Name="com.lrxe8.isle8" Publisher="CN=LRXe8" Version="0.2.4.0" />
 
   <Properties>
     <DisplayName>ISLe8</DisplayName>
@@ -43,13 +43,13 @@
         <uap:SplashScreen Image="Assets\SplashScreen.png" />
       </uap:VisualElements>
       <Extensions>
-        <!-- Settings › General › Open at login (PORTING.md §3.17); off until the switch turns it on. -->
-        <uap5:Extension Category="windows.startupTask">
+        <!-- Settings â€º General â€º Open at login (PORTING.md Â§3.17); off until the switch turns it on. -->
+        <uap5:Extension Category="windows.startupTask" Executable="ISLe8.exe" EntryPoint="Windows.FullTrustApplication">
           <uap5:StartupTask TaskId="ISLe8Startup" Enabled="false" DisplayName="ISLe8" />
         </uap5:Extension>
       </Extensions>
     </Application>
-    <!-- The isle8 command (PORTING.md §1): a console program, "isle8" on every terminal's PATH. Not in Start. -->
+    <!-- The isle8 command (PORTING.md Â§1): a console program, "isle8" on every terminal's PATH. Not in Start. -->
     <Application Id="Cli" Executable="isle8-cli.exe" EntryPoint="Windows.FullTrustApplication" desktop4:Subsystem="console" desktop4:SupportsMultipleInstances="true">
       <uap:VisualElements
         DisplayName="isle8"
@@ -72,9 +72,9 @@
     <rescap:Capability Name="runFullTrust" />
     <!-- For the two lines in Properties above. -->
     <rescap:Capability Name="unvirtualizedResources" />
-    <!-- The notification mirror (PORTING.md §3.11): Windows asks the user once. -->
+    <!-- The notification mirror (PORTING.md Â§3.11): Windows asks the user once. -->
     <uap3:Capability Name="userNotificationListener" />
-    <!-- Wireless device batteries (PORTING.md §3.14). -->
+    <!-- Wireless device batteries (PORTING.md Â§3.14). -->
     <DeviceCapability Name="bluetooth" />
   </Capabilities>
 </Package>

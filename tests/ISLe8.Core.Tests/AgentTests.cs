@@ -34,6 +34,20 @@ public class AgentTests
     private static JsonElement Input(string json) => JsonDocument.Parse(json).RootElement;
 
     [Fact]
+    public void AnApprovalCarriesTheWholeRequest()
+    {
+        var twoLines = Input("""{"command":"echo ok\nrm -rf ~/x"}""");
+        Assert.Equal("echo ok\nrm -rf ~/x", AgentText.Request("Bash", twoLines));
+        Assert.Equal(@"C:\Users\me\.claude\settings.json", AgentText.Request("Edit", Input("""{"file_path":"C:\\Users\\me\\.claude\\settings.json","old_string":"a"}""")));
+        Assert.Equal("url: https://x\ndepth: 2", AgentText.Request("mcp__fetch", Input("""{"url":"https://x","depth":2}""")));
+        var approval = new AgentApproval(1, "s", AgentKind.Claude, "p", "Bash", AgentText.Describe("Bash", twoLines), AgentText.Request("Bash", twoLines));
+        Assert.Equal("echo ok", approval.Detail.Detail);
+        Assert.True(approval.IsLongerThanDetail);
+        Assert.Equal(2, approval.RequestLines);
+        Assert.Equal(AgentText.RequestLimit, AgentText.Request("Bash", Input($$"""{"command":"{{new string('a', 9000)}}"}""")).Length);
+    }
+
+    [Fact]
     public void ToolCallsReadAsShortLines()
     {
         Assert.Equal(new AgentAction(ActionKind.Command, "npm test"), AgentText.Describe("Bash", Input("""{"command":"npm test\nnpm run lint"}""")));
