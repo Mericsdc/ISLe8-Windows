@@ -35,6 +35,11 @@ aktivitesi, kulak önceliği, açılış sekmesi ve hook kurulumu Core testlerin
 
 - [ ] İkinci satır: kullanımdan sonra bellek yine 80 MB'ın üstünde (Raf ölçümündeki açık madde). W6'nın ölçüm turunda bakılacak.
 
+## Büyütülen pencereler ve şerit (0.2.3, 2026-10-30)
+
+- [ ] Görünüm › Ada › Büyütülen pencereler: üç seçenek; "hemen altından" büyütülmüş tarayıcının sekmeleri pill'in altına yapışıyor,
+      "en üstünden" bant hiç yok.
+
 ## Güncellemeler (2026-10-30)
 
 Sürüm 0.2.1 (0.2.0 etiketinin yayını CI'da isle8-cli geri yüklenmediği için çıkmadı). Release okuma, sürüm karşılaştırma, dosya seçimi, güvenilen adresler ve günlük denetim Core testlerinde

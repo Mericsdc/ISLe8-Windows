@@ -120,8 +120,10 @@ Windows'ta ikisi de serbest, bu yüzden kullanıcı isteğiyle eklendi. Hepsinin
 - **Boştayken saat:** boştaki pill'in ortasında kullanıcının bölge ayarındaki kısa saat; dakikada bir, dakika başında güncellenir.
 - **Şarkı adı:** müzik çalarken geniş pill'de kapak ile çubukların arasında; sığmazsa her turun başında 1,6 sn bekleyip 28 DIP/sn
   kayar (kompozisyon animasyonu, ISLe8 tarafında zamanlayıcı yok). Yalnızca geniş pill görünürken kayar.
-- **Tam ekranda gizle** (Ayarlar › Genel; önceden ayarı vardı, düğmesi yoktu) ve **ada için şerit ayır** (görev çubuğundayken
-  şerit görev çubuğunun üstünde, `ABE_BOTTOM`).
+- **Tam ekranda gizle** (Ayarlar › Genel; önceden ayarı vardı, düğmesi yoktu).
+- **Büyütülen pencereler** (0.2.3, Görünüm › Ada; önce Genel'de aç/kapat): adanın altından (şerit pill + 6 DIP büyüme payı),
+  pill'in hemen altından (şerit tam pill kadar; büyüyen pill pencereye 6 DIP taşar) ya da ekranın en üstünden (şerit yok). Görev
+  çubuğundayken şerit görev çubuğunun üstünde (`ABE_BOTTOM`).
 
 ### Boyutlar (Windows'ta etkin piksel / DIP)
 
