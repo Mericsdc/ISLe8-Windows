@@ -122,7 +122,8 @@ internal static class NotificationsPage
         var state = SettingsUi.Description(context.Palette, "");
         var developer = new Button { Content = L.Get("Notifications_DeveloperMode") };
         developer.Click += async (_, _) => await Windows.System.Launcher.LaunchUriAsync(new Uri("ms-settings:developers"));
-        var move = new Button { Content = L.Get("Notifications_MoveToPackage"), Style = (Style)Application.Current.Resources["AccentButtonStyle"] };
+        var move = new Button { Content = L.Get("Notifications_MoveToPackage") };
+        SettingsUi.Accent(move);
         void Refresh()
         {
             var busy = updater.State is Shell.UpdateState.Checking or Shell.UpdateState.Downloading or Shell.UpdateState.Installing;

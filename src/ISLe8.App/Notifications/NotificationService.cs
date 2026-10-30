@@ -2,6 +2,7 @@ using ISLe8.Core.Diagnostics;
 using ISLe8.Core.Notifications;
 using ISLe8.Core.Settings;
 using ISLe8.Shell;
+using ISLe8.UI;
 using Microsoft.UI.Dispatching;
 using Windows.Storage.Streams;
 using Windows.UI.Notifications;
@@ -181,7 +182,7 @@ internal sealed class NotificationService : IDisposable
         try
         {
             if (sender.GetNotification(args.UserNotificationId) is not { } received || Read(received) is not { } notification) return;
-            _queue.TryEnqueue(() => Deliver(notification));
+            _queue.Post(() => Deliver(notification));
         }
         catch (Exception e)
         {

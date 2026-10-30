@@ -5,6 +5,7 @@ using ISLe8.Island;
 using ISLe8.Localization;
 using ISLe8.Settings;
 using ISLe8.Shell;
+using ISLe8.UI;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -61,7 +62,7 @@ public partial class App : Application, IXamlMetadataProvider
 
         // Starting ISLe8 again while it runs opens its settings, as on the Mac (Program.Main redirects).
         var queue = DispatcherQueue.GetForCurrentThread();
-        AppInstance.GetCurrent().Activated += (_, _) => queue.TryEnqueue(OpenSettings);
+        AppInstance.GetCurrent().Activated += (_, _) => queue.Post(OpenSettings);
     }
 
     public void OpenSettings() => _settingsWindow?.Show();

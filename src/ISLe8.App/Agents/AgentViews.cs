@@ -252,10 +252,10 @@ internal sealed class AgentsTabView
         Root = _layout;
         _ticker = queue.CreateTimer();
         _ticker.Interval = TimeSpan.FromSeconds(1);
-        _ticker.Tick += (_, _) =>
+        _ticker.OnTick(() =>
         {
             foreach (var tick in _tickers) tick();
-        };
+        });
         _hub.Changed += OnChanged;
         _usage.Changed += OnChanged;
     }

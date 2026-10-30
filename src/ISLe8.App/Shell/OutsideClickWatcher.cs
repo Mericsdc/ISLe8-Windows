@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
 using ISLe8.Core.Diagnostics;
 using ISLe8.Interop;
+using ISLe8.UI;
 using Microsoft.UI.Dispatching;
 
 namespace ISLe8.Shell;
@@ -61,7 +62,7 @@ internal sealed unsafe class OutsideClickWatcher : IDisposable
             && message is Win32.WM_LBUTTONDOWN or Win32.WM_RBUTTONDOWN or Win32.WM_MBUTTONDOWN
             && s_active is { } watcher)
         {
-            watcher._queue.TryEnqueue(() => watcher._clicked());
+            watcher._queue.Post(() => watcher._clicked());
         }
         return Win32.CallNextHookEx(0, code, message, data);
     }

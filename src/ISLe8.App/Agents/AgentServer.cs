@@ -4,6 +4,7 @@ using System.Security.Principal;
 using System.Text;
 using ISLe8.Core.Agents;
 using ISLe8.Core.Diagnostics;
+using ISLe8.UI;
 using Microsoft.UI.Dispatching;
 
 namespace ISLe8.Agents;
@@ -74,12 +75,12 @@ internal sealed class AgentServer : IDisposable
         {
             if (await ReadLineAsync(pipe) is not { } line) return;
             var answer = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
-            _queue.TryEnqueue(() => _hub.Handle(line, connection, reply => answer.TrySetResult(reply)));
+            _queue.Post(() => _hub.Handle(line, connection, reply => answer.TrySetResult(reply)));
             // The client sends nothing more: a read that ends means it went away.
             var gone = WaitUntilClosedAsync(pipe);
             if (await Task.WhenAny(answer.Task, gone) == gone)
             {
-                _queue.TryEnqueue(() => _hub.Abandoned(connection));
+                _queue.Post(() => _hub.Abandoned(connection));
                 return;
             }
             await pipe.WriteAsync(Encoding.UTF8.GetBytes(answer.Task.Result + "\n"));

@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using ISLe8.Core.Diagnostics;
+using ISLe8.UI;
 using Microsoft.UI.Dispatching;
 
 namespace ISLe8.Status;
@@ -146,7 +147,7 @@ internal sealed unsafe partial class BrightnessMonitor : IDisposable
             var level = Current(services);
             if (level is null && !HasLid()) return;
             Log.Info(level is null ? "brightness: waiting for the built-in display (lid closed)" : "brightness: following the built-in display");
-            _queue.TryEnqueue(() =>
+            _queue.Post(() =>
             {
                 if (!_keysRegistered && _window != 0 && !_disposed) _keysRegistered = RegisterKeys();
             });
@@ -219,7 +220,7 @@ internal sealed unsafe partial class BrightnessMonitor : IDisposable
         }
     }
 
-    private void Post(double level) => _queue.TryEnqueue(() =>
+    private void Post(double level) => _queue.Post(() =>
     {
         if (_enabled) Changed?.Invoke(level);
     });

@@ -99,6 +99,27 @@ internal static class SettingsUi
         TextWrapping = TextWrapping.Wrap,
     };
 
+    /// <summary>
+    /// Windows' accent button, in the system accent colour. AccentButtonStyle itself can't be taken from the
+    /// resources: under Native AOT an object XAML made comes back through Resources[…] as a bare COM wrapper,
+    /// and the cast to Style threw; 0.2.6 closed whenever an update was out and Settings opened.
+    /// </summary>
+    public static void Accent(Button button)
+    {
+        var system = new Windows.UI.ViewManagement.UISettings();
+        Brush Of(Windows.UI.ViewManagement.UIColorType type) => new SolidColorBrush(system.GetColorValue(type));
+        var text = new SolidColorBrush(Microsoft.UI.Colors.White);
+        button.Background = Of(Windows.UI.ViewManagement.UIColorType.Accent);
+        button.Foreground = text;
+        button.BorderBrush = new SolidColorBrush(Microsoft.UI.Colors.Transparent);
+        button.Resources["ButtonBackgroundPointerOver"] = Of(Windows.UI.ViewManagement.UIColorType.AccentLight1);
+        button.Resources["ButtonBackgroundPressed"] = Of(Windows.UI.ViewManagement.UIColorType.AccentDark1);
+        button.Resources["ButtonForegroundPointerOver"] = text;
+        button.Resources["ButtonForegroundPressed"] = text;
+        button.Resources["ButtonBorderBrushPointerOver"] = button.BorderBrush;
+        button.Resources["ButtonBorderBrushPressed"] = button.BorderBrush;
+    }
+
     public static ComboBox Choices(IEnumerable<string> items, int selected, Action<int> chose)
     {
         var box = new ComboBox { MinWidth = 220 };

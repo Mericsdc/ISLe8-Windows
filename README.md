@@ -48,6 +48,9 @@ Windows Ayarları › Sistem › Geliştiriciler için › **Geliştirici Modu**
 
 **Güncelleme:** ISLe8 yeni sürümü günde bir kez GitHub'a sorar. **Ayarlar › Genel › Güncellemeler**'de ya da bildirim
 alanı simgesinin menüsünde **Güncelle**: indirir, SHA-256'sını denetler, kendini değiştirip yeniden açılır; ayarlar kalır.
+0.2.7 ve öncesinden güncellerken ISLe8 kapanıp eski sürüm geri açılabiliyor (0.2.8'de düzeldi): o sürümlerden bir kez
+yeni zip'i elle indirip eski klasörün yerine koy. Uygulama henüz imzalı olmadığından Microsoft Defender 0.2.7'yi yanlışlıkla
+"Trojan:Win32/Bearfoos.A!ml" diye siliyor; 0.2.7'yi kullanma, 0.2.8'i indir.
 
 ### Kullanım
 

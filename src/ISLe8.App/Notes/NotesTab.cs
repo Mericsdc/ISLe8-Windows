@@ -307,14 +307,14 @@ internal sealed class NotesTab
         var timer = _queue.CreateTimer();
         timer.Interval = TimeSpan.FromSeconds(1.2);
         timer.IsRepeating = false;
-        timer.Tick += (_, _) =>
+        timer.OnTick(() =>
         {
             if (_copied == note.Id)
             {
                 _copied = null;
                 Fill();
             }
-        };
+        });
         timer.Start();
     }
 

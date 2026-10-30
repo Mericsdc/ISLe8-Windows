@@ -2,6 +2,7 @@ using System.Runtime.InteropServices;
 using ISLe8.Core.Diagnostics;
 using ISLe8.Core.Status;
 using ISLe8.Interop;
+using ISLe8.UI;
 using Microsoft.UI.Dispatching;
 using Microsoft.Win32;
 
@@ -45,7 +46,8 @@ internal sealed unsafe partial class GameWatch(DispatcherQueue queue) : IDisposa
         s_current = this;
         _hook = Win32.SetWinEventHook(
             Win32.EVENT_SYSTEM_FOREGROUND, Win32.EVENT_SYSTEM_FOREGROUND, 0, &ForegroundProc, 0, 0,
-            Win32.WINEVENT_OUTOFCONTEXT | Win32.WINEVENT_SKIPOWNPROCESS);
+            // ISLe8's own windows too: its Settings coming forward as a game quits must count as the game leaving.
+            Win32.WINEVENT_OUTOFCONTEXT);
         if (_hook == 0) Log.Info("games: no foreground hook");
         Check(Win32.GetForegroundWindow(), lookAgain: true);
     }
@@ -58,14 +60,19 @@ internal sealed unsafe partial class GameWatch(DispatcherQueue queue) : IDisposa
         if (s_current == this) s_current = null;
     }
 
+    /// <summary>Only hands the window over: an exception escaping a native callback would end the process unlogged.</summary>
     [UnmanagedCallersOnly]
-    private static void ForegroundProc(nint hook, uint @event, nint hwnd, int idObject, int idChild, uint thread, uint time) =>
-        s_current?.Check(hwnd, lookAgain: true);
+    private static void ForegroundProc(nint hook, uint @event, nint hwnd, int idObject, int idChild, uint thread, uint time)
+    {
+        s_current?.Arrived(hwnd);
+    }
+
+    private void Arrived(nint window) => queue.Post(() => Check(window, lookAgain: true));
 
     private void Check(nint window, bool lookAgain)
     {
         _again?.Stop();
-        var game = window != 0 && (IsKnownGame(window, readAgain: !lookAgain) || HasScreenToItself());
+        var game = window != 0 && (IsKnownGame(window, readAgain: !lookAgain) || HasScreenToItself(window));
         if (!game && lookAgain && window != 0)
         {
             if (_again is null)
@@ -73,10 +80,10 @@ internal sealed unsafe partial class GameWatch(DispatcherQueue queue) : IDisposa
                 _again = queue.CreateTimer();
                 _again.IsRepeating = false;
                 _again.Interval = LookAgain;
-                _again.Tick += (_, _) =>
+                _again.OnTick(() =>
                 {
                     if (Win32.GetForegroundWindow() == _waiting) Check(_waiting, lookAgain: false);
-                };
+                });
             }
             _waiting = window;
             _again.Start();
@@ -117,7 +124,14 @@ internal sealed unsafe partial class GameWatch(DispatcherQueue queue) : IDisposa
         }
     }
 
-    private static bool HasScreenToItself() => SHQueryUserNotificationState(out var state) == 0 && state == QUNS_RUNNING_D3D_FULL_SCREEN;
+    /// <summary>
+    /// Windows says a Direct3D program has the screen to itself, and this window covers its monitor. Windows' answer is
+    /// for the whole session: right after Alt+Tab out of a game it still says so for the window you switched to.
+    /// </summary>
+    private static bool HasScreenToItself(nint window) =>
+        SHQueryUserNotificationState(out var state) == 0 && state == QUNS_RUNNING_D3D_FULL_SCREEN
+        && GetWindowRect(window, out var rect) && Monitors.TryGet(Win32.MonitorFromWindow(window, Win32.MONITOR_DEFAULTTONEAREST), out var monitor)
+        && rect.Left <= monitor.Bounds.X && rect.Top <= monitor.Bounds.Y && rect.Right >= monitor.Bounds.Right && rect.Bottom >= monitor.Bounds.Bottom;
 
     /// <summary>The window's program, as a full path; limited access is enough, even for a game its anti-cheat guards.</summary>
     private static string? Program(nint window)
@@ -150,6 +164,10 @@ internal sealed unsafe partial class GameWatch(DispatcherQueue queue) : IDisposa
     [LibraryImport("kernel32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static partial bool CloseHandle(nint handle);
+
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool GetWindowRect(nint window, out RECT rect);
 
     [LibraryImport("shell32.dll")]
     private static partial int SHQueryUserNotificationState(out int state);

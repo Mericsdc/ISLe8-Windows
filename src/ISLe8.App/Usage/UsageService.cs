@@ -5,6 +5,7 @@ using ISLe8.Core.Diagnostics;
 using ISLe8.Core.Island;
 using ISLe8.Core.Settings;
 using ISLe8.Core.Usage;
+using ISLe8.UI;
 using Microsoft.UI.Dispatching;
 using Windows.System.Power;
 
@@ -151,7 +152,7 @@ internal sealed class UsageService : IDisposable
 
     private bool LowEnergy => _settings.UsageSaverMode || EnergySaverOn;
 
-    private void OnEnergySaverChanged(object? sender, object e) => _queue.TryEnqueue(ConfigureMonitoring);
+    private void OnEnergySaverChanged(object? sender, object e) => _queue.Post(ConfigureMonitoring);
 
     /// <summary>Brings jobs, timers and the watcher in line with the settings, and asks the vendors that just started running.</summary>
     private void Reconcile()
@@ -220,8 +221,8 @@ internal sealed class UsageService : IDisposable
                 IncludeSubdirectories = true,
                 NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size | NotifyFilters.FileName,
             };
-            _watcher.Changed += (_, _) => _queue.TryEnqueue(ScheduleLocalRead);
-            _watcher.Created += (_, _) => _queue.TryEnqueue(ScheduleLocalRead);
+            _watcher.Changed += (_, _) => _queue.Post(ScheduleLocalRead);
+            _watcher.Created += (_, _) => _queue.Post(ScheduleLocalRead);
             _watcher.EnableRaisingEvents = true;
         }
         catch (Exception e) when (e is IOException or ArgumentException or UnauthorizedAccessException)
@@ -312,7 +313,7 @@ internal sealed class UsageService : IDisposable
         var previous = _snaps.GetValueOrDefault(vendor);
         var gap = RemoteInterval(vendor);
         var now = _clock.Now;
-        void Asking() => _queue.TryEnqueue(() =>
+        void Asking() => _queue.Post(() =>
         {
             if (_jobs.GetValueOrDefault(vendor) != job) return;
             if (_asking.Add(vendor)) Changed?.Invoke();
@@ -331,7 +332,7 @@ internal sealed class UsageService : IDisposable
             catch (OperationCanceledException)
             {
             }
-            _queue.TryEnqueue(() => Finished(vendor, job, snapshot));
+            _queue.Post(() => Finished(vendor, job, snapshot));
         });
     }
 

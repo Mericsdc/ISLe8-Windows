@@ -98,7 +98,7 @@ internal sealed class SettingsWindow(IslandController island, SettingsStore stor
         ApplyTheme(window, root, palette);
         var queue = DispatcherQueue.GetForCurrentThread();
         _systemColors = new UISettings();
-        _systemColors.ColorValuesChanged += (_, _) => queue.TryEnqueue(() =>
+        _systemColors.ColorValuesChanged += (_, _) => queue.Post(() =>
         {
             if (_window == window) ApplyTheme(window, root, palette);
         });

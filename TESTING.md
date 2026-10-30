@@ -3,6 +3,32 @@
 Her maddeyi işaretle; olmayan varsa günlükle birlikte not et (README › Günlük ve ayarlar). W1'in
 adımları en üstte, W0'ın listesi altta.
 
+## Güncellemede kapanma ve hata taraması (0.2.8, 2026-10-30)
+
+Kullanıcı: "güncelleme varsa kendini kapatıyor eski sürümde". Claude'un paket kapsayıcısında, uygulama verisi oraya
+yönlendirilmiş, gerçek ayarlardan yalıtılmış olarak denendi.
+
+- [x] Yeniden üretildi: yayınlanan 0.2.6 zip'i (AOT) 0.2.7'yi buldu; Ayarlar açılınca çöktü (0xc000027b, CoreMessagingXP,
+      stowed E_NOINTERFACE = InvalidCastException). Sebep: güncelleme varken `AccentButtonStyle`'ın kaynaklardan `Style`'a
+      çevrilmesi; AOT'suz derlemede olmuyor. Düzeltme: `SettingsUi.Accent`, kaynak sözlüğünden nesne alınmıyor.
+- [x] Kuyruk geri çağrıları (39), zamanlayıcılar (11) ve UI iş parçacığındaki await sonrası artık `Guarded`: hata günlüğe,
+      ada açık kalıyor. Oyun algılayıcının Windows geri çağrısı yalnızca kuyruğa atıyor.
+- [x] Yeniden üretildi: zip güncellemesi "Cannot rename the item … because it is in use" ile bozuluyor, eski sürüm geri
+      açılıyordu (ISLe8 kendi klasöründe çalışır başlatılınca; Gezgin böyle başlatır). Düzeltmeden sonra aynı deneme
+      (0.2.6.99 → yayınlanan 0.2.7 zip'i, Ayarlar › Güncelle UI Automation ile): 4 sn'de kapandı, dosyalar değişti, 0.2.7 açıldı.
+- [ ] Yayınlanan 0.2.8 AOT derlemesinde Ayarlar'ın güncelleme varken açılması (0.2.9 çıkınca görülecek).
+- [x] Microsoft Defender, güncelleyicinin açtığı 0.2.7 `ISLe8.exe`'yi "Trojan:Win32/Bearfoos.A!ml" diye karantinaya aldı
+      (21:47, 22:00, 22:02); sonra yayınlanan 0.2.7 exe'si kendi başına da işaretli oldu (22:04). 0.2.6 ve yerel derlemeler temiz.
+- [x] Zip güncellemesi PowerShell'siz (`UpdateFinisher`): yerel 0.2.6.99 çalışırken yerel 0.2.8.1 `--finish-update` ile
+      klasörü 2 sn'de değiştirdi, eski klasörü sildi, 0.2.8.1'i açtı; 20 sn sonra hâlâ açık, Defender yeni bir şey yakalamadı.
+- [ ] Yayınlanan 0.2.8'in Defender'dan geçmesi ve 0.2.8'den sonraki sürüme güncelleme (indirilmiş dosyayla).
+- [x] 0.2.7 kodunun bağımsız incelemesi, bulunanlar düzeltildi: oyun algılayıcının geri çağrısı; performans örnekleyicisinin
+      her açılıp kapanmada yeniden kurulması, ilk ölçümün %0 çıkması, ETW oturum yarışı ve günlük şişmesi; FPS'in olayın
+      geldiği ana göre sayılması (artık 100 ms'de bir boşaltılıyor); Alt+Tab'den sonra yanlış "oyun"; "Etkin ekran"da oyun
+      gizlemesinin çalışmaması; "Oyun oynarken" göstergesinin kenarlıksız tam ekranda gizlenmesi; ETW oturumunun ISLe8'den
+      sonra açık kalması; zip'ten geçişte girişte başlatmanın kaybolması.
+- [x] 363 birim testi, derleme uyarısız.
+
 ## Bir kullanıcının geri bildirimi (0.2.7, 2026-10-30)
 
 16 madde geldi; kullanıcı Mac'e dokunmadan hepsinin Windows'ta düzeltilmesini istedi. Düzeltilenler ve denenenler:

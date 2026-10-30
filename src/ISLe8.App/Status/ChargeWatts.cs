@@ -1,4 +1,5 @@
 using ISLe8.Core.Diagnostics;
+using ISLe8.UI;
 using Microsoft.UI.Dispatching;
 using Windows.Devices.Power;
 
@@ -49,7 +50,7 @@ internal sealed class ChargeWatts
         }
     }
 
-    private void OnReportUpdated(Battery sender, object args) => _queue.TryEnqueue(() =>
+    private void OnReportUpdated(Battery sender, object args) => _queue.Post(() =>
     {
         if (_battery is not null) Read();
     });

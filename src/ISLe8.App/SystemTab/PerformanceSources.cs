@@ -186,6 +186,8 @@ internal sealed unsafe partial class FrameCounter : IDisposable
     private const ulong InvalidTrace = ulong.MaxValue;
 
     private static FrameCounter? s_current;
+    /// <summary>Windows said no (not an administrator, not in Performance Log Users): not asked again, not logged again.</summary>
+    private static bool s_denied;
     private readonly nint _properties;
     private ulong _session;
     private ulong _trace = InvalidTrace;
@@ -200,7 +202,7 @@ internal sealed unsafe partial class FrameCounter : IDisposable
     {
         _properties = Marshal.AllocHGlobal(PropertiesSize + NameBytes);
         if (!Start()) return;
-        s_current = this;
+        Interlocked.Exchange(ref s_current, this);
         var logfile = stackalloc byte[LogfileSize];
         new Span<byte>(logfile, LogfileSize).Clear();
         fixed (char* name = SessionName)
@@ -234,15 +236,15 @@ internal sealed unsafe partial class FrameCounter : IDisposable
 
     private bool Start()
     {
+        if (s_denied) return false;
         var properties = (byte*)_properties;
-        // A session a crashed ISLe8 left behind is stopped first.
-        Prepare(properties);
-        ControlTraceW(0, SessionName, properties, 1 /* EVENT_TRACE_CONTROL_STOP */);
+        StopLeftover();
         Prepare(properties);
         ulong session;
         var result = StartTraceW(&session, SessionName, properties);
         if (result != 0)
         {
+            s_denied = result == 5;
             Log.Info($"frames: no session ({result}; 5 means ISLe8 isn't allowed to trace)");
             return false;
         }
@@ -255,14 +257,24 @@ internal sealed unsafe partial class FrameCounter : IDisposable
         return true;
     }
 
+    /// <summary>A session an ISLe8 that ended suddenly left behind is stopped: at start, and before a new one.</summary>
+    public static void StopLeftover()
+    {
+        var properties = stackalloc byte[PropertiesSize + NameBytes];
+        Prepare(properties);
+        ControlTraceW(0, SessionName, properties, 1 /* EVENT_TRACE_CONTROL_STOP */);
+    }
+
     private static void Prepare(byte* properties)
     {
         new Span<byte>(properties, PropertiesSize + NameBytes).Clear();
         *(uint*)properties = PropertiesSize + NameBytes;   // Wnode.BufferSize
         *(uint*)(properties + 40) = 1;                     // Wnode.ClientContext: QueryPerformanceCounter
         *(uint*)(properties + 44) = 0x00020000;            // Wnode.Flags: WNODE_FLAG_TRACED_GUID
-        *(uint*)(properties + 64) = 0x00000100;            // LogFileMode: EVENT_TRACE_REAL_TIME_MODE
-        *(uint*)(properties + 68) = 1;                     // FlushTimer: a second
+        // LogFileMode: EVENT_TRACE_REAL_TIME_MODE | EVENT_TRACE_USE_MS_FLUSH_TIMER. Buffers come every 100 ms, not every
+        // second, or a second's count would sometimes hold two seconds of frames and sometimes none.
+        *(uint*)(properties + 64) = 0x00000100 | 0x00000010;
+        *(uint*)(properties + 68) = 100;                   // FlushTimer, in milliseconds
         *(uint*)(properties + 116) = PropertiesSize;       // LoggerNameOffset
     }
 
@@ -294,7 +306,7 @@ internal sealed unsafe partial class FrameCounter : IDisposable
 
     public void Dispose()
     {
-        if (s_current == this) s_current = null;
+        Interlocked.CompareExchange(ref s_current, null, this);
         Stop();
         if (_trace != InvalidTrace) CloseTrace(_trace);
         _trace = InvalidTrace;

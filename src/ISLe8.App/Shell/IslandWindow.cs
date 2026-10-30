@@ -3,6 +3,7 @@ using ISLe8.Core.Diagnostics;
 using ISLe8.Core.Geometry;
 using ISLe8.Core.Settings;
 using ISLe8.Interop;
+using ISLe8.UI;
 using Microsoft.UI;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Windowing;
@@ -75,6 +76,7 @@ internal sealed unsafe class IslandWindow : IDisposable
 
     private bool _hiddenForApp;
     private bool _hiddenForGame;
+    private nint _gameWindow;
 
     /// <summary>After every placement: start, a monitor or DPI change, new display settings.</summary>
     public event Action<IslandLayout>? LayoutChanged;
@@ -119,7 +121,7 @@ internal sealed unsafe class IslandWindow : IDisposable
     {
         if (_placePending) return;
         _placePending = true;
-        _queue.TryEnqueue(Place);
+        _queue.Post(Place);
     }
 
     /// <summary>
@@ -356,17 +358,26 @@ internal sealed unsafe class IslandWindow : IDisposable
 
     /// <summary>
     /// A game came to the front (its window) or left it (0): with Hide while gaming on, the island
-    /// steps aside while the game is on its monitor, unless the performance pill is wanted over it (Windows only).
+    /// steps aside while the game is on its monitor. With the performance pill wanted it stays over the game,
+    /// and over a borderless full-screen one too, which Hide in full screen would otherwise hide (Windows only).
+    /// Asked again after every placement: in Active screen mode the island moves to the game's monitor.
     /// </summary>
-    public void SetGameInFront(nint game) =>
-        SetHidden(ref _hiddenForGame, game != 0 && _settings.HideWhileGaming && _settings.PerformancePill == Core.SystemInfo.PerformancePill.Off
+    public void SetGameInFront(nint game)
+    {
+        _gameWindow = game;
+        var pill = _settings.PerformancePill != Core.SystemInfo.PerformancePill.Off;
+        if (game != 0 && pill) SetHidden(ref _hiddenForApp, false);
+        SetHidden(ref _hiddenForGame, game != 0 && _settings.HideWhileGaming && !pill
             && Win32.MonitorFromWindow(game, Win32.MONITOR_DEFAULTTONEAREST) == Monitor.Handle);
+    }
 
     private void OnFullscreenApp(bool opened)
     {
         if (opened)
         {
             if (!_settings.HideInFullscreen || _hiddenForApp) return;
+            // A game under the performance pill stays visible (SetGameInFront).
+            if (_gameWindow != 0 && _settings.PerformancePill != Core.SystemInfo.PerformancePill.Off) return;
             var foreground = Win32.GetForegroundWindow();
             if (foreground == 0 || foreground == Hwnd || IsDesktop(foreground)) return;
             if (Win32.MonitorFromWindow(foreground, Win32.MONITOR_DEFAULTTONEAREST) != Monitor.Handle) return;

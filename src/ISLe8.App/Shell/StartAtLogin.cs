@@ -63,10 +63,28 @@ internal static class StartAtLogin
         }
     }
 
-    /// <summary>At start, for the zip: the folder may have moved since the entry was written.</summary>
+    /// <summary>
+    /// At start. The zip: the folder may have moved since the entry was written. The installed app, just moved
+    /// to from the zip (Updater.MoveToPackageAsync): the zip opened at login, so its startup task takes over.
+    /// </summary>
     public static void Repair()
     {
-        if (!AppPackage.IsInstalled && LoginItem.ShouldRepair(Read(), Executable, File.Exists)) SetRunKey(true);
+        if (!AppPackage.IsInstalled)
+        {
+            if (LoginItem.ShouldRepair(Read(), Executable, File.Exists)) SetRunKey(true);
+            return;
+        }
+        var fromZip = Path.Combine(AppPaths.DataFolder, "login-from-zip");
+        if (!File.Exists(fromZip)) return;
+        try
+        {
+            File.Delete(fromZip);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            Log.Error(e, "open at login");
+        }
+        _ = SetAsync(true);
     }
 
     private static bool IsOn(StartupTaskState state) => state is StartupTaskState.Enabled or StartupTaskState.EnabledByPolicy;

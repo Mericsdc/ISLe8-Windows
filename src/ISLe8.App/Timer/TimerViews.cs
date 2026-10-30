@@ -54,7 +54,7 @@ internal sealed class SecondTicker
         _timer = queue.CreateTimer();
         _timer.Interval = every ?? TimeSpan.FromSeconds(1);
         _timer.IsRepeating = true;
-        _timer.Tick += (_, _) => tick();
+        _timer.OnTick(() => tick());
     }
 
     public void Run(bool run)

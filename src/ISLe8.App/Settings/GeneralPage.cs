@@ -112,7 +112,7 @@ internal static class GeneralPage
                 ? L.Format("Update_Install", release.Version.ToString(3))
                 : L.Get("Update_Check");
             button.IsEnabled = !busy;
-            if (updater.State == UpdateState.Available) button.Style = (Style)Application.Current.Resources["AccentButtonStyle"];
+            if (updater.State == UpdateState.Available) SettingsUi.Accent(button);
             notes.Visibility = release is not null ? Visibility.Visible : Visibility.Collapsed;
             if (release is not null) notes.NavigateUri = release.Page;
             progress.Visibility = updater.State == UpdateState.Downloading ? Visibility.Visible : Visibility.Collapsed;

@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using ISLe8.UI;
 using Microsoft.UI.Dispatching;
 
 namespace ISLe8.Shell;
@@ -23,7 +24,7 @@ internal sealed partial class MemoryTrim(DispatcherQueue queue)
             _timer = queue.CreateTimer();
             _timer.IsRepeating = false;
             _timer.Interval = Quiet;
-            _timer.Tick += (_, _) => SetProcessWorkingSetSize(GetCurrentProcess(), -1, -1);
+            _timer.OnTick(() => SetProcessWorkingSetSize(GetCurrentProcess(), -1, -1));
         }
         _timer.Stop();
         _timer.Start();

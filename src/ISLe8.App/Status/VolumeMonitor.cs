@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using ISLe8.Core.Diagnostics;
+using ISLe8.UI;
 using Microsoft.UI.Dispatching;
 
 namespace ISLe8.Status;
@@ -185,12 +186,12 @@ internal sealed unsafe partial class VolumeMonitor : IDisposable
 
     // MARK: Callbacks, on Core Audio's threads
 
-    private void Notified(float level, bool muted) => _queue.TryEnqueue(() => Changed?.Invoke(level, muted));
+    private void Notified(float level, bool muted) => _queue.Post(() => Changed?.Invoke(level, muted));
 
     private void DefaultChanged()
     {
         if (Interlocked.Exchange(ref _attachQueued, 1) == 1) return;
-        _queue.TryEnqueue(() =>
+        _queue.Post(() =>
         {
             if (_enumerator == 0) return;
             Attach();

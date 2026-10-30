@@ -658,6 +658,31 @@ kaldırmadı). 0.2.2'den beri kurulu ISLe8'de betiği Görev Zamanlayıcı başl
 olarak, sınırlı yetkiyle; betik görevi siler). Betik her adımı `updates\apply.log`'a yazar. Kurulu ISLe8 için
 Release'te `ISLe8-<sürüm>-<rid>-package.zip` (scripts/package.ps1). İmzalı .msix ve App Installer W6'da.
 
+**0.2.8'de bulunan iki hata (ikisinde de ISLe8 güncellemede "kendini kapatıyordu"):**
+- Ayarlar'daki Güncelle düğmesi, güncelleme varken `AccentButtonStyle`'ı `Application.Current.Resources`'tan alıp
+  `Style`'a çeviriyordu. Native AOT'ta XAML'in yarattığı bir nesne `object` olarak dönünce çıplak bir COM sarmalayıcısı
+  oluyor ve dönüşüm `InvalidCastException` (E_NOINTERFACE) atıyor. Bu, yayınlanan sürümlerde Ayarlar açılınca çökme demek
+  (0xc000027b, CoreMessagingXP); AOT'suz yerel derlemede görünmüyordu. Düğme artık sistemin vurgu rengiyle elle boyanıyor
+  (`SettingsUi.Accent`); kaynak sözlüğünden nesne alınmıyor.
+- WinUI 3'te `DispatcherQueue.TryEnqueue` geri çağrısında, `DispatcherQueueTimer.Tick`'te ya da bir `async void`'un await
+  sonrasında atılan hata `Application.UnhandledException`'a hiç uğramıyor, süreci kapatıyor. Hepsi artık `UI/Guarded.cs`
+  üzerinden geçiyor (`Post`, `OnTick`, `GuardedSynchronizationContext`); hata günlüğe yazılıyor, ada açık kalıyor.
+- Zip güncellemesi hiç tamamlanamıyordu: Gezgin ISLe8'i kendi klasöründe çalışır başlatıyor, betiği başlatan PowerShell bu
+  çalışma klasörünü miras alıyordu, betik de o klasörü yeniden adlandıramıyordu ("in use"). Eski sürüm geri açılıyordu.
+  Betikler artık `updates` klasöründe çalışıyor; zip güncellemesini ise artık betik değil yeni ISLe8 bitiriyor (aşağıda).
+- **Microsoft Defender:** güncelleyicinin indirip açtığı 0.2.7 `ISLe8.exe`'yi "Trojan:Win32/Bearfoos.A!ml" diye karantinaya
+  aldı (makine öğrenmesi tahmini, yanlış alarm). Güncelleme ISLe8'i kapatıyor, yeni exe silindiği için hiçbir şey açılmıyordu.
+  Sonra bulut kararı dosyanın özetine bağlandı: yayınlanan 0.2.7 exe'si artık kendi başına da işaretli. 0.2.6 ve yerel
+  derlemeler temiz. İmzasız bir programın exe indirip gizli bir PowerShell'le (`-ExecutionPolicy Bypass -WindowStyle Hidden`)
+  yerine koyması tipik bir zararlı davranışına benziyor. 0.2.8'den beri zip güncellemesinde PowerShell yok: indirilen yeni
+  `ISLe8.exe` `--finish-update <plan>` ile başlıyor (`Shell/UpdateFinisher.cs`), eskisinin kapanmasını bekliyor, eski klasörü
+  kenara alıp yeni dosyaları kopyalıyor, ISLe8'i açıyor; hata olursa eskisini geri koyuyor. İndirilen dosyalar 30 sn sonra
+  siliniyor. Kurulu (paketli) sürüm `Add-AppxPackage` için hâlâ betiği kullanıyor. Kalıcı çözüm imzalı yayın (ör. Azure
+  Trusted Signing, açık kaynak için SignPath) ve dosyaların Microsoft'a yanlış alarm olarak bildirilmesi.
+- 0.2.7 ve öncesi zip sürümleri Gezgin'den açıldıysa kendini 0.2.8'e güncelleyemez (Ayarlar'dan denenirse çöker,
+  bildirim alanı menüsünden denenirse betik klasörü yeniden adlandıramaz). Yeni zip elle indirilip eski klasörün yerine
+  konmalı; ayarlar veri klasöründe olduğu için kalır.
+
 ### Windows'a özgü: oyunlar, performans göstergesi, kapalı ada (0.2.7, 2026-10-30)
 
 Bir kullanıcının geri bildirimiyle eklendi; Mac'te karşılıkları yok.

@@ -110,6 +110,7 @@ internal sealed class IslandController : IDisposable
         _trim = new MemoryTrim(_queue);
         _games = new GameWatch(_queue);
         _performance = new PerformanceSampler(_queue);
+        FrameCounter.StopLeftover();
         _updater = new Updater(_settings, () => _store.Save(_settings), _queue, () => ((App)Application.Current).Quit());
         _agents = new AgentHub(_settings, clock);
         _agentServer = new AgentServer(_agents, _queue);
@@ -324,7 +325,7 @@ internal sealed class IslandController : IDisposable
     public void Dispose()
     {
         _games.Dispose();
-        _performance.Run(false);
+        _performance.Dispose();
         _outsideClicks.Dispose();
         _clipboardKey?.Dispose();
         _notifications.Dispose();
@@ -376,7 +377,7 @@ internal sealed class IslandController : IDisposable
         _view.Area.LostFocus += (_, e) =>
         {
             if (e.OriginalSource is not TextBox) return;
-            _queue.TryEnqueue(() =>
+            _queue.Post(() =>
             {
                 if (FocusManager.GetFocusedElement(_view.Area.XamlRoot) is not TextBox) _model.SetTyping(false, CursorOnIsland());
             });
@@ -393,11 +394,11 @@ internal sealed class IslandController : IDisposable
             if (e.DataView.Contains(Windows.ApplicationModel.DataTransfer.StandardDataFormats.StorageItems)) e.AcceptedOperation = Windows.ApplicationModel.DataTransfer.DataPackageOperation.Copy;
         };
         // A leave also bubbles up from a zone; only leaving the island itself counts.
-        _view.Area.DragLeave += (_, _) => _queue.TryEnqueue(() =>
+        _view.Area.DragLeave += (_, _) => _queue.Post(() =>
         {
             if (_model.State == IslandState.DropTarget && !CursorOnIsland()) _model.SetFileDragNearby(false);
         });
-        _view.Area.Drop += (_, _) => _queue.TryEnqueue(() => _model.SetFileDragNearby(false));
+        _view.Area.Drop += (_, _) => _queue.Post(() => _model.SetFileDragNearby(false));
         _view.Area.ContextFlyout = BuildMenu();
         _view.Dock.SetTabs(_model.VisibleTabs, _model.Tab);
         _view.Dock.Chosen += _model.Select;
@@ -447,6 +448,8 @@ internal sealed class IslandController : IDisposable
     /// <summary>A new monitor, DPI, layout or view: everything jumps to where it belongs, without animating.</summary>
     private void ApplyLayout(IslandLayout layout)
     {
+        // The island may have moved to another monitor (Active screen): is a game on this one?
+        _window.SetGameInFront(_games.GameWindow);
         var state = _model.State;
         var expanded = state == IslandState.Expanded;
         var alert = state == IslandState.Alert;
@@ -966,9 +969,9 @@ internal sealed class IslandController : IDisposable
         // The title scrolls only while the wide pill can be seen; otherwise it waits where it started.
         var title = _settings.ShowPillTitle && _media.Current is { Title: { Length: > 0 } name } ? name : null;
         _view.PillTitle.Show(title, running: earsSeen && _model.Activity == PillActivity.Media && title is not null);
-        // The performance pill is meant for over a game: it samples whenever it can be seen.
-        _performance.Run(state is IslandState.Pill or IslandState.Peek && _model.Pill == PillKind.Compact
-            && _model.Activity == PillActivity.Performance && !_window.IsHiddenForFullscreen);
+        // The performance pill samples while it is the activity, open island and banners included, so it isn't set up
+        // again each time; not while the island is hidden.
+        _performance.Run(_model.Activity == PillActivity.Performance && _model.Pill == PillKind.Compact && !_window.IsHiddenForFullscreen);
     }
 
     private async void LoadArtwork()

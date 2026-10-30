@@ -1,6 +1,7 @@
 using ISLe8.Core.Devices;
 using ISLe8.Core.Diagnostics;
 using ISLe8.Core.Island;
+using ISLe8.UI;
 using Microsoft.UI.Dispatching;
 using Windows.Devices.Bluetooth;
 using Windows.Devices.Bluetooth.Advertisement;
@@ -88,12 +89,12 @@ internal sealed class DeviceService : IDisposable
         {
             // A receiver plugged in or out: no Bluetooth event says so.
             var receivers = DeviceInformation.CreateWatcher(HidBatteries.WatchSelector);
-            receivers.Added += (_, _) => _queue.TryEnqueue(() =>
+            receivers.Added += (_, _) => _queue.Post(() =>
             {
                 if (_enumerated >= _watchers.Count) SomethingConnected();
             });
-            receivers.Removed += (_, _) => _queue.TryEnqueue(SomethingConnected);
-            receivers.EnumerationCompleted += (_, _) => _queue.TryEnqueue(EnumerationCompleted);
+            receivers.Removed += (_, _) => _queue.Post(SomethingConnected);
+            receivers.EnumerationCompleted += (_, _) => _queue.Post(EnumerationCompleted);
             _watchers.Add(receivers);
             receivers.Start();
         }
@@ -106,10 +107,10 @@ internal sealed class DeviceService : IDisposable
             try
             {
                 var watcher = DeviceInformation.CreateWatcher(selector, EndpointProperties, DeviceInformationKind.AssociationEndpoint);
-                watcher.Added += (_, info) => _queue.TryEnqueue(() => Added(info));
-                watcher.Updated += (_, update) => _queue.TryEnqueue(() => Updated(update));
-                watcher.Removed += (_, update) => _queue.TryEnqueue(() => Removed(update.Id));
-                watcher.EnumerationCompleted += (_, _) => _queue.TryEnqueue(EnumerationCompleted);
+                watcher.Added += (_, info) => _queue.Post(() => Added(info));
+                watcher.Updated += (_, update) => _queue.Post(() => Updated(update));
+                watcher.Removed += (_, update) => _queue.Post(() => Removed(update.Id));
+                watcher.EnumerationCompleted += (_, _) => _queue.Post(EnumerationCompleted);
                 watcher.Start();
                 _watchers.Add(watcher);
             }
@@ -157,7 +158,7 @@ internal sealed class DeviceService : IDisposable
 
     // MARK: This computer
 
-    private void OnPowerChanged(object? sender, object e) => _queue.TryEnqueue(() =>
+    private void OnPowerChanged(object? sender, object e) => _queue.Post(() =>
     {
         var before = Battery;
         ReadBattery();
@@ -460,7 +461,7 @@ internal sealed class DeviceService : IDisposable
             using (var reader = DataReader.FromBuffer(data.Data)) reader.ReadBytes(bytes);
             if (AirPodsReading.Parse(bytes) is not { } reading) continue;
             var signal = args.RawSignalStrengthInDBm;
-            _queue.TryEnqueue(() => Heard(reading, signal));
+            _queue.Post(() => Heard(reading, signal));
         }
     }
 

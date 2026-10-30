@@ -1,4 +1,5 @@
 using ISLe8.Core.Island;
+using ISLe8.UI;
 using Microsoft.UI.Dispatching;
 
 namespace ISLe8.Island;
@@ -14,11 +15,11 @@ internal sealed class DispatcherClock(DispatcherQueue queue) : IIslandClock
         timer.IsRepeating = false;
         timer.Interval = delay;
         var pending = new Pending(timer);
-        timer.Tick += (_, _) =>
+        timer.OnTick(() =>
         {
             timer.Stop();
             if (!pending.IsCancelled) action();
-        };
+        });
         timer.Start();
         return pending;
     }

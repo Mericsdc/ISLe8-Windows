@@ -5,6 +5,7 @@ using System.Security.Cryptography;
 using ISLe8.Core.Diagnostics;
 using ISLe8.Core.Settings;
 using ISLe8.Core.Updates;
+using ISLe8.UI;
 using Microsoft.UI.Dispatching;
 
 namespace ISLe8.Shell;
@@ -69,14 +70,36 @@ internal sealed class Updater
         _daily = _queue.CreateTimer();
         _daily.Interval = TimeSpan.FromHours(1);
         _daily.IsRepeating = true;
-        _daily.Tick += (_, _) => CheckIfDue();
+        _daily.OnTick(() => CheckIfDue());
         _daily.Start();
         // Not at the very start: the usage CLIs and the first layout come first.
         var soon = _queue.CreateTimer();
         soon.Interval = TimeSpan.FromSeconds(30);
         soon.IsRepeating = false;
-        soon.Tick += (_, _) => CheckIfDue();
+        soon.OnTick(() =>
+        {
+            ClearDownloads();
+            CheckIfDue();
+        });
         soon.Start();
+    }
+
+    /// <summary>The last update's download and unpacked files, once ISLe8 runs from where they were copied to.</summary>
+    private void ClearDownloads()
+    {
+        var folder = Path.Combine(AppPaths.DataFolder, "updates");
+        if (State is UpdateState.Downloading or UpdateState.Installing || !Directory.Exists(folder)) return;
+        _ = Task.Run(() =>
+        {
+            try
+            {
+                Directory.Delete(folder, recursive: true);
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+            {
+                // Tried again next start, and before the next download.
+            }
+        });
     }
 
     private void CheckIfDue()
@@ -152,12 +175,28 @@ internal sealed class Updater
             // The zips hold one ISLe8 folder.
             var source = Directory.Exists(Path.Combine(unpacked, "ISLe8")) ? Path.Combine(unpacked, "ISLe8") : unpacked;
             if (!File.Exists(Path.Combine(source, "ISLe8.exe"))) throw new IOException(Localization.L.Get("Update_BadFile"));
+            var id = Environment.ProcessId.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            var log = Path.Combine(AppPaths.DataFolder, "update.log");
+            if (!packaged)
+            {
+                // The new ISLe8 finishes the job itself (UpdateFinisher), working in the updates folder, not the one it replaces.
+                var plan = Path.Combine(folder, "finish.txt");
+                await File.WriteAllLinesAsync(plan, [id, source, target, log]);
+                Log.Info($"update: {release.Tag} downloaded, handing over to the new ISLe8 for {target}");
+                using var finisher = Process.Start(new ProcessStartInfo(Path.Combine(source, "ISLe8.exe"))
+                {
+                    ArgumentList = { UpdateFinisher.Argument, plan },
+                    UseShellExecute = false,
+                    WorkingDirectory = folder,
+                });
+                _quit();
+                return;
+            }
             var script = Path.Combine(folder, "apply.ps1");
             await File.WriteAllTextAsync(script, Script, System.Text.Encoding.UTF8);
-            var family = packaged ? Windows.ApplicationModel.Package.Current.Id.FamilyName : "";
+            var family = Windows.ApplicationModel.Package.Current.Id.FamilyName;
             // One line per value, read back as they are: no quoting to get wrong.
-            await File.WriteAllLinesAsync(Path.Combine(folder, "apply.txt"),
-                [Environment.ProcessId.ToString(System.Globalization.CultureInfo.InvariantCulture), source, target, family, Path.Combine(AppPaths.DataFolder, "update.log")]);
+            await File.WriteAllLinesAsync(Path.Combine(folder, "apply.txt"), [id, source, target, family, log]);
             Log.Info($"update: {release.Tag} downloaded, handing over to apply.ps1 for {target}");
             HandOver(script, packaged);
             _quit();
@@ -248,13 +287,20 @@ internal sealed class Updater
             if (Test-Path $Target) { Remove-Item $Target -Recurse -Force }
             Move-Item $Source $Target
             Add-AppxPackage -Register (Join-Path $Target 'AppxManifest.xml')
-            Remove-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run' -Name $RunName -ErrorAction SilentlyContinue
-            $family = (Get-AppxPackage com.lrxe8.isle8 | Where-Object InstallLocation -eq $Target | Select-Object -First 1).PackageFamilyName
-            Start-Process "shell:AppsFolder\$family!App"
         } catch {
             Add-Content $Log $_.Exception.Message
-            Start-Process $Zip
+            Start-Process $Zip -WorkingDirectory (Split-Path $Zip)
+            exit
         }
+        # Installed: whatever happens next, the zip's ISLe8 isn't wanted again. Open at login goes over to the
+        # package's startup task, which only the installed ISLe8 can turn on (StartAtLogin.Repair).
+        $run = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run'
+        if (Get-ItemProperty $run -Name $RunName -ErrorAction SilentlyContinue) {
+            Set-Content (Join-Path (Split-Path $Log) 'login-from-zip') '' -ErrorAction SilentlyContinue
+            Remove-ItemProperty $run -Name $RunName -ErrorAction SilentlyContinue
+        }
+        $family = (Get-AppxPackage com.lrxe8.isle8 | Sort-Object Version -Descending | Select-Object -First 1).PackageFamilyName
+        if ($family) { Start-Process "shell:AppsFolder\$family!App" } else { Add-Content $Log 'ISLe8 is installed, but Windows did not list it' }
         """;
 
     private async Task DownloadAsync(ReleaseAsset asset, string path)
@@ -306,7 +352,7 @@ internal sealed class Updater
         Set(UpdateState.Failed);
     }
 
-    private void Set(UpdateState state, double progress = 0) => _queue.TryEnqueue(() =>
+    private void Set(UpdateState state, double progress = 0) => _queue.Post(() =>
     {
         State = state;
         Progress = progress;
@@ -362,7 +408,7 @@ internal sealed class Updater
                 if ($Family) { Add-AppxPackage -Register (Join-Path $Target 'AppxManifest.xml') -ForceApplicationShutdown -ErrorAction SilentlyContinue }
             }
         }
-        if ($Family) { Start-Process "shell:AppsFolder\$Family!App" } else { Start-Process (Join-Path $Target 'ISLe8.exe') }
+        if ($Family) { Start-Process "shell:AppsFolder\$Family!App" } else { Start-Process (Join-Path $Target 'ISLe8.exe') -WorkingDirectory $Target }
         """;
 
     // MARK: Starting the script outside the package
@@ -371,7 +417,9 @@ internal sealed class Updater
     /// The installed app's children run with its package identity, and registering the package again
     /// stops every process that has it, the script too, halfway (seen: the files in place, nothing
     /// registered). So for the installed app the script is started by Task Scheduler, as the user,
-    /// outside the package; the zip's ISLe8 starts it directly.
+    /// outside the package; the zip's ISLe8 starts it directly, working in the updates folder. Up to 0.2.7 it
+    /// inherited ISLe8's own, which is the zip folder when Explorer starts ISLe8, and that folder can't be
+    /// renamed while a process works in it: every zip update failed and the old ISLe8 came back.
     /// </summary>
     private static void HandOver(string script, bool packaged)
     {
@@ -379,7 +427,7 @@ internal sealed class Updater
         var command = $"\"{powershell}\" -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File \"{script}\"";
         if (!packaged)
         {
-            using var _ = Process.Start(new ProcessStartInfo(powershell, $"-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File \"{script}\"") { UseShellExecute = false, CreateNoWindow = true });
+            using var _ = Process.Start(new ProcessStartInfo(powershell, $"-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File \"{script}\"") { UseShellExecute = false, CreateNoWindow = true, WorkingDirectory = Path.GetDirectoryName(script) });
             return;
         }
         Schtasks($"/Create /TN \"ISLe8 update\" /TR \"{command.Replace("\"", "\\\"")}\" /SC ONCE /ST 00:00 /F /RL LIMITED");

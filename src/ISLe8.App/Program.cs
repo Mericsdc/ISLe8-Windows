@@ -23,6 +23,9 @@ public static class Program
         WinRT.ComWrappersSupport.InitializeComWrappers();
         Log.FilePath = AppPaths.Log;
 
+        // The new ISLe8 finishing a zip update: no window, no island (Shell/UpdateFinisher.cs).
+        if (Environment.GetCommandLineArgs() is [_, Shell.UpdateFinisher.Argument, var plan, ..]) return Shell.UpdateFinisher.Run(plan);
+
         // One island per session. Starting it again opens the running island's settings (App.OnLaunched).
         var island = AppInstance.FindOrRegisterForKey("ISLe8.Island");
         if (!island.IsCurrent)
@@ -34,8 +37,8 @@ public static class Program
         Log.Info($"start {typeof(Program).Assembly.GetName().Version} on {Environment.OSVersion.VersionString}");
         Application.Start(_ =>
         {
-            SynchronizationContext.SetSynchronizationContext(
-                new DispatcherQueueSynchronizationContext(DispatcherQueue.GetForCurrentThread()));
+            // Guarded: an exception after an await on this thread would otherwise end the process (UI/Guarded.cs).
+            SynchronizationContext.SetSynchronizationContext(new UI.GuardedSynchronizationContext(DispatcherQueue.GetForCurrentThread()));
             new App();
         });
         return 0;

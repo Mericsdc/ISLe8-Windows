@@ -3,6 +3,7 @@ using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
 using ISLe8.Core.Diagnostics;
 using ISLe8.Core.SystemInfo;
+using ISLe8.UI;
 using Microsoft.UI.Dispatching;
 
 namespace ISLe8.SystemTab;
@@ -49,7 +50,7 @@ internal sealed partial class SystemSampler(DispatcherQueue queue)
                 {
                     var sample = Next();
                     var link = ReadLink();
-                    queue.TryEnqueue(() =>
+                    queue.Post(() =>
                     {
                         if (running.IsCancellationRequested) return;
                         Sample = sample;

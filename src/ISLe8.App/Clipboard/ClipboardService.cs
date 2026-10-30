@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using ISLe8.Core.Clipboard;
 using ISLe8.Core.Diagnostics;
 using ISLe8.Core.Settings;
+using ISLe8.UI;
 using Microsoft.UI.Dispatching;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Graphics.Imaging;
@@ -64,7 +65,7 @@ internal sealed partial class ClipboardService
     public nint? OnMessage(uint message, nint wParam, nint lParam)
     {
         if (message != WM_CLIPBOARDUPDATE) return null;
-        _queue.TryEnqueue(() => _ = ReadAsync());
+        _queue.Post(() => _ = ReadAsync());
         return 0;
     }
 
@@ -304,11 +305,11 @@ internal sealed partial class ClipboardService
         var timer = _queue.CreateTimer();
         timer.Interval = TimeSpan.FromSeconds(1.2);
         timer.IsRepeating = false;
-        timer.Tick += (_, _) =>
+        timer.OnTick(() =>
         {
             LastCopiedId = null;
             Changed?.Invoke();
-        };
+        });
         return timer;
     }
 

@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using ISLe8.Core.Diagnostics;
+using ISLe8.UI;
 using Microsoft.UI.Dispatching;
 
 namespace ISLe8.Status;
@@ -97,7 +98,7 @@ internal sealed unsafe partial class VolumeKeys : IDisposable
                 if (down && keys._canHandle((int)vk))
                 {
                     keys._held |= bit;
-                    keys._queue.TryEnqueue(() => keys._press((int)vk));
+                    keys._queue.Post(() => keys._press((int)vk));
                     return 1;
                 }
                 if (!down && (keys._held & bit) != 0)

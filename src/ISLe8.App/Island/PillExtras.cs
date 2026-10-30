@@ -110,7 +110,7 @@ internal sealed class PillClock
         Root = new Grid { IsHitTestVisible = false, HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Top, Children = { Text } };
         _timer = queue.CreateTimer();
         _timer.IsRepeating = false;
-        _timer.Tick += (_, _) => Tick();
+        _timer.OnTick(() => Tick());
     }
 
     public Grid Root { get; }

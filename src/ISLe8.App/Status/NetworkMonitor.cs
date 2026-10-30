@@ -1,5 +1,6 @@
 using ISLe8.Core.Diagnostics;
 using ISLe8.Core.Status;
+using ISLe8.UI;
 using Microsoft.UI.Dispatching;
 using Windows.Networking.Connectivity;
 
@@ -46,7 +47,7 @@ internal sealed class NetworkMonitor : IDisposable
             if (_readQueued) return;
             _readQueued = true;
         }
-        _queue.TryEnqueue(() =>
+        _queue.Post(() =>
         {
             lock (_lock) _readQueued = false;
             if (!_started) return;

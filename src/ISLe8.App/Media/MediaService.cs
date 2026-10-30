@@ -1,5 +1,6 @@
 using ISLe8.Core.Diagnostics;
 using ISLe8.Core.Media;
+using ISLe8.UI;
 using Microsoft.UI.Dispatching;
 using Windows.Foundation;
 using Windows.Media;
@@ -55,7 +56,7 @@ internal sealed class MediaService : IDisposable
         _queue = queue;
         // The event's sender may be a different wrapper for the same session; work on the followed one.
         _propertiesChanged = (session, args) => OnUi(session, current => _ = ReadPropertiesAsync(current));
-        _playbackChanged = (session, _) => _queue.TryEnqueue(() => OnPlaybackChanged(session));
+        _playbackChanged = (session, _) => _queue.Post(() => OnPlaybackChanged(session));
         _timelineChanged = (session, _) => OnUi(session, current => { ReadTimeline(current); Publish(); });
     }
 
@@ -86,8 +87,8 @@ internal sealed class MediaService : IDisposable
             await Task.Delay(MediaRules.RetryDelay(attempt));
         }
         if (_manager is not { } manager || _disposed) return;
-        manager.SessionsChanged += (_, _) => _queue.TryEnqueue(Refresh);
-        manager.CurrentSessionChanged += (_, _) => _queue.TryEnqueue(Refresh);
+        manager.SessionsChanged += (_, _) => _queue.Post(Refresh);
+        manager.CurrentSessionChanged += (_, _) => _queue.Post(Refresh);
         Refresh();
         // Nothing to follow is news too: what starts after this is new (TrackChangeDetector).
         if (_session is null) Publish();
@@ -254,7 +255,7 @@ internal sealed class MediaService : IDisposable
     /// has died under us, follows another.
     /// </summary>
     private void OnUi(GlobalSystemMediaTransportControlsSession sender, Action<GlobalSystemMediaTransportControlsSession> action) =>
-        _queue.TryEnqueue(() =>
+        _queue.Post(() =>
         {
             try
             {

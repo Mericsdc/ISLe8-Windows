@@ -148,7 +148,7 @@ internal sealed class MediaColumn
         _clock = queue.CreateTimer();
         _clock.Interval = TimeSpan.FromMilliseconds(500);
         _clock.IsRepeating = true;
-        _clock.Tick += (_, _) => _scrubber.Show(_media.Current, DateTimeOffset.Now);
+        _clock.OnTick(() => _scrubber.Show(_media.Current, DateTimeOffset.Now));
         _scrubber.DraggingChanged += UpdateClock;
     }
 
