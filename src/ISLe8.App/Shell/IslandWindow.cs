@@ -231,7 +231,7 @@ internal sealed unsafe class IslandWindow : IDisposable
         var bounds = monitor.Bounds;
         var bottom = _settings.Placement != IslandPlacement.Top;
         var gap = !bottom && _settings.FlushTop ? 0 : IslandMetrics.TopMargin;
-        var height = _settings.ReserveTopStrip ? IslandMetrics.ReservedPixels(monitor.Scale, gap) : 0;
+        var height = _settings.ReserveTopStrip ? IslandMetrics.ReservedPixels(monitor.Scale, gap, _settings.StripFitsPill) : 0;
         var data = new APPBARDATA
         {
             cbSize = (uint)sizeof(APPBARDATA),

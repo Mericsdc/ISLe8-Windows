@@ -145,6 +145,17 @@ public sealed class PlacementTests : IDisposable
     }
 
     [Fact]
+    public void TheStripCanBeJustThePill()
+    {
+        // At 150 %: the pill and its swell, then the pill alone, flush or 6 DIP down.
+        Assert.Equal(57, IslandMetrics.ReservedPixels(1.5, gap: 0));
+        Assert.Equal(48, IslandMetrics.ReservedPixels(1.5, gap: 0, fitsPill: true));
+        Assert.Equal(57, IslandMetrics.ReservedPixels(1.5, fitsPill: true));
+        Assert.False(new AppSettings().StripFitsPill);
+        Assert.True(new AppSettings().ReserveTopStrip);
+    }
+
+    [Fact]
     public void TheIdleClockAndTheTitleAreOffByDefault()
     {
         Assert.False(new AppSettings().ShowIdleClock);

@@ -214,6 +214,12 @@ public sealed class AppSettings
     /// </summary>
     public bool ReserveTopStrip { get; set; } = true;
 
+    /// <summary>
+    /// With the strip kept: only as tall as the pill, so maximised windows start right under it, with no
+    /// room for the pill's swell (which then laps a few pixels over the window's top).
+    /// </summary>
+    public bool StripFitsPill { get; set; }
+
     /// <summary>Settings › General › Updates: GitHub is asked once a day whether a newer ISLe8 is out.</summary>
     public bool CheckForUpdates { get; set; } = true;
 

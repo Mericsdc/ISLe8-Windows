@@ -1039,10 +1039,10 @@
     <comment>mac: Kapalıyken raf orijinal dosyayı gösterir; dosya taşınsa da bulunur.</comment>
   </data>
   <data name="Settings_ReserveStrip" xml:space="preserve">
-    <value>Keep a strip free for the island</value>
+    <value>Maximized windows</value>
   </data>
   <data name="Settings_ReserveStripNote" xml:space="preserve">
-    <value>A thin strip is kept free for the island, as for the taskbar (at the top of the screen, or just above the taskbar); maximized windows such as a browser's tabs never run under it. Turned off, windows reach the screen's edge with no gap, and the island sits over them.</value>
+    <value>A strip like the taskbar's is kept for the island (at the top of the screen, or just above the taskbar), so a browser's tabs never run under it. "Right below the pill" makes the strip as tall as the pill, with no gap; the pill's swell under the pointer laps a few pixels over the window. "At the very top" keeps no strip: windows reach the screen's edge and the island sits over them.</value>
   </data>
   <data name="Settings_Notifications" xml:space="preserve">
     <value>Notifications</value>
@@ -1671,5 +1671,14 @@
   </data>
   <data name="Tray_Update" xml:space="preserve">
     <value>Update to {0}</value>
+  </data>
+  <data name="Settings_StripPill" xml:space="preserve">
+    <value>Start below the island</value>
+  </data>
+  <data name="Settings_StripTight" xml:space="preserve">
+    <value>Start right below the pill</value>
+  </data>
+  <data name="Settings_StripNone" xml:space="preserve">
+    <value>Start at the very top</value>
   </data>
 </root>

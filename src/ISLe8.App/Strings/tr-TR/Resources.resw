@@ -1039,10 +1039,10 @@
     <comment>mac: Kapalıyken raf orijinal dosyayı gösterir; dosya taşınsa da bulunur.</comment>
   </data>
   <data name="Settings_ReserveStrip" xml:space="preserve">
-    <value>Ada için şerit ayır</value>
+    <value>Büyütülen pencereler</value>
   </data>
   <data name="Settings_ReserveStripNote" xml:space="preserve">
-    <value>Görev çubuğu gibi ada için ince bir şerit ayrılır (ada üstteyse ekranın üstünde, görev çubuğundaysa onun üstünde); büyütülen pencereler, tarayıcı sekmeleri adanın altında kalmaz. Kapatınca pencereler ekranın kenarına kadar uzanır, aradaki boşluk kalkar ve ada pencerelerin üstünde durur.</value>
+    <value>Ada için görev çubuğu gibi bir şerit ayrılır (ada üstteyse ekranın üstünde, görev çubuğundaysa onun üstünde), tarayıcı sekmeleri adanın altında kalmaz. "Hemen altından" şeridi pill kadar yapar, aradaki boşluk kalkar; üzerine gelince büyüyen pill pencerenin üstüne birkaç piksel taşar. "En üstünden" şerit ayırmaz: pencereler ekranın kenarına kadar uzanır, ada üstlerinde durur.</value>
   </data>
   <data name="Settings_Notifications" xml:space="preserve">
     <value>Bildirimler</value>
@@ -1671,5 +1671,14 @@
   </data>
   <data name="Tray_Update" xml:space="preserve">
     <value>{0} sürümüne güncelle</value>
+  </data>
+  <data name="Settings_StripPill" xml:space="preserve">
+    <value>Adanın altından başlasın</value>
+  </data>
+  <data name="Settings_StripTight" xml:space="preserve">
+    <value>Pill'in hemen altından başlasın</value>
+  </data>
+  <data name="Settings_StripNone" xml:space="preserve">
+    <value>Ekranın en üstünden başlasın</value>
   </data>
 </root>

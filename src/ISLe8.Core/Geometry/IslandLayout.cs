@@ -36,7 +36,8 @@ public static class IslandMetrics
     public const double ReservedHeight = TopMargin + PillHeight + 6;
 
     /// <summary>The reserved strip on a screen at <paramref name="scale"/>, for an island <paramref name="gap"/> from its edge.</summary>
-    public static int ReservedPixels(double scale, double gap = TopMargin) => (int)Math.Ceiling((gap + PillHeight + PeekGrowth.Height) * (scale > 0 ? scale : 1));
+    public static int ReservedPixels(double scale, double gap = TopMargin, bool fitsPill = false) =>
+        (int)Math.Ceiling((gap + PillHeight + (fitsPill ? 0 : PeekGrowth.Height)) * (scale > 0 ? scale : 1));
     public const double PillHeight = 32;
     public const double IdlePillWidth = 200;
     public const double CompactPillWidth = 260;

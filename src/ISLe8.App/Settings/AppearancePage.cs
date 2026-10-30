@@ -123,6 +123,19 @@ internal static class AppearancePage
                 flush.Visibility = Placements[index] == IslandPlacement.Top ? Visibility.Visible : Visibility.Collapsed;
             }), L.Get("Settings_PlacementNote")));
         section.Children.Add(flush);
+        // Windows has no menu bar for the island to sit in, as the Mac's notch does; a strip like the
+        // taskbar's can keep one free: the pill and its swell, just the pill, or none.
+        var strip = !settings.ReserveTopStrip ? 2 : settings.StripFitsPill ? 1 : 0;
+        section.Children.Add(SettingsUi.Card(palette, L.Get("Settings_ReserveStrip"), SettingsUi.Choices(
+            [L.Get("Settings_StripPill"), L.Get("Settings_StripTight"), L.Get("Settings_StripNone")],
+            strip,
+            index =>
+            {
+                settings.ReserveTopStrip = index < 2;
+                settings.StripFitsPill = index == 1;
+                context.Save();
+                context.Island.PlaceIsland();
+            }), L.Get("Settings_ReserveStripNote")));
         section.Children.Add(SettingsUi.Card(palette, L.Get("Settings_IdleClock"), SettingsUi.Switch(settings.ShowIdleClock, on =>
         {
             settings.ShowIdleClock = on;
