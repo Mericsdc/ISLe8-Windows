@@ -340,6 +340,15 @@ internal sealed class IslandController : IDisposable
         _view.Area.PointerExited += (_, e) => UpdateHover(e, touchInside: false);
         _view.Area.PointerPressed += OnPointerPressed;
         _view.Area.PointerWheelChanged += OnPointerWheelChanged;
+        // Typing ends when the text field lets go of the keyboard, unless another one took it.
+        _view.Area.LostFocus += (_, e) =>
+        {
+            if (e.OriginalSource is not TextBox) return;
+            _queue.TryEnqueue(() =>
+            {
+                if (FocusManager.GetFocusedElement(_view.Area.XamlRoot) is not TextBox) _model.SetTyping(false, CursorOnIsland());
+            });
+        };
         // Files dragged onto the pill open the drop target (PORTING.md §3.10).
         _view.Area.DragEnter += (_, e) =>
         {
@@ -871,6 +880,7 @@ internal sealed class IslandController : IDisposable
     /// </summary>
     private void TakeKeyboard()
     {
+        _model.SetTyping(true, CursorOnIsland());
         if (_foregroundBeforeKeyboard == 0) _foregroundBeforeKeyboard = _window.TakeForeground();
     }
 

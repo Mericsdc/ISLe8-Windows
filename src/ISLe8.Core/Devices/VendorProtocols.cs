@@ -103,6 +103,29 @@ public static class SteelSeriesProtocol
         if (state is not (0x02 or 0x08)) return null;
         return new Reading(Math.Clamp((int)answer[6], 0, 100), answer[7] <= 100 ? answer[7] : null, state == 0x02);
     }
+
+    /// <summary>
+    /// The Arctis 7+ family, asked the same way on the same collection (usage 0x01), as HeadsetControl
+    /// asks it (github.com/Sapd/HeadsetControl, steelseries_arctis_7_plus; only the facts are used).
+    /// Not yet read from one of these headsets.
+    /// </summary>
+    public static readonly IReadOnlyDictionary<int, string> Arctis7Plus = new Dictionary<int, string>
+    {
+        [0x220E] = "Arctis 7+",
+        [0x2212] = "Arctis 7P+",
+        [0x2216] = "Arctis 7X+",
+        [0x2236] = "Arctis 7+ Destiny",
+    };
+
+    /// <summary>
+    /// [1] echoes the command, [2] is 0x01 while the headset is off, [3] the battery in five steps
+    /// (0–4), [4] 0x01 while it charges. Null when the headset is off or the answer is something else.
+    /// </summary>
+    public static Reading? ParseArctis7Plus(ReadOnlySpan<byte> answer)
+    {
+        if (answer.Length < 5 || answer[1] != StatusCommand || answer[2] == 0x01) return null;
+        return new Reading(Math.Min((int)answer[3], 4) * 25, null, answer[4] == 0x01);
+    }
 }
 
 /// <summary>

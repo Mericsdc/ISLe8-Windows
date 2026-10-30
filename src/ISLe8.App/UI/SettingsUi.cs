@@ -1,3 +1,4 @@
+using ISLe8.Localization;
 using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -110,8 +111,11 @@ internal static class SettingsUi
         return box;
     }
 
-    /// <summary>A slider in steps of <paramref name="step"/>, its value written beside it the way <paramref name="format"/> says.</summary>
-    public static StackPanel SliderRow(double value, double minimum, double maximum, double step, Func<double, string> format, Action<double> changed)
+    /// <summary>
+    /// A slider in steps of <paramref name="step"/>, its value written beside it the way <paramref name="format"/> says.
+    /// With <paramref name="standard"/>, a button after it puts the slider back there; it fades while the value is already that.
+    /// </summary>
+    public static StackPanel SliderRow(double value, double minimum, double maximum, double step, Func<double, string> format, Action<double> changed, double? standard = null)
     {
         var label = new TextBlock
         {
@@ -136,7 +140,24 @@ internal static class SettingsUi
             label.Text = format(stepped);
             changed(stepped);
         };
-        return new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12, Children = { slider, label } };
+        var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12, Children = { slider, label } };
+        if (standard is { } back)
+        {
+            var reset = new Button
+            {
+                Content = new FontIcon { Glyph = Glyphs.Undo, FontSize = 12 },
+                Padding = new Thickness(8, 6, 8, 6),
+                VerticalAlignment = VerticalAlignment.Center,
+                IsEnabled = Math.Abs(value - back) > step / 2,
+            };
+            var name = L.Get("Settings_RestoreDefault");
+            ToolTipService.SetToolTip(reset, name);
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(reset, name);
+            reset.Click += (_, _) => slider.Value = back;
+            slider.ValueChanged += (_, e) => reset.IsEnabled = Math.Abs(e.NewValue - back) > step / 2;
+            row.Children.Add(reset);
+        }
+        return row;
     }
 
     /// <summary>A switch without "On"/"Off" beside it: WinUI would write those in Windows' language, not the island's.</summary>

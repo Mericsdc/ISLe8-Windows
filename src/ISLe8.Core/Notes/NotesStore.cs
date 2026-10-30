@@ -46,18 +46,21 @@ public sealed class NotesStore
 
     public void Add(string text)
     {
-        text = text.Trim();
+        text = Clean(text);
         if (text.Length == 0) return;
         _notes.Insert(0, new Note(Guid.NewGuid(), text, _now()));
         Save();
     }
+
+    /// <summary>Trimmed, every line ending in \n: the Windows text box breaks lines with \r.</summary>
+    public static string Clean(string text) => text.Replace("\r\n", "\n").Replace('\r', '\n').Trim();
 
     /// <summary>Emptying a note deletes it.</summary>
     public void Update(Guid id, string text)
     {
         var index = _notes.FindIndex(note => note.Id == id);
         if (index < 0) return;
-        text = text.Trim();
+        text = Clean(text);
         if (text.Length == 0) _notes.RemoveAt(index);
         else _notes[index] = _notes[index] with { Text = text, Updated = _now() };
         Save();

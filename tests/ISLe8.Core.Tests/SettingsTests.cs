@@ -13,6 +13,19 @@ public sealed class SettingsTests : IDisposable
         if (Directory.Exists(_folder)) Directory.Delete(_folder, recursive: true);
     }
 
+    [Theory]
+    [InlineData(Core.Weather.TemperatureUnit.Fahrenheit)]
+    [InlineData(Core.Weather.TemperatureUnit.Celsius)]
+    public void TheWeatherUnitStaysAfterARestart(Core.Weather.TemperatureUnit unit)
+    {
+        var store = new SettingsStore(FilePath);
+        var settings = store.Load();
+        settings.WeatherUnit = unit;
+        store.Save(settings);
+
+        Assert.Equal(unit, new SettingsStore(FilePath).Load().WeatherUnit);
+    }
+
     [Fact]
     public void DefaultsToEmberWhenThereIsNoFile()
     {

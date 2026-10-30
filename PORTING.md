@@ -485,8 +485,12 @@ Her modülde: Mac dosyaları → Windows karşılığı → önemli davranışla
       Uyuyan fare ya da kablolu cihaz yanıt vermez. Razer Viper V3 Pro (1532:00C1) ile doğrulandı.
     - **SteelSeries Arctis Nova Pro Omni** (1038:2290): 0xFFC0 satıcı koleksiyonunda rapor kimliği + 0xB0 durum sorusu;
       yanıtta [6] kulaklık %, [7] baz istasyonundaki yedek pil %, [15] durum (0x01 kapalı, 0x02 kabloyla şarj, 0x08 bağlı).
-      Yedek pil kartta ikinci halka ("Yedek pil"). Diğer SteelSeries modelleri (Nova 7, Arctis 7 …) başka komutlar kullanıyor;
+      Yedek pil kartta ikinci halka ("Yedek pil"). Nova 7 gibi diğer SteelSeries modelleri başka komutlar kullanıyor;
       elde cihaz olmadan eklenmedi.
+    - **SteelSeries Arctis 7+ ailesi** (1038:220E 7+, 2212 7P+, 2216 7X+, 2236 7+ Destiny; 0.2.7): aynı 0xB0 sorusu,
+      0xFFC0 / kullanım 0x01 koleksiyonunda, rapor kimliği 0. Yanıtta (Windows'un önüne koyduğu rapor kimliğiyle sayınca)
+      [1] 0xB0 yankısı, [2] 0x01 ise kulaklık kapalı, [3] pil 0–4 (her adım %25), [4] 0x01 ise şarj. HeadsetControl'ün
+      (Sapd/HeadsetControl, `steelseries_arctis_7_plus`) okuduğu gibi; elde cihaz yok, bir kullanıcının 7P+'sı için eklendi.
     - **ASUS ROG, ROG Omni Receiver** (0B05:1ACE; 0.2.5): alıcının arayüz 2'sinde üç satıcı koleksiyonu, hepsi 64 baytlık
       raporlar. col01 (rapor 1, 0xFF02) `A0`: eşleşmiş cihazlar, 5. bayttan 4'er baytlık yuvalarda küçük-endian PID. Klavye
       col02'de (rapor 2, 0xFF00) `12 01`: [6] pil %, [9] 1 ise şarj; fare col03'te (rapor 3, 0xFF01) `12 07`: [5] pil %,
@@ -548,6 +552,8 @@ Her modülde: Mac dosyaları → Windows karşılığı → önemli davranışla
   - Başlangıçta açılma: MSIX `StartupTask` (`ISLe8Startup`), paketsizse `HKCU\…\Run`. Kullanıcı görevi Windows'un
     Başlangıç listesinden kapattıysa ISLe8 onu açamıyor; anahtar o zaman Windows Ayarları › Uygulamalar › Başlangıç'ı açıyor.
   - Uygulama yeniden açılınca (ikinci örnek) Ayarlar açılır.
+  - **Varsayılana döndür (Windows, 0.2.7):** açık ada genişliği, animasyon hızı, açılma/kapanma gecikmesi ve bildirim
+    süresi kaydırıcılarının yanında; değer zaten varsayılansa soluk. Mac'te bu kaydırıcılarda yok (yalnızca temalarda).
 - **Ayarlar (Mac ile aynı bölümler):** Genel, Görünüm, Düzen, Kısayollar, Medya, Raf, Pano, Bildirimler, Sistem, Widget'lar, Ajanlar. "Kilit Ekranı" yok.
 - **Genel bölümü:**
   - Açılma: üzerine gelince / tıklayınca; açılma ve kapanma gecikmesi.
@@ -569,6 +575,11 @@ Her modülde: Mac dosyaları → Windows karşılığı → önemli davranışla
 - **Kabul:** Not ekleme, kopyalama, düzenleme, silme; uygulama yeniden açılınca notlar duruyor.
 - **Windows'ta yapılan:** `%LOCALAPPDATA%\LRXe8\ISLe8\notes.json`; klasörün ACL'i zaten yalnızca kullanıcıya (ve
   SYSTEM/Yöneticiler'e) açık, dosyaya ayrıca izin verilmiyor. İngilizce metinlerde Mac'in "Return"ü "Enter" oldu.
+- **Windows'ta farklı (0.2.7, bir kullanıcının isteğiyle):**
+  - **Shift+Enter** yeni satır açar; Enter yine ekler. Kutunun `\r`'leri kayıtta `\n` olur.
+  - **Yazarken ada açık kalır:** satıra tıklayınca (adaya klavye verilince) imlecin çıkması adayı kapatmaz; başka yere
+    tıklamak kapatır; satır odağı bırakınca imleç dışarıdaysa ada kapanır. Mac'te imleç çıkınca kapanıyor;
+    Windows'ta yazılan bir not böyle kaybolmuştu. Takvimin hızlı ekleme satırı ve pano araması da aynı kuralı izler.
 
 ### 3.20 Sistem sekmesi ve LAN (plana eklenmeli: W3)
 

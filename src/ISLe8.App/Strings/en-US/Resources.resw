@@ -269,6 +269,10 @@
     <value>Size and Motion</value>
     <comment>mac: Boyut ve hareket</comment>
   </data>
+  <data name="Settings_RestoreDefault" xml:space="preserve">
+    <value>Restore default</value>
+    <comment>mac: Varsayılana döndür</comment>
+  </data>
   <data name="Settings_ExpandedWidth" xml:space="preserve">
     <value>Open island width</value>
     <comment>mac: Açık ada genişliği</comment>

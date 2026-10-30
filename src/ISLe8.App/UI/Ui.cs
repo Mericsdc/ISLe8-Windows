@@ -73,6 +73,7 @@ internal static class Glyphs
     public const string Close = "\uE711";
     public const string Video = "\uE714";
     public const string Refresh = "\uE72C";
+    public const string Undo = "";
     public const string Offline = "\uE701";
     public const string Location = "\uE81D";
     public const string Forward = "\uE76C";

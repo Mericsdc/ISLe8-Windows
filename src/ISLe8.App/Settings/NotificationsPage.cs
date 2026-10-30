@@ -53,7 +53,7 @@ internal static class NotificationsPage
             {
                 settings.NotificationDuration = seconds;
                 context.Save();
-            })));
+            }, standard: AppearancePage.Standard.NotificationDuration)));
 
         page.Children.Add(SettingsUi.SectionHeader(L.Get("Notifications_Apps")));
         var apps = new StackPanel();

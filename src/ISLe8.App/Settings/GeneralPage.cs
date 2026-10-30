@@ -33,7 +33,7 @@ internal static class GeneralPage
         page.Children.Add(LanguageCard(context));
 
         page.Children.Add(SettingsUi.SectionHeader(L.Get("Settings_Behavior")));
-        var openDelay = SecondsCard(palette, L.Get("Settings_OpenDelay"), settings.OpenDelay, 1, value =>
+        var openDelay = SecondsCard(palette, L.Get("Settings_OpenDelay"), settings.OpenDelay, AppearancePage.Standard.OpenDelay, 1, value =>
         {
             settings.OpenDelay = value;
             context.Save();
@@ -51,7 +51,7 @@ internal static class GeneralPage
             });
         page.Children.Add(SettingsUi.Card(palette, L.Get("Settings_OpenMode"), openMode));
         page.Children.Add(openDelay);
-        page.Children.Add(SecondsCard(palette, L.Get("Settings_CloseDelay"), settings.CloseDelay, 1.5, value =>
+        page.Children.Add(SecondsCard(palette, L.Get("Settings_CloseDelay"), settings.CloseDelay, AppearancePage.Standard.CloseDelay, 1.5, value =>
         {
             settings.CloseDelay = value;
             context.Save();
@@ -195,11 +195,11 @@ internal static class GeneralPage
     // MARK: Behaviour
 
     /// <summary>A delay in seconds, in steps of 0.05 like the Mac's, written as "0,35 sn".</summary>
-    private static Border SecondsCard(SettingsPalette palette, string title, double value, double maximum, Action<double> changed) =>
+    private static Border SecondsCard(SettingsPalette palette, string title, double value, double standard, double maximum, Action<double> changed) =>
         SettingsUi.Card(palette, title, SettingsUi.SliderRow(
             value, 0, maximum, 0.05,
             seconds => L.Format("Settings_Seconds", seconds.ToString("0.00", L.Culture)),
-            changed));
+            changed, standard));
 
     /// <summary>Windows answers for the startup task in its own time; the switch waits for it, and shows what it said.</summary>
     private static ToggleSwitch LoginSwitch()

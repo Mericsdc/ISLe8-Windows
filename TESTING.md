@@ -3,6 +3,23 @@
 Her maddeyi işaretle; olmayan varsa günlükle birlikte not et (README › Günlük ve ayarlar). W1'in
 adımları en üstte, W0'ın listesi altta.
 
+## Bir kullanıcının geri bildirimi (0.2.7 adayı, 2026-10-30)
+
+16 madde geldi. Düzeltilenler ve denenenler:
+
+- [x] Notlar: Shift+Enter yeni satır, Enter ekler; `\r` kayıtta `\n` (birim testi).
+- [x] Notlar: yazarken imlecin çıkması adayı kapatmıyor, başka yere tıklamak kapatıyor (model testleri).
+- [ ] Notlar ve yazarken açık kalma canlı (kullanıcı bilgisayardaydı, fareyle denenmedi).
+- [x] Varsayılana döndür düğmesi: ada genişliği, animasyon hızı, açılma/kapanma gecikmesi, bildirim süresi (derleme temiz).
+- [ ] Varsayılana döndür canlı (Ayarlar'da tıklanmadı).
+- [x] Arctis 7+ / 7P+ / 7X+ / 7+ Destiny: HeadsetControl'ün sorusu ve yanıtı (birim testi).
+- [ ] Arctis 7P+ gerçek cihazla (elde yok; kullanıcıdan dönüş bekleniyor).
+- [x] Hava birimi °F/°C kaydedip yeniden yükleyince kalıyor (JIT'te birim testi). Sıfırlanma yeniden üretilemedi; AOT'da
+      denenemedi (yerelde C++ bağlayıcısı yok).
+- [x] Ölçüm: ajan çalışırken (pill'deki çubuklar ve nabız) ISLe8'in kompozisyon iş parçacığı (`dwmcorei.dll`) tek çekirdeğin
+      ~%12'sini kullanıyor (müzik çubukları da aynı türden döngü). Pencereli oyunlarda bu kare kare çizim
+      ve terminal penceresi (0.2.6'da düzeldi) en olası sebepler.
+
 ## agy'nin açıp kapattığı terminal penceresi (0.2.6, 2026-10-30)
 
 Canlı geri bildirim: "belirli aralıklarla CMD açılıp kapanıyor". Sistem genelinde yeni konsol pencereleri ve süreç zinciri 25 dk

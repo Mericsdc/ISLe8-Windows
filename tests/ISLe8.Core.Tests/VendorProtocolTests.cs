@@ -54,6 +54,24 @@ public class VendorProtocolTests
     }
 
     [Fact]
+    public void TheArctis7PlusTellsItsBatteryInQuarters()
+    {
+        // Unnumbered reports: Windows puts report id 0 first, then the echoed 0xB0.
+        byte[] answer = [0x00, 0xB0, 0x03, 0x03, 0x00, 0x32, 0x32, 0x00];
+        Assert.Equal(new SteelSeriesProtocol.Reading(75, null, false), SteelSeriesProtocol.ParseArctis7Plus(answer));
+
+        answer[4] = 0x01;
+        Assert.True(SteelSeriesProtocol.ParseArctis7Plus(answer)!.IsCharging);
+        answer[3] = 0x09;
+        Assert.Equal(100, SteelSeriesProtocol.ParseArctis7Plus(answer)!.Headset);
+        // The headset is off, or the answer is to something else.
+        answer[2] = 0x01;
+        Assert.Null(SteelSeriesProtocol.ParseArctis7Plus(answer));
+        Assert.Null(SteelSeriesProtocol.ParseArctis7Plus([0x00, 0xB7, 0x03, 0x03, 0x00]));
+        Assert.Equal("Arctis 7P+", SteelSeriesProtocol.Arctis7Plus[0x2212]);
+    }
+
+    [Fact]
     public void TheSpareNeverRunsOutFirst()
     {
         var headset = new WirelessDevice("s", "Arctis Nova Pro Omni", DeviceKind.Headphones, 94, Spare: 5);

@@ -17,6 +17,9 @@ internal static class AppearancePage
 {
     private static readonly HomeStyle[] Styles = [HomeStyle.Dashboard, HomeStyle.Compact, HomeStyle.Minimal];
 
+    /// <summary>What a new ISLe8 starts with, for the sliders' Restore default.</summary>
+    internal static readonly AppSettings Standard = new();
+
     public static FrameworkElement Build(SettingsContext context)
     {
         var settings = context.Settings;
@@ -61,7 +64,7 @@ internal static class AppearancePage
             {
                 settings.AnimationSpeed = value;
                 context.Save();
-            })));
+            }, standard: Standard.AnimationSpeed)));
 
         page.Children.Add(SettingsUi.Gap());
         page.Children.Add(SettingsUi.Card(palette, L.Get("Settings_HideFromCapture"), SettingsUi.Switch(settings.HideFromScreenCapture, on =>
@@ -160,7 +163,7 @@ internal static class AppearancePage
             context.Settings.ExpandedWidth = value;
             context.Save();
             context.Island.ApplyLayoutSettings();
-        }));
+        }, standard: Standard.ExpandedWidth));
 
     private static string StyleNote(HomeStyle style) => L.Get(style switch
     {

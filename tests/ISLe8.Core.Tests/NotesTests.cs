@@ -29,6 +29,15 @@ public sealed class NotesTests : IDisposable
     }
 
     [Fact]
+    public void ANoteKeepsItsLinesWhicheverWayTheyBreak()
+    {
+        var store = new NotesStore(_folder, () => _now);
+        store.Add("  Alışveriş\rSüt\r\nEkmek\n");
+
+        Assert.Equal("Alışveriş\nSüt\nEkmek", store.Notes[0].Text);
+    }
+
+    [Fact]
     public void EditingAndEmptyingANote()
     {
         var store = new NotesStore(_folder, () => _now);

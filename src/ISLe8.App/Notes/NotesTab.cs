@@ -3,10 +3,12 @@ using ISLe8.Core.Theming;
 using ISLe8.Localization;
 using ISLe8.UI;
 using Microsoft.UI.Dispatching;
+using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Windows.ApplicationModel.DataTransfer;
+using Windows.UI.Core;
 
 namespace ISLe8.Notes;
 
@@ -50,7 +52,7 @@ internal sealed class NotesTab
             PlaceholderText = L.Get("Notes_Placeholder"),
             FontSize = 12,
             TextWrapping = TextWrapping.Wrap,
-            AcceptsReturn = false,
+            AcceptsReturn = true,
             MaxHeight = 3 * 18 + 8,
             MinHeight = 24,
             Padding = new Thickness(2, 3, 2, 3),
@@ -65,7 +67,8 @@ internal sealed class NotesTab
         }
         _box.AddHandler(UIElement.PointerPressedEvent, new PointerEventHandler((_, _) => BeginTyping()), handledEventsToo: true);
         _box.TextChanged += (_, _) => UpdateButtons();
-        _box.KeyDown += OnKey;
+        // Before the box: it takes Enter for a new line itself, and only Shift+Enter should.
+        _box.PreviewKeyDown += OnKey;
 
         _cancel = Ui.IconButton(Glyphs.Close, 22, 11, L.Get("Notes_Cancel"), Cancel, out _);
         _commit = Ui.IconButton(Glyphs.Add, 22, 11, L.Get("Notes_Add"), Commit, out _commitIcon);
@@ -147,7 +150,7 @@ internal sealed class NotesTab
 
     private void OnKey(object sender, KeyRoutedEventArgs e)
     {
-        if (e.Key == Windows.System.VirtualKey.Enter)
+        if (e.Key == Windows.System.VirtualKey.Enter && !InputKeyboardSource.GetKeyStateForCurrentThread(Windows.System.VirtualKey.Shift).HasFlag(CoreVirtualKeyStates.Down))
         {
             e.Handled = true;
             Commit();

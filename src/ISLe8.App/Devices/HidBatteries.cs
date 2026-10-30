@@ -97,10 +97,14 @@ internal static unsafe partial class HidBatteries
 
     private static void ReadSteelSeries(string path, string lower, List<Reading> readings)
     {
-        var product = SteelSeriesProtocol.NovaPro.Keys.FirstOrDefault(pid => lower.Contains($"pid_{pid:x4}"));
-        if (product == 0) return;
+        bool Is(int pid) => lower.Contains($"pid_{pid:x4}");
+        var novaPro = SteelSeriesProtocol.NovaPro.Keys.FirstOrDefault(Is);
+        var plus = SteelSeriesProtocol.Arctis7Plus.Keys.FirstOrDefault(Is);
+        if (novaPro == 0 && plus == 0) return;
         using var handle = Open(path, access: 0xC0000000, overlapped: true);
         if (handle.IsInvalid || Caps(handle) is not { } caps || caps.UsagePage != SteelSeriesProtocol.UsagePage || OutputReportId(handle) is not { } reportId) return;
+        // The 7+ dongle has more than one collection on the vendor page; usage 0x01 is the one that answers.
+        if (plus != 0 && caps.Usage != 0x01) return;
         using var stream = new FileStream(handle, FileAccess.ReadWrite, 0, isAsync: true);
         stream.Write(SteelSeriesProtocol.Request(reportId, caps.OutputReportByteLength));
         using var timeout = new CancellationTokenSource(TimeSpan.FromMilliseconds(600));
@@ -118,9 +122,11 @@ internal static unsafe partial class HidBatteries
             }
             if (count == 0) return;
             if (answer[1] != SteelSeriesProtocol.StatusCommand) continue;
-            if (SteelSeriesProtocol.Parse(answer) is { } reading)
+            var reading = plus != 0 ? SteelSeriesProtocol.ParseArctis7Plus(answer) : SteelSeriesProtocol.Parse(answer);
+            if (reading is not null)
             {
-                readings.Add(new Reading(Id(path), Product(handle) ?? SteelSeriesProtocol.NovaPro[product], DeviceKind.Headphones, reading.Headset, reading.IsCharging, reading.Spare));
+                var name = Product(handle) ?? (plus != 0 ? SteelSeriesProtocol.Arctis7Plus[plus] : SteelSeriesProtocol.NovaPro[novaPro]);
+                readings.Add(new Reading(Id(path), name, DeviceKind.Headphones, reading.Headset, reading.IsCharging, reading.Spare));
             }
             return;
         }

@@ -269,6 +269,10 @@
     <value>Boyut ve hareket</value>
     <comment>mac: Boyut ve hareket</comment>
   </data>
+  <data name="Settings_RestoreDefault" xml:space="preserve">
+    <value>Varsayılana döndür</value>
+    <comment>mac: Varsayılana döndür</comment>
+  </data>
   <data name="Settings_ExpandedWidth" xml:space="preserve">
     <value>Açık ada genişliği</value>
     <comment>mac: Açık ada genişliği</comment>

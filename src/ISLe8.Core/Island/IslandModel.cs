@@ -101,6 +101,9 @@ public sealed class IslandModel
     public bool IsHovering { get; private set; }
     public bool IsMenuOpen { get; private set; }
 
+    /// <summary>A text field on the open island is being typed in; the pointer leaving doesn't close it, a click elsewhere does.</summary>
+    public bool IsTyping { get; private set; }
+
     /// <summary>The session is locked: no banners, nothing waits for later (IslandModel.swift, setLocked).</summary>
     public bool IsLocked { get; private set; }
 
@@ -183,7 +186,7 @@ public sealed class IslandModel
                     : _clock.After(PeekDelay, () => Transition(IslandState.Peek));
             }
         }
-        else if (!IsMenuOpen && !(IsPinned && State == IslandState.Expanded))
+        else if (!IsMenuOpen && !((IsPinned || IsTyping) && State == IslandState.Expanded))
         {
             var delay = State != IslandState.Expanded ? LeaveDelay
                 : touch ? TouchCloseDelay
@@ -441,6 +444,23 @@ public sealed class IslandModel
     /// The island's menu opened or closed. While it is open the island neither opens nor closes;
     /// once it closes with the pointer elsewhere, the island closes as if the pointer had just left.
     /// </summary>
+    /// <summary>
+    /// Typing started (a text field took the keyboard) or ended. Windows only: on the Mac the island
+    /// closes as the pointer leaves even mid-word; here a note was lost that way.
+    /// </summary>
+    public void SetTyping(bool typing, bool pointerInside)
+    {
+        if (typing == IsTyping) return;
+        IsTyping = typing;
+        if (typing) Cancel(ref _closeTimer);
+        else if (State == IslandState.Expanded)
+        {
+            SetHovering(pointerInside);
+            return;
+        }
+        Changed?.Invoke();
+    }
+
     public void SetMenuOpen(bool open, bool pointerInside)
     {
         if (open == IsMenuOpen) return;
@@ -585,7 +605,11 @@ public sealed class IslandModel
     {
         if (state == State) return;
         var old = State;
-        if (old == IslandState.Expanded) _closedAt = _clock.Now;
+        if (old == IslandState.Expanded)
+        {
+            _closedAt = _clock.Now;
+            IsTyping = false;
+        }
         // Pill < peek < open, whichever pill: the bigger state springs open, the smaller one closes.
         IsGrowing = state > old;
         State = state;

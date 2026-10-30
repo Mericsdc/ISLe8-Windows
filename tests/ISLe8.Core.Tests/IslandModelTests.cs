@@ -179,6 +179,40 @@ public class IslandModelTests
     }
 
     [Fact]
+    public void TypingKeepsTheIslandOpenWhenThePointerLeaves()
+    {
+        OpenByHover();
+        _model.SetTyping(true, pointerInside: true);
+        _model.SetHovering(false);
+        Wait(5000);
+
+        Assert.Equal(IslandState.Expanded, _model.State);
+        Assert.True(_model.WantsOutsideClicks);
+    }
+
+    [Fact]
+    public void TypingEndedWithThePointerAwayClosesTheIsland()
+    {
+        OpenByHover();
+        _model.SetTyping(true, pointerInside: true);
+        _model.SetHovering(false);
+        _model.SetTyping(false, pointerInside: false);
+        Wait(1000);
+
+        Assert.Equal(IslandState.Pill, _model.State);
+    }
+
+    [Fact]
+    public void TypingEndsWhenTheIslandCloses()
+    {
+        OpenByHover();
+        _model.SetTyping(true, pointerInside: true);
+        _model.Close();
+
+        Assert.False(_model.IsTyping);
+    }
+
+    [Fact]
     public void AMenuOpenedOnThePillKeepsItAPill()
     {
         _model.SetHovering(true);
