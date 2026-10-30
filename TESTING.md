@@ -35,6 +35,15 @@ aktivitesi, kulak önceliği, açılış sekmesi ve hook kurulumu Core testlerin
 
 - [ ] İkinci satır: kullanımdan sonra bellek yine 80 MB'ın üstünde (Raf ölçümündeki açık madde). W6'nın ölçüm turunda bakılacak.
 
+## ASUS ROG Omni Receiver (0.2.5, 2026-10-30)
+
+Core testleri 347'den 351'e (`VendorProtocolTests`: sorular, eşleşme listesi, klavye ve fare yanıtları; gerçek baytlarla).
+
+- [x] ROG Azoth, Omni Receiver üzerinden (2.4 GHz): alıcı eşleşme listesinde 0x1A85, klavye yanıtı %46–47 ve şarj oluyor.
+- [x] Cihazlar sekmesinde "ROG Azoth · %47 · Şarj oluyor" kartı; başlıktaki cihaz çipi en düşük pili (%47) gösteriyor;
+      `isle8 devices` "ROG Azoth · %47".
+- [ ] Kablo çıkınca "Şarj oluyor" kalkıyor; klavye uyuyunca kart gidiyor, uyanınca 10 dk içinde ya da ada açılınca geri geliyor.
+
 ## Denetimden düzeltmeler (0.2.4, 2026-10-30)
 
 Salt-okunur kod denetiminin kritik ve yüksek bulguları. Core testleri 345'ten 347'ye (raf silme sınırı, onayın tam metni).

@@ -7,8 +7,9 @@ namespace ISLe8.Devices;
 
 /// <summary>
 /// Batteries of devices on their own USB receivers, which Windows knows nothing about: Razer mice and
-/// keyboards, SteelSeries Arctis headsets. Each is asked in its maker's protocol (<see cref="RazerProtocol"/>,
-/// <see cref="SteelSeriesProtocol"/>), the way Synapse and GG ask; only questions, never a setting.
+/// keyboards, SteelSeries Arctis headsets, ASUS ROG keyboards and mice on the ROG Omni Receiver. Each
+/// is asked in its maker's protocol (<see cref="RazerProtocol"/>, <see cref="SteelSeriesProtocol"/>,
+/// <see cref="AsusProtocol"/>), the way Synapse, GG and Armoury Crate ask; only questions, never a setting.
 /// Runs off the UI thread, a few milliseconds per device.
 /// </summary>
 internal static unsafe partial class HidBatteries
@@ -19,12 +20,22 @@ internal static unsafe partial class HidBatteries
     /// <summary>The HID interfaces worth watching for arrivals: these makers' receivers.</summary>
     public const string WatchSelector =
         "System.Devices.InterfaceClassGuid:=\"{4D1E55B2-F16F-11CF-88CB-001111000030}\" AND System.Devices.InterfaceEnabled:=System.StructuredQueryType.Boolean#True"
-        + " AND (System.DeviceInterface.Hid.VendorId:=5426 OR System.DeviceInterface.Hid.VendorId:=4152)";
+        + " AND (System.DeviceInterface.Hid.VendorId:=5426 OR System.DeviceInterface.Hid.VendorId:=4152"
+        + " OR (System.DeviceInterface.Hid.VendorId:=2821 AND System.DeviceInterface.Hid.ProductId:=6862))";
 
     public static List<Reading> Read()
     {
         var readings = new List<Reading>();
-        foreach (var path in InterfacePaths())
+        var paths = InterfacePaths();
+        try
+        {
+            ReadAsus(paths, readings);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or OperationCanceledException)
+        {
+            Log.Error(e, "hid battery");
+        }
+        foreach (var path in paths)
         {
             var lower = path.ToLowerInvariant();
             try
@@ -115,6 +126,82 @@ internal static unsafe partial class HidBatteries
         }
     }
 
+    // MARK: ASUS ROG Omni Receiver
+
+    /// <summary>
+    /// Each receiver says what is paired with it (col01); a keyboard it lists is asked on col02, a
+    /// mouse on col03. The three collections of one receiver share its instance in their paths.
+    /// </summary>
+    private static void ReadAsus(List<string> paths, List<Reading> readings)
+    {
+        var receivers = paths
+            .Where(path => path.Contains("vid_0b05&pid_1ace&mi_02&col0", StringComparison.OrdinalIgnoreCase))
+            .GroupBy(OmniInstance, StringComparer.OrdinalIgnoreCase);
+        foreach (var receiver in receivers)
+        {
+            string? Collection(int number) => receiver.FirstOrDefault(path => path.Contains($"&col0{number}", StringComparison.OrdinalIgnoreCase));
+            if (Collection(1) is not { } list
+                || Exchange(list, AsusProtocol.PairListRequest(), answer => AsusProtocol.IsPairList(answer)) is not { } pairs)
+            {
+                continue;
+            }
+            foreach (var pid in AsusProtocol.Paired(pairs))
+            {
+                var keyboard = AsusProtocol.Keyboards.TryGetValue(pid, out var keyboardName);
+                var mouse = AsusProtocol.Mice.TryGetValue(pid, out var mouseName);
+                if (!keyboard && !mouse || Collection(keyboard ? 2 : 3) is not { } channel) continue;
+                var answer = keyboard
+                    ? Exchange(channel, AsusProtocol.KeyboardBatteryRequest(), answer => AsusProtocol.IsKeyboardBattery(answer))
+                    : Exchange(channel, AsusProtocol.MouseBatteryRequest(), answer => AsusProtocol.IsMouseBattery(answer));
+                if (answer is null || (keyboard ? AsusProtocol.KeyboardBattery(answer) : AsusProtocol.MouseBattery(answer)) is not { } reading) continue;
+                readings.Add(new Reading($"{Id(channel)}#{pid:x4}", keyboard ? keyboardName! : mouseName!,
+                    keyboard ? DeviceKind.Keyboard : DeviceKind.Mouse, reading.Level, reading.IsCharging, null));
+            }
+        }
+    }
+
+    /// <summary>The receiver's instance, the part of the path after the collection: "a&amp;2c91b242&amp;0".</summary>
+    private static string OmniInstance(string path)
+    {
+        var parts = path.Split('#');
+        if (parts.Length < 3) return path;
+        var cut = parts[2].LastIndexOf('&');
+        return cut > 0 ? parts[2][..cut] : parts[2];
+    }
+
+    /// <summary>
+    /// Writes one output report and reads input reports until one is the answer, for at most 600 ms;
+    /// Armoury Crate may be talking to the same collection, so other reports are skipped, and a
+    /// question lost among its traffic is asked once more.
+    /// </summary>
+    private static byte[]? Exchange(string path, byte[] request, Func<byte[], bool> isAnswer) =>
+        ExchangeOnce(path, request, isAnswer) ?? ExchangeOnce(path, request, isAnswer);
+
+    private static byte[]? ExchangeOnce(string path, byte[] request, Func<byte[], bool> isAnswer)
+    {
+        using var handle = Open(path, access: 0xC0000000, overlapped: true);
+        if (handle.IsInvalid || Caps(handle) is not { } caps || caps.OutputReportByteLength != request.Length) return null;
+        using var stream = new FileStream(handle, FileAccess.ReadWrite, 0, isAsync: true);
+        stream.Write(request);
+        using var timeout = new CancellationTokenSource(TimeSpan.FromMilliseconds(600));
+        var answer = new byte[Math.Max((int)caps.InputReportByteLength, request.Length)];
+        while (!timeout.IsCancellationRequested)
+        {
+            int count;
+            try
+            {
+                count = stream.ReadAsync(answer, timeout.Token).AsTask().GetAwaiter().GetResult();
+            }
+            catch (OperationCanceledException)
+            {
+                return null;
+            }
+            if (count == 0) return null;
+            if (isAnswer(answer)) return answer;
+        }
+        return null;
+    }
+
     // MARK: HID
 
     /// <summary>The device-specific middle of the interface path: the same for a device across starts.</summary>
@@ -179,7 +266,7 @@ internal static unsafe partial class HidBatteries
     private static SafeFileHandle Open(string path, uint access, bool overlapped) =>
         CreateFileW(path, access, 3 /* read | write sharing */, 0, 3 /* OPEN_EXISTING */, overlapped ? 0x40000000u : 0, 0);
 
-    /// <summary>Every present HID interface of the two makers.</summary>
+    /// <summary>Every present HID interface of these makers' receivers.</summary>
     private static List<string> InterfacePaths()
     {
         var paths = new List<string>();
@@ -196,7 +283,7 @@ internal static unsafe partial class HidBatteries
                 if (!SetupDiGetDeviceInterfaceDetailW(set, ref data, buffer, 2048, out _, 0)) continue;
                 var path = new string((char*)(buffer + 4));
                 var lower = path.ToLowerInvariant();
-                if (lower.Contains("vid_1532") || lower.Contains("vid_1038")) paths.Add(path);
+                if (lower.Contains("vid_1532") || lower.Contains("vid_1038") || lower.Contains("vid_0b05&pid_1ace")) paths.Add(path);
             }
         }
         finally

@@ -104,3 +104,103 @@ public static class SteelSeriesProtocol
         return new Reading(Math.Clamp((int)answer[6], 0, 100), answer[7] <= 100 ? answer[7] : null, state == 0x02);
     }
 }
+
+/// <summary>
+/// ASUS ROG keyboards and mice on the ROG Omni Receiver (0B05:1ACE), asked as Armoury Crate asks
+/// (the protocol as G-Helper documents it, github.com/seerge/g-helper, GPL-3.0; only the facts are
+/// used here). The receiver has three vendor collections on its interface 2, each with 64-byte
+/// reports: col01 (report 1) lists what is paired, col02 (report 2) talks to a keyboard, col03
+/// (report 3) to a mouse. Read from a ROG Azoth: the pair list names 0x1A85, the keyboard answers
+/// 46 % and charging.
+/// </summary>
+public static class AsusProtocol
+{
+    public const int Vendor = 0x0B05;
+    public const int OmniReceiver = 0x1ACE;
+    public const int ReportLength = 64;
+
+    public const byte PairListReport = 0x01;
+    public const byte KeyboardReport = 0x02;
+    public const byte MouseReport = 0x03;
+
+    /// <summary>Keyboards by the product id the receiver lists them under.</summary>
+    public static readonly IReadOnlyDictionary<int, string> Keyboards = new Dictionary<int, string>
+    {
+        [0x1A85] = "ROG Azoth",
+        [0x1B42] = "ROG Azoth Extreme",
+        [0x1CF1] = "ROG Azoth Extreme SE",
+        [0x1AB0] = "ROG Strix Scope II 96 Wireless",
+        [0x1B7A] = "ROG Strix Scope II 96 RX Wireless",
+        [0x1B06] = "ROG Falchion RX Low Profile",
+    };
+
+    public static readonly IReadOnlyDictionary<int, string> Mice = new Dictionary<int, string>
+    {
+        [0x1B65] = "ROG Harpe Ace Mini",
+        [0x1C0E] = "ROG Keris II Origin",
+        [0x1D4E] = "ROG Keris II Origin",
+        [0x1A94] = "ROG Harpe Ace Aim Lab Edition",
+        [0x1AD7] = "ROG Strix Impact III Wireless",
+        [0x1A72] = "ROG Gladius III Aimpoint",
+        [0x1A68] = "ROG Keris Wireless Aimpoint",
+        [0x1A6A] = "ROG Keris Wireless Aimpoint",
+        [0x1B1A] = "ROG Keris II Ace",
+        [0x1B18] = "ROG Keris II Ace",
+        [0x1B68] = "ROG Harpe Ace Extreme",
+        [0x1B69] = "ROG Harpe Ace Extreme",
+    };
+
+    public sealed record Reading(int Level, bool IsCharging);
+
+    /// <summary>A 64-byte report: its id, then the command's bytes, the rest zero.</summary>
+    public static byte[] Request(byte reportId, params ReadOnlySpan<byte> command)
+    {
+        var report = new byte[ReportLength];
+        report[0] = reportId;
+        command.CopyTo(report.AsSpan(1));
+        return report;
+    }
+
+    /// <summary>What is paired: 0xA0.</summary>
+    public static byte[] PairListRequest() => Request(PairListReport, 0xA0, 0x00, 0x00);
+
+    /// <summary>A keyboard's power state: 0x12 0x01.</summary>
+    public static byte[] KeyboardBatteryRequest() => Request(KeyboardReport, 0x12, 0x01);
+
+    /// <summary>A mouse's: 0x12 0x07.</summary>
+    public static byte[] MouseBatteryRequest() => Request(MouseReport, 0x12, 0x07);
+
+    public static bool IsPairList(ReadOnlySpan<byte> answer) => answer.Length >= 9 && answer[0] == PairListReport && answer[1] == 0xA0;
+
+    /// <summary>The paired product ids: little-endian, in four-byte slots from byte 5, until an empty one.</summary>
+    public static List<int> Paired(ReadOnlySpan<byte> answer)
+    {
+        var pids = new List<int>();
+        if (!IsPairList(answer)) return pids;
+        for (var offset = 5; offset + 1 < answer.Length; offset += 4)
+        {
+            var pid = answer[offset] | answer[offset + 1] << 8;
+            if (pid == 0) break;
+            pids.Add(pid);
+        }
+        return pids;
+    }
+
+    public static bool IsKeyboardBattery(ReadOnlySpan<byte> answer) => answer.Length >= 10 && answer[0] == KeyboardReport && answer[1] == 0x12 && answer[2] == 0x01;
+
+    public static bool IsMouseBattery(ReadOnlySpan<byte> answer) => answer.Length >= 11 && answer[0] == MouseReport && answer[1] == 0x12 && answer[2] == 0x07;
+
+    /// <summary>
+    /// A keyboard's answer: [6] the battery, [9] 1 while charging. A device that has gone to sleep
+    /// answers 0 % and not charging: no reading, as Armoury Crate shows none.
+    /// </summary>
+    public static Reading? KeyboardBattery(ReadOnlySpan<byte> answer) =>
+        IsKeyboardBattery(answer) ? Make(answer[6], answer[9] == 1) : null;
+
+    /// <summary>A mouse's: [5] the battery, [10] non-zero while charging.</summary>
+    public static Reading? MouseBattery(ReadOnlySpan<byte> answer) =>
+        IsMouseBattery(answer) ? Make(answer[5], answer[10] > 0) : null;
+
+    private static Reading? Make(byte level, bool charging) =>
+        level > 100 || level == 0 && !charging ? null : new Reading(level, charging);
+}

@@ -484,7 +484,14 @@ Her modülde: Mac dosyaları → Windows karşılığı → önemli davranışla
       yanıtta [6] kulaklık %, [7] baz istasyonundaki yedek pil %, [15] durum (0x01 kapalı, 0x02 kabloyla şarj, 0x08 bağlı).
       Yedek pil kartta ikinci halka ("Yedek pil"). Diğer SteelSeries modelleri (Nova 7, Arctis 7 …) başka komutlar kullanıyor;
       elde cihaz olmadan eklenmedi.
-    - Alıcı takılıp çıkarılınca HID arayüzü izleyicisi (`DeviceWatcher`, VendorId 0x1532/0x1038) tetikler; kulaklık ya da
+    - **ASUS ROG, ROG Omni Receiver** (0B05:1ACE; 0.2.5): alıcının arayüz 2'sinde üç satıcı koleksiyonu, hepsi 64 baytlık
+      raporlar. col01 (rapor 1, 0xFF02) `A0`: eşleşmiş cihazlar, 5. bayttan 4'er baytlık yuvalarda küçük-endian PID. Klavye
+      col02'de (rapor 2, 0xFF00) `12 01`: [6] pil %, [9] 1 ise şarj; fare col03'te (rapor 3, 0xFF01) `12 07`: [5] pil %,
+      [10] şarj. %0 ve şarjda değil = uyuyor, kart yok. PID'ler ve komutlar G-Helper'dan (seerge/g-helper, GPL-3.0; yalnızca
+      protokol bilgisi, kod alınmadı). Armoury Crate aynı koleksiyonla konuşabildiği için başka raporlar atlanır, kaybolan soru bir
+      kez daha sorulur. ROG Azoth (alıcıda 0x1A85) ile doğrulandı: %47, şarj oluyor. Alıcısız (kablolu ya da Azoth'un kendi
+      donanım kilidiyle) ASUS cihazları ve Bluetooth'taki Azoth bu yoldan okunmaz; Bluetooth'ta Windows'un pil özelliği okunur.
+    - Alıcı takılıp çıkarılınca HID arayüzü izleyicisi (`DeviceWatcher`, VendorId 0x1532/0x1038, 0x0B05:0x1ACE) tetikler; kulaklık ya da
       fare açılıp kapanınca olay yok, 10 dk'lık okuma ve ada açılışı bunu yakalar.
   - Mac'in boş durum metni ("AirPods, Magic Mouse ya da …") Windows'ta "Kablosuz kulaklık, fare, klavye ya da …" oldu.
   - Yüzde önce Windows'un kendi tuttuğu PnP özelliğinden okunuyor (BLE cihazlar için de); GATT okuması yalnızca o yoksa.

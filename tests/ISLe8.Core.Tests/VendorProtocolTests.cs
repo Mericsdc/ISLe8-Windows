@@ -61,4 +61,54 @@ public class VendorProtocolTests
         var merged = DeviceRules.Merge([new WirelessDevice("a", "X", DeviceKind.Other, 50), new WirelessDevice("b", "X", DeviceKind.Headphones, null, Spare: 80)]);
         Assert.Equal((50, 80, DeviceKind.Headphones), (merged[0].Main, merged[0].Spare, merged[0].Kind));
     }
+
+    // MARK: ASUS ROG Omni Receiver
+
+    /// <summary>A 64-byte answer that starts with these bytes (as read from a ROG Azoth on its Omni Receiver).</summary>
+    private static byte[] Answer(string hex)
+    {
+        var report = new byte[AsusProtocol.ReportLength];
+        Convert.FromHexString(hex.Replace("-", "")).CopyTo(report, 0);
+        return report;
+    }
+
+    [Fact]
+    public void AsusQuestionsAre64ByteReportsWithTheirIds()
+    {
+        Assert.Equal([0x01, 0xA0, 0x00, 0x00], AsusProtocol.PairListRequest()[..4]);
+        Assert.Equal([0x02, 0x12, 0x01], AsusProtocol.KeyboardBatteryRequest()[..3]);
+        Assert.Equal([0x03, 0x12, 0x07], AsusProtocol.MouseBatteryRequest()[..3]);
+        Assert.All([AsusProtocol.PairListRequest(), AsusProtocol.KeyboardBatteryRequest(), AsusProtocol.MouseBatteryRequest()], report => Assert.Equal(64, report.Length));
+    }
+
+    [Fact]
+    public void TheReceiverListsTheAzoth()
+    {
+        var pairs = AsusProtocol.Paired(Answer("01-A0-00-01-00-85-1A-02-04-00-00"));
+        Assert.Equal([0x1A85], pairs);
+        Assert.Equal("ROG Azoth", AsusProtocol.Keyboards[pairs[0]]);
+        Assert.Equal([0x1A85, 0x1B1A], AsusProtocol.Paired(Answer("01-A0-00-02-00-85-1A-02-04-1A-1B-01-04-00-00")));
+        Assert.Empty(AsusProtocol.Paired(Answer("02-12-01-00")));
+    }
+
+    [Fact]
+    public void TheAzothAnswers46PercentCharging()
+    {
+        var answer = Answer("02-12-01-00-00-00-2E-02-01-01-14-2E-62-0F");
+        Assert.Equal(new AsusProtocol.Reading(46, true), AsusProtocol.KeyboardBattery(answer));
+        Assert.Equal(new AsusProtocol.Reading(46, false), AsusProtocol.KeyboardBattery(Answer("02-12-01-00-00-00-2E-02-01-00")));
+        // Asleep: nothing to show. Another command's answer, or the error answer: not this one.
+        Assert.Null(AsusProtocol.KeyboardBattery(Answer("02-12-01-00-00-00-00-02-01-00")));
+        Assert.Null(AsusProtocol.KeyboardBattery(Answer("02-12-00-00-00-00-2E")));
+        Assert.Null(AsusProtocol.KeyboardBattery(Answer("02-FF-AA")));
+    }
+
+    [Fact]
+    public void AnOmniMouseAnswersAtByteFive()
+    {
+        Assert.Equal(new AsusProtocol.Reading(80, false), AsusProtocol.MouseBattery(Answer("03-12-07-00-00-50-00-00-00-00-00")));
+        Assert.Equal(new AsusProtocol.Reading(80, true), AsusProtocol.MouseBattery(Answer("03-12-07-00-00-50-00-00-00-00-01")));
+        Assert.Null(AsusProtocol.MouseBattery(Answer("03-12-07-00-00-00-00-00-00-00-00")));
+        Assert.Equal("ROG Keris II Ace", AsusProtocol.Mice[0x1B1A]);
+    }
 }

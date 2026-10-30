@@ -212,10 +212,11 @@ PORTING.md §2 › Boyutlar; değerler `IslandSizes`'ta, Core testleriyle.
   eşleşmiş cihaz için aynı kapsayıcıdaki (`System.Devices.ContainerId`) düğümler okunuyor. O sayı yoksa Bluetooth LE
   cihazının GATT Battery Service'i (0x180F/0x2A19) okunuyor. Tür: ad, Apple ürün kimliği (donanım kimliğindeki
   `_VID&0001004c_PID&…`), klasik Class of Device ya da LE görünümü.
-- **Alıcıyla bağlanan cihazlar** (`HidBatteries`): Razer ve SteelSeries'in USB alıcıları Bluetooth'ta görünmez; pilleri
-  üreticinin HID protokolüyle sorulur (`RazerProtocol`, `SteelSeriesProtocol`, Core'da). SetupAPI ile HID arayüzleri bulunur,
-  Razer'da 91 baytlık feature report (erişimsiz açılan fare arayüzünde), SteelSeries'te 0xFFC0 koleksiyonuna 64 baytlık çıkış
-  raporu ve 600 ms içinde gelen yanıt. Yalnızca okuma.
+- **Alıcıyla bağlanan cihazlar** (`HidBatteries`): Razer, SteelSeries ve ASUS ROG'un (Omni Receiver) USB alıcıları
+  Bluetooth'ta görünmez; pilleri üreticinin HID protokolüyle sorulur (`RazerProtocol`, `SteelSeriesProtocol`, `AsusProtocol`,
+  Core'da). SetupAPI ile HID arayüzleri bulunur, Razer'da 91 baytlık feature report (erişimsiz açılan fare arayüzünde),
+  SteelSeries'te 0xFFC0 koleksiyonuna 64 baytlık çıkış raporu, ASUS'ta önce alıcının eşleşme listesi sonra klavye ya da fare
+  koleksiyonu; yanıt 600 ms içinde. Yalnızca okuma.
 - **Tetikleyiciler:** iki `DeviceWatcher` (klasik ve LE eşleşmiş cihazlar, `IsConnected`) bağlanma ve kopmayı söylüyor;
   üçüncüsü Razer/SteelSeries HID arayüzlerinin takılıp çıkarılmasını;
   2 ve 10 sn sonra okunuyor. Ada açılınca 60 sn'den eskiyse; bağlı cihaz varken 10 dk'da bir. Cihaz yoksa hiçbir şey çalışmıyor.
