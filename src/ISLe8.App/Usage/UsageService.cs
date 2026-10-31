@@ -37,7 +37,8 @@ internal sealed class UsageService : IDisposable
     /// </summary>
     private static readonly IReadOnlyDictionary<string, string> AgyEnvironment = new Dictionary<string, string>
     {
-        ["AGY_CLI_DISABLE_AUTO_UPDATE"] = "1",
+        // "true", not "1": agy 1.4.11 ignores "1" and goes on to start its updater (its own log says which).
+        ["AGY_CLI_DISABLE_AUTO_UPDATE"] = "true",
     };
 
     /// <summary>Settings files ignored (so none of their hooks run, ISLe8's own included), no MCP server, no transcript.</summary>
@@ -422,7 +423,7 @@ internal sealed class UsageService : IDisposable
     private static async Task<UsageSnapshot?> GeminiAsync(string agy, DateTimeOffset now, Action asking, CancellationToken cancel)
     {
         asking();
-        var output = await UsageCli.RunAsync(agy, ["-p", "/quota", "--output-format", "json", "--print-timeout", "30s"], TimeSpan.FromSeconds(40), AgyEnvironment, cancel);
+        var output = await UsageCli.RunAsync(agy, ["-p", "/quota", "--output-format", "json", "--print-timeout", "30s"], TimeSpan.FromSeconds(40), AgyEnvironment, cancel, alone: true);
         if (cancel.IsCancellationRequested) return null;
         return output is null ? UsageSnapshot.Status(UsageVendor.Gemini, UsageState.Failed, UsageError.Timeout) : UsageParse.Gemini(output.Text, output.Code, now);
     }

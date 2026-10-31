@@ -29,6 +29,8 @@ sürümü; C# + WinUI 3, .NET 10, Native AOT, x64 ve ARM64.
   GPU kullanımı ve sıcaklıkları, RAM ve saat (hangilerinin görüneceği seçilir, pill onlara göre genişler).
 - **Raf, Pano, Notlar:** sürüklenen dosyalar, pano geçmişi, notlar (Shift+Enter yeni satır).
 - **Uyarılar:** şarj, Ethernet kablosu ve düşük pil; ses ve parlaklık göstergesi (isteğe bağlı, Windows'unkinin yerine).
+- **Klavye temizliği:** adanın başlığındaki klavye düğmesi bütün tuşları sen açana kadar kilitler, silerken bir şey yazılmaz;
+  fareyle ya da Ctrl+Alt+Del › Kilitle ile açılır (Ayarlar › Sistem'de de var).
 - **Kişiselleştirme:** Mac'tekiyle aynı 7 tema; ada ekranın üstünde, görev çubuğunun üstünde solda, ortada, sağda ya da görev
   çubuğunun içinde istediğin yerde;
   kapalıyken siyah, temaya uyan ya da saydam; boştayken ince çubuk, saat, çalan şarkının adı; tam ekranda gizlenme.

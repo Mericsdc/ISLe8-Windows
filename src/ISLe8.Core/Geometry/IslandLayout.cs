@@ -105,7 +105,7 @@ public sealed record IslandLayout
 
     /// <summary>
     /// Settings › Appearance › Island › Thin bar (Windows only): the idle pill drawn as a short bar in its middle,
-    /// at its top edge, or halfway down on the taskbar. The pill's whole size still takes the pointer.
+    /// at its top edge, or halfway down on the taskbar. Only the bar takes the pointer (<see cref="BarRegion"/>).
     /// </summary>
     public DipRect Bar()
     {
@@ -161,6 +161,12 @@ public sealed record IslandLayout
 
     /// <summary>The same for the peek, so the swollen pill keeps the pointer that swelled it.</summary>
     public PixelRect PeekRegion(PillKind kind) => EdgeAnchoredRegion(Peek(kind));
+
+    /// <summary>
+    /// The same for the thin bar: the pill's whole size, invisible round a bar 6 DIP tall, opened the island
+    /// under a pointer heading for a browser's tabs (the user: "cok engelliyor").
+    /// </summary>
+    public PixelRect BarRegion() => EdgeAnchoredRegion(Bar());
 
     private PixelRect EdgeAnchoredRegion(DipRect shape)
     {

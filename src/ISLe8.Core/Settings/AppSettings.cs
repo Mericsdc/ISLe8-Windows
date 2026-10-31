@@ -210,6 +210,9 @@ public sealed class AppSettings
 
     /// <summary>A green LAN chip while online by cable, and the ears when the cable goes in or out.</summary>
     public bool ShowNetworkChip { get; set; } = true;
+
+    /// <summary>Windows only: Settings › System › Keyboard cleaning, the keyboard button in the open island's header (KeyboardLock).</summary>
+    public bool ShowKeyboardCleaning { get; set; } = true;
     public bool SwipeToChangeTabs { get; set; } = true;
 
     /// <summary>Kept out of screenshots, recordings and shared screens.</summary>

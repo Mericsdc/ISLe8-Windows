@@ -235,6 +235,32 @@ public sealed class PlacementTests : IDisposable
         Assert.Equal(taskbar.IdlePill.Y + taskbar.IdlePill.Height / 2, taskbar.Bar().Y + 3, 3);
     }
 
+    /// <summary>
+    /// The user: "tam olarak işaretlediğim yerden algılıyor ... cok engelliyor". The whole pill took the pointer, 51 px down
+    /// a 1440p screen at 150 % under a bar 9 px tall; now only the bar and its slop do, out to the screen's edge.
+    /// </summary>
+    [Fact]
+    public void TheThinBarTakesThePointerOnlyAroundItselfOutToTheEdge()
+    {
+        var flush = IslandLayout.Compute(new PixelRect(0, 0, 2560, 1440), new PixelRect(0, 0, 2560, 1368), 1.5, Expanded, IslandPlacement.Top, flushTop: true);
+        var pill = flush.PillRegion(Geometry.PillKind.Idle);
+        var bar = flush.BarRegion();
+        Assert.Equal((0, 51), (pill.Y, pill.Height));
+        Assert.Equal(0, bar.Y);
+        Assert.Equal((IslandMetrics.BarHeight + IslandMetrics.HitSlop) * 1.5, bar.Height);
+        Assert.InRange(bar.Width, (IslandMetrics.BarWidth + 2 * IslandMetrics.HitSlop) * 1.5, (IslandMetrics.BarWidth + 2 * IslandMetrics.HitSlop) * 1.5 + 1);
+        Assert.Equal(pill.X + pill.Width / 2.0, bar.X + bar.Width / 2.0, 1);
+
+        var top = At(IslandPlacement.Top);
+        Assert.Equal((0, IslandMetrics.TopMargin + IslandMetrics.BarHeight + IslandMetrics.HitSlop), (top.BarRegion().Y, (double)top.BarRegion().Height));
+
+        // On the taskbar the bar is halfway down the pill; its target runs from just above it to the bottom.
+        var taskbar = At(IslandPlacement.TaskbarCenter);
+        var low = taskbar.BarRegion();
+        Assert.Equal(taskbar.PillRegion(Geometry.PillKind.Idle).Bottom, low.Bottom);
+        Assert.Equal(taskbar.Bar().Y + taskbar.Area.Y - IslandMetrics.HitSlop, low.Y, 1);
+    }
+
     [Fact]
     public void AGameIsWhatGameBarRecognised()
     {

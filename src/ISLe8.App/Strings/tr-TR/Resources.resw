@@ -1582,6 +1582,42 @@
     <value>Kablolu bağlantı (LAN)</value>
     <comment>mac: Kablolu bağlantı (LAN)</comment>
   </data>
+  <data name="Settings_KeyboardCleaning" xml:space="preserve">
+    <value>Klavye temizliği</value>
+    <comment>mac: Klavye temizliği</comment>
+  </data>
+  <data name="Settings_LockKeyboard" xml:space="preserve">
+    <value>Klavyeyi kilitle</value>
+    <comment>mac: Klavyeyi kilitle</comment>
+  </data>
+  <data name="Settings_LockKeyboardNote" xml:space="preserve">
+    <value>Klavyeyi sen açana kadar kilitler; silerken tuşlar bir şey yazmaz. Fare ve dokunmatik yüzey çalışır, adadaki düğmeyle istediğin an açarsın; fare yoksa Ctrl+Alt+Del › Kilitle de açar. Yönetici olarak çalışan bir pencere öndeyse tuşlar ona gidebilir.</value>
+  </data>
+  <data name="Settings_KeyboardButton" xml:space="preserve">
+    <value>Başlıkta klavye düğmesi</value>
+  </data>
+  <data name="Settings_KeyboardButtonNote" xml:space="preserve">
+    <value>Açık adanın üst satırında, cihazların yanında; basınca klavye kilitlenir.</value>
+  </data>
+  <data name="Keyboard_Lock" xml:space="preserve">
+    <value>Klavyeyi temizle</value>
+    <comment>mac: Klavyeyi temizle</comment>
+  </data>
+  <data name="Keyboard_Locked" xml:space="preserve">
+    <value>Klavye kilitli</value>
+    <comment>mac: Klavye kilitli</comment>
+  </data>
+  <data name="Keyboard_LockedNote" xml:space="preserve">
+    <value>Tuşlara basmak bir şey yazmaz; gönül rahatlığıyla silebilirsin.</value>
+    <comment>mac: Tuşlara basmak bir şey yazmaz; gönül rahatlığıyla silebilirsin.</comment>
+  </data>
+  <data name="Keyboard_LockedWayOut" xml:space="preserve">
+    <value>Fare yoksa Ctrl+Alt+Del › Kilitle de açar.</value>
+  </data>
+  <data name="Keyboard_Unlock" xml:space="preserve">
+    <value>Kilidi aç</value>
+    <comment>mac: Kilidi aç</comment>
+  </data>
   <data name="Settings_Island" xml:space="preserve">
     <value>Ada</value>
   </data>
@@ -1716,7 +1752,7 @@
     <value>Boştayken ince çubuk</value>
   </data>
   <data name="Settings_IdleBarNote" xml:space="preserve">
-    <value>Bir şey olmadığında ada ince bir çubuğa iner; imleç gelince açılır. Çubuğun çevresi de imleci alır.</value>
+    <value>Bir şey olmadığında ada ince bir çubuğa iner; imleç çubuğa gelince açılır. Yalnızca çubuk imleci alır, çevresindeki sekmelere ve düğmelere tıklanabilir.</value>
   </data>
   <data name="Settings_Performance" xml:space="preserve">
     <value>Performans göstergesi</value>

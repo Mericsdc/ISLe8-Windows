@@ -239,10 +239,13 @@ internal static partial class UsageCli
         return environment;
     }
 
-    /// <summary>Runs to completion under a deadline. Null if it couldn't start, timed out or was cancelled.</summary>
-    public static async Task<Output?> RunAsync(string binary, IEnumerable<string> arguments, TimeSpan timeout, IReadOnlyDictionary<string, string>? extra, CancellationToken cancel)
+    /// <summary>
+    /// Runs to completion under a deadline. Null if it couldn't start, timed out or was cancelled. <paramref name="alone"/>:
+    /// it may start nothing (<see cref="UsageChild.Start"/>).
+    /// </summary>
+    public static async Task<Output?> RunAsync(string binary, IEnumerable<string> arguments, TimeSpan timeout, IReadOnlyDictionary<string, string>? extra, CancellationToken cancel, bool alone = false)
     {
-        using var child = UsageChild.Start(binary, arguments, ChildEnvironment(binary, extra), WorkDir);
+        using var child = UsageChild.Start(binary, arguments, ChildEnvironment(binary, extra), WorkDir, alone);
         if (child is null) return null;
         child.Input.Close();
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancel);

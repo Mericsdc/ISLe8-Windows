@@ -438,10 +438,13 @@ Her modülde: Mac dosyaları → Windows karşılığı → önemli davranışla
 - **Kaynaklar:**
   - **Codex:** app-server + oturum kayıtları `%USERPROFILE%\.codex\sessions`, `FileSystemWatcher` ile anında.
   - **Claude:** `claude -p /usage --output-format json --max-turns 1` + izolasyon bayrakları. Bayraklar: `--restricted --strict-mcp-config --no-session-persistence --settings {"disableAllHooks":true,"language":"English"}`. **Hook'lar kapalı**; aksi halde ISLe8'in kendi hook'ları tetiklenir.
-  - **Antigravity:** `agy -p /quota`, Windows'ta `AGY_CLI_DISABLE_AUTO_UPDATE=1` ile (0.2.6). Yoksa agy her çalışmada kendini
-    günceller: yeni sürümü (~70 MB) indirir, kendinin bir kopyasını yeni bir konsolda başlatır; Windows Terminal penceresi bir
-    an açılıp kapanıyordu. İş bitince Job onu değiştirmeden öldürdüğü için bu her sorguda (5 dk) baştan başlıyordu. Mac'te
-    Seatbelt agy'nin kendi klasörüne yazmasını engellediği için güncelleme sessizce başarısız olur; sonuç aynı.
+  - **Antigravity:** `agy -p /quota`, Windows'ta `AGY_CLI_DISABLE_AUTO_UPDATE=true` ile ve hiçbir süreç başlatamadan (aşağıda,
+    Pencere yok). Yoksa agy, son denetimden 15 dakika geçtiyse kendini günceller: yeni sürümü (~70 MB) indirir, kendinin bir
+    kopyasını yeni bir konsolda başlatır; Windows Terminal penceresi bir an açılıp kapanıyordu. İş bitince Job onu
+    değiştirmeden öldürdüğü için bu her sorguda baştan başlıyordu. 0.2.6–0.2.9 değişkeni `1` ile verdi; agy 1.4.11 yalnızca
+    `true`'yu tanıyor (`auto_updater.go:247 Auto-update disabled via environment variable`), `1`'i yok sayıp güncelleyiciyi
+    başlatmayı sürdürdü (2026-10-31, agy'nin kendi günlüğü `%USERPROFILE%\.gemini\antigravity-cli\log`). Mac'te Seatbelt
+    agy'nin kendi klasörüne yazmasını engellediği için güncelleme sessizce başarısız olur; sonuç aynı.
 - **Güvenlik:**
   - Token, çerez ya da kimlik bilgisi asla okunmaz.
   - Seatbelt Windows'ta yok. Her CLI kendi Job Object'inde çalışır (`KILL_ON_JOB_CLOSE`), izin listeli ortam değişkenleri ve boş geçici bir çalışma klasörüyle, süre sınırıyla, `CREATE_NO_WINDOW` ile.
@@ -468,7 +471,13 @@ Her modülde: Mac dosyaları → Windows karşılığı → önemli davranışla
     masaüstünde (`WinSta0\ISLe8-cli`), askıda başlar ve Job'a girdikten sonra devam eder (önce Job'a başladıktan sonra
     giriyordu, o arada başlattıkları dışarıda kalabilirdi). Yalnızca üç boru ucu miras alınır. Deneme: yeni konsol isteyen
     `start /min` bu masaüstünde pencere açmadı, normal masaüstünde `ConsoleWindowClass` açtı. Süre dolunca Job sonlandırılır;
-    bekleyen okuma boru kapanınca biter.
+    bekleyen okuma boru kapanınca biter. Bu masaüstü Windows Terminal'e yetmeyebilir: varsayılan terminal o olunca yeni
+    konsolu COM açıyor (`WindowsTerminal.exe < svchost`), kullanıcının masaüstünde ve öne geçerek; görünmez masaüstünden
+    açılan bir konsolun oraya gitmediği doğrulanmadı. Bu yüzden agy (sorgusu için hiçbir şey başlatması gerekmiyor) ayrıca
+    konsolsuz (`DETACHED_PROCESS`) ve `PROC_THREAD_ATTRIBUTE_CHILD_PROCESS_POLICY` ile başlar: Windows ona hiçbir süreç
+    başlattırmaz, güncelleyicisi de `Failed to spawn background update … İşlem oluşturma engellendi` ile kalır, `/quota` yine
+    yanıt verir. Konsol sunucusu da bir alt süreç sayıldığı için konsolla birlikte bu yasak agy'yi hiç açtırmıyordu
+    (0xC0000142). Codex ve Claude alt süreç başlattığı için onlarda yok.
     npm kısayolu (`.cmd`) cmd.exe ya da node olmadan, gösterdiği yerel ikiliye çözülür: Claude Code paketindeki
     `claude.exe`, Codex'in platform paketindeki `codex.exe`.
   - **Güven:** Mac'teki sahiplik/izin denetiminin karşılığı ACL denetimi. Dosya, klasörü (DLL yerleştirilebilecek yer) ve üstündeki
@@ -627,7 +636,21 @@ Her modülde: Mac dosyaları → Windows karşılığı → önemli davranışla
 - **Mac:** [KeyboardLock.swift][mac-keyboardlock], [KeyboardLockWindow.swift][mac-keyboardwindow]
 - **Davranış:** Ayarlar > Sistem'de "Klavyeyi kilitle" ve palette "Klavyeyi temizle". Bütün tuşlar, değiştiriciler ve medya tuşları iki dakikalığına yutulur; fare çalışır. Ekranın ortasında "Klavye kilitli" kartı, geri sayım ve "Kilidi aç" düğmesi. İki dakika sonra kendiliğinden açılır; süreç ölürse kilit de kalkar.
 - **Windows:** `SetWindowsHookEx(WH_KEYBOARD_LL)` ile her olaya 1 döndür (Ctrl+Alt+Del yine çalışır, bu iyi). Mac'te Erişilebilirlik izni gerekiyor; Windows'ta özel izin yok.
-- **Kabul:** Kilitliyken hiçbir tuş yazmıyor; düğme ve süre kilidi açıyor.
+- **Kabul:** Kilitliyken hiçbir tuş yazmıyor; düğme ve süre kilidi açıyor (Windows'ta süre yok, aşağıda).
+- **Windows'ta yapılan (2026-10-31):** `KeyboardLock`, yalnızca kilitliyken, kendi iş parçacığında bir `WH_KEYBOARD_LL`
+  kancası; her olaya (`SendInput` ile gönderilenler de) 1 döner. Oturum kilitlenince (Ctrl+Alt+Del › Kilitle) ve ISLe8
+  kapanınca da kalkar. Ayarlar › Sistem › Klavye temizliği: "Klavyeyi kilitle" düğmesi ve başlıktaki düğmeyi gizleyen anahtar.
+  Palet henüz yok (§3.16).
+- **Windows'ta farklı** (kullanıcı isteği: "LAN yanına veya mouse işaretinin yanına koy. Takvim üzerine."): açık adanın
+  başlığında, cihaz çipinin (yoksa LAN'ın) yanında, iğne ve ayarlar gibi bir klavye düğmesi; yer yokken de düşmez. Kilitliyken
+  vurgu rengine döner, yanında asma kilit. Mac'in ekran ortasındaki kartı (Klavye kilitli, açıklama, Kilidi aç) tek satır
+  olarak adanın sekme alanına girer, en kısa Home'a (64) sığar; ada iğneli açık kalır (zaten iğneliyse dokunulmaz), kilit
+  kalkınca iğne de kalkar.
+- **Windows'ta farklı, süre yok** (kullanıcı isteği: "2 dakikalık süre sınırını kaldır … istediğimiz zaman açabilelim"): Mac'in
+  iki dakikası (`keyboardLockLimit`) ve geri sayımı yok; kilit, düğmeyle ya da oturum kilitlenince kalkar. Kartın üçüncü
+  satırında geri sayım yerine fare yokken çıkış yolu: "Fare yoksa Ctrl+Alt+Del › Kilitle de açar."
+- **Sınırlar:** Ctrl+Alt+Del'i Windows alır (çıkış yolu olarak iyi); yönetici olarak çalışan bir pencere öndeyken onun tuşları
+  kancaya uğramaz; dizüstülerin donanımda işlediği bazı Fn tuşları da.
 
 ### 3.22 Özel günler (plana eklenmeli: W5)
 
@@ -742,7 +765,9 @@ Bir kullanıcının geri bildirimiyle eklendi; Mac'te karşılıkları yok.
   - Mac'te kapalı ada çentikle bir olsun diye hep siyah. "Temaya uysun" açık adanın rengini, gradyanını ve camını kullanır.
   - "Saydam" siyahın %30'unu bırakır; beyaz içerik okunur, görev çubuğu ya da masaüstü arkadan görünür.
 - **Boştayken ince çubuk** (Görünüm › Ada): boş pill 140×6 bir çubuk olarak çizilir. Üstte pill'in üst kenarında, görev
-  çubuğunda ortasında durur. İmleç pill'in tamamında algılanır; saat çubukta gösterilmez.
+  çubuğunda ortasında durur; saat çubukta gösterilmez. İmleci yalnızca çubuk ve 2 DIP payı alır, ekranın kenarına kadar
+  (`IslandLayout.BarRegion`). 0.2.7–0.2.9'da pill'in tamamı alıyordu: 1440p %150'de 9 px'lik çubuğun altında 51 px, sekmelere
+  giden imleç adayı açıyordu (kullanıcı: "tam olarak işaretlediğim yerden algılıyor … çok engelliyor").
 - **Banner'larda boş pill satırı yok:** Mac'te banner'ın üst satırı çentiğin altında boş kalıyor. Windows'ta bu satır siyah
   bir bant oluyordu; görev çubuğunda en alta düştüğünden müzik bildiriminin altında fazla boşluk görünüyordu. Artık banner,
   içeriği ve üstte/altta 5'er DIP'ten ibaret (`IslandSizes.BannerInset`).
@@ -755,7 +780,7 @@ Bir kullanıcının geri bildirimiyle eklendi; Mac'te karşılıkları yok.
 
 ## 4. DESIGN.md §4 ile farklar
 
-- **Plana eklenmesi gerekenler:** ses/parlaklık göstergesi (§3.2, yapıldı), kamera/mikrofon göstergesi ve uyanık tut (§3.4), komut paleti (§3.16), ayarlar penceresi (§3.17), takvim hızlı ekleme (§3.6), `isle8.exe` konsol yardımcısı (§1), Notlar (§3.19), Sistem sekmesi ve LAN (§3.20, yapıldı), klavye temizliği (§3.21), özel günler (§3.22), iPhone/iPad pilleri (§3.14), durum kulakları (§2, yapıldı).
+- **Plana eklenmesi gerekenler:** ses/parlaklık göstergesi (§3.2, yapıldı), kamera/mikrofon göstergesi ve uyanık tut (§3.4), komut paleti (§3.16), ayarlar penceresi (§3.17), takvim hızlı ekleme (§3.6), `isle8.exe` konsol yardımcısı (§1), Notlar (§3.19), Sistem sekmesi ve LAN (§3.20, yapıldı), klavye temizliği (§3.21, yapıldı), özel günler (§3.22), iPhone/iPad pilleri (§3.14), durum kulakları (§2, yapıldı).
 - **Öne alınan:** MSIX paket kimliği. Bildirim aynası, App Execution Alias ve `StartupTask` paket kimliği istiyor; takvim yalnızca ek kaynağı (AppointmentStore) için istiyor, asıl yolu ICS (§3.6). **Karar (2026-10-29): tam MSIX**, dosya ve kayıt defteri sanallaştırması kapalı (ayarlar zip sürümüyle aynı klasörde). Yerel kurulum `scripts/install.ps1` (Geliştirici Modu, imzasız, klasöründen kayıt); imzalı .msix ve Releases'e konması W6'da. Zip sürümü bildirim aynası olmadan sürüyor.
 - **Varsayılan değişiklikleri:** Tasarruf modu varsayılan açık. Açılma gecikmesi 0. Bütün sekmeler aynı yükseklikte.
 

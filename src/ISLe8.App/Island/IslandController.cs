@@ -77,6 +77,9 @@ internal sealed class IslandController : IDisposable
     private readonly GameWatch _games;
     private readonly PerformanceSampler _performance;
     private readonly Updater _updater;
+    private readonly KeyboardLock _keyboardLock;
+    /// <summary>The keyboard lock pinned the island open, so unlocking lets it go.</summary>
+    private bool _pinnedForKeyboard;
     private HotKey? _clipboardKey;
     private nint _foregroundBeforeKeyboard;
 
@@ -116,6 +119,7 @@ internal sealed class IslandController : IDisposable
         _agentServer = new AgentServer(_agents, _queue);
         _usage = new Usage.UsageService(_settings, _queue, clock, AppPaths.DataFolder);
         _outsideClicks = new OutsideClickWatcher(_queue, OnClickedOutside);
+        _keyboardLock = new KeyboardLock(_queue);
     }
 
     /// <summary>The weather, for Settings › Widgets.</summary>
@@ -133,6 +137,9 @@ internal sealed class IslandController : IDisposable
     /// <summary>Settings › Agents › Usage limits.</summary>
     public void ApplyUsageSettings() => _usage.ApplySettings();
 
+    /// <summary>Settings › System › Keyboard cleaning: the island opens on the lock's card.</summary>
+    public void LockKeyboard() => _keyboardLock.Set(true);
+
     /// <summary>Settings › System › Wireless devices: the header's chip shows at once.</summary>
     public void ApplyDeviceSettings() => _view.DevicesChip.Refresh();
 
@@ -141,6 +148,7 @@ internal sealed class IslandController : IDisposable
     {
         _status.ApplySettings();
         _view.ShowStatusChips(_settings, _status);
+        ShowKeyboardLock();
     }
 
     /// <summary>The clipboard history, for Settings › Clipboard.</summary>
@@ -297,6 +305,8 @@ internal sealed class IslandController : IDisposable
             if (message == Win32.WM_WTSSESSION_CHANGE && wParam is Win32.WTS_SESSION_LOCK or Win32.WTS_SESSION_UNLOCK)
             {
                 _model.SetLocked(wParam == Win32.WTS_SESSION_LOCK);
+                // Ctrl+Alt+Del › Lock is a way out of the keyboard lock too; back, the keyboard works.
+                if (wParam == Win32.WTS_SESSION_LOCK) _keyboardLock.Set(false);
             }
             return null;
         });
@@ -321,6 +331,7 @@ internal sealed class IslandController : IDisposable
             UpdateBars();
         };
         _performance.Changed += ShowPerformance;
+        _keyboardLock.Changed += OnKeyboardLockChanged;
         _window.Show();
         _games.Start();
         UpdatePerformance();
@@ -334,6 +345,8 @@ internal sealed class IslandController : IDisposable
 
     public void Dispose()
     {
+        // First: whatever goes wrong after, the keyboard works again.
+        _keyboardLock.Dispose();
         _games.Dispose();
         _performance.Dispose();
         _outsideClicks.Dispose();
@@ -413,7 +426,14 @@ internal sealed class IslandController : IDisposable
         _view.Dock.SetTabs(_model.VisibleTabs, _model.Tab);
         _view.Dock.Chosen += _model.Select;
         _view.Header.SetPinned(_model.IsPinned);
-        _view.Header.PinClicked += () => _model.SetPinned(!_model.IsPinned);
+        _view.Header.PinClicked += () =>
+        {
+            // The pin is the user's again.
+            _pinnedForKeyboard = false;
+            _model.SetPinned(!_model.IsPinned);
+        };
+        _view.KeyboardChip.Clicked += () => _keyboardLock.Set(!_keyboardLock.IsOn);
+        _view.KeyboardCard.Unlock += () => _keyboardLock.Set(false);
         _view.Header.SettingsClicked += () =>
         {
             // As on the Mac: the island steps aside for the window it opened.
@@ -433,6 +453,7 @@ internal sealed class IslandController : IDisposable
 
         _view.Banner.Refresh();
         _view.ShowStatusChips(_settings, _status);
+        ShowKeyboardLock();
         if (_window.Layout is { } layout) ApplyLayout(layout);
         _artworkKey = null;
         LoadArtwork();
@@ -603,7 +624,7 @@ internal sealed class IslandController : IDisposable
             IslandState.Alert => layout.OpenRegion(AlertRect(layout)),
             IslandState.DropTarget => layout.OpenRegion(layout.Open(IslandSizes.DropTarget)),
             IslandState.Peek => layout.PeekRegion(_model.Pill),
-            _ => layout.PillRegion(_model.Pill),
+            _ => IsBar(state) ? layout.BarRegion() : layout.PillRegion(_model.Pill),
         };
         // The window region also clips what is drawn: the notch shape's shoulders reach past the shape.
         var shoulder = (int)Math.Ceiling(Shoulder(state) * layout.Scale);
@@ -620,7 +641,7 @@ internal sealed class IslandController : IDisposable
             IslandState.Alert => layout.OpenRegion(AlertRect(layout)),
             IslandState.DropTarget => layout.OpenRegion(layout.Open(IslandSizes.DropTarget)),
             IslandState.Peek => layout.PeekRegion(_model.Pill),
-            _ => layout.PillRegion(_model.Pill),
+            _ => IsBar(_model.State) ? layout.BarRegion() : layout.PillRegion(_model.Pill),
         };
 
     /// <summary>Whether the cursor is on the island; while open, through the outline and its slack.</summary>
@@ -983,6 +1004,29 @@ internal sealed class IslandController : IDisposable
         if (_foregroundBeforeKeyboard == 0) return;
         _window.ReturnForeground(_foregroundBeforeKeyboard);
         _foregroundBeforeKeyboard = 0;
+    }
+
+    // MARK: Keyboard cleaning
+
+    private void ShowKeyboardLock() => _view.ShowKeyboardLock(_settings, _keyboardLock.IsOn);
+
+    /// <summary>
+    /// Locked, the island stays open on the lock's card (pinned, unless it already was), so the way back stays in
+    /// view while the keyboard is wiped; unlocked, it lets go again.
+    /// </summary>
+    private void OnKeyboardLockChanged()
+    {
+        ShowKeyboardLock();
+        if (_keyboardLock.IsOn && !_model.IsPinned)
+        {
+            _pinnedForKeyboard = true;
+            _model.SetPinned(true);
+        }
+        else if (!_keyboardLock.IsOn && _pinnedForKeyboard)
+        {
+            _pinnedForKeyboard = false;
+            _model.SetPinned(false);
+        }
     }
 
     // MARK: Timer

@@ -352,4 +352,7 @@ public class StatusTests
         Assert.True(_settings.ShowBatteryChip);
         Assert.True(_settings.ShowNetworkChip);
     }
+
+    [Fact]
+    public void TheKeyboardButtonIsOnByDefault() => Assert.True(_settings.ShowKeyboardCleaning);
 }

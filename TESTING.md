@@ -3,6 +3,73 @@
 Her maddeyi işaretle; olmayan varsa günlükle birlikte not et (README › Günlük ve ayarlar). W1'in
 adımları en üstte, W0'ın listesi altta.
 
+## İnce çubuğun görünmeyen fare alanı (2026-10-31)
+
+Kullanıcı (masaüstünde ekranın ortasını, üstten ~95 px aşağıyı gösteren bir okla): "tam olarak işaretlediğim yerden algılıyor
+şu anda adayı ve çok engelliyor."
+
+- [x] Okun yeri: ekran görüntüsü duvar kâğıdına (3840×2160, 2560×1440'a doldurulmuş) eşlendi; sol üstü (825, 0), ortalama hata
+      0,7 gri düzeyi. Ok ucu ≈ (1282, 95); ada ekran görüntüsünde yok ("Ekran yakalamada gizle" açık).
+- [x] Sebep, 20 dakikalık pasif izleyiciden (`GetWindowRgnBox`, imleç, `WindowFromPoint`; fareye dokunmadan): boştaki ada
+      ince çubuk (140×6 DIP, 210×9 px) olarak çiziliyor ama pencere bölgesi pill'in tamamıydı, x 1127–1433, y 0–51.
+      Kullanıcının denemesinde imleç (1304, 43)'e inince ada 47 ms içinde açıldı (açılma gecikmesi 0). Önde bir Chromium
+      penceresi vardı; sekme şeridi o yükseklikte.
+- [x] Düzeltme birim testinde: çubuğun bölgesi çubuk + 2 DIP pay, ekranın kenarına kadar (üstte 1440p %150'de 216×12 px;
+      görev çubuğunda çubuğun üstünden alta); 371 test.
+- [x] Kurulu (JIT), 8 dakikalık izleyici: ajan göstergesi gidince bölge x 1172–1388, y 0–12 (216×12 px, `WindowFromPoint`
+      haritası da yalnızca orayı gösterdi). Kullanıcı iki kez çubuğa gitti, (1264, 8) ve (1216, 0); ada açıldı, kapanınca
+      bölge yine 216×12'ye indi.
+- [ ] Kullanıcıda: sekmelere giderken adanın açılmaması, çubuğa gidince açılması.
+
+## Oyunda açılan CMD ve süresiz klavye kilidi (2026-10-31)
+
+Kullanıcı: "2 dakikalık süre sınırını kaldır … istediğimiz zaman açabilelim. CMD durumunu çöz, oyundayken oyunun tam ortasında
+cmd açılıp gidiyor. Sanırım antigravity limitlerini kontrol ediyor."
+
+- [x] Sebep, agy'nin kendi günlüğünden (`%USERPROFILE%\.gemini\antigravity-cli\log`, her çalışmaya bir dosya): 30.10 19:46'dan
+      31.10 12:40'a ISLe8'in agy sorgularında, son denetimden 15 dakika geçmişse her seferinde `Spawned background update
+      process` (tasarruf modunda 16 dakikada bir); hiçbirinde "Auto-update disabled". 12:40'ta başlayan indirme
+      `agy\bin\.new`'u 27,8 MB'ta bıraktı (Job öldürdü).
+- [x] Değişkenin değeri: aynı agy 1.4.11, 15 dakikalık pencere içinde iki çalışma. `1` → `Last check was less than 15 minutes
+      ago, skipping update (fast path)`, `true` → `Auto-update disabled via environment variable AGY_CLI_DISABLE_AUTO_UPDATE`.
+      Değişken denetimi önce geliyor, yani `1` hiçbir zaman tanınmadı. 0.2.6'daki "düzeldi" denemesi 15 dakikalık pencereye
+      denk gelmişti.
+- [x] Pencereyi Windows Terminal açıyor: 40 dk'lık izleyici (WinEvent kancası, süreç zinciri) yeni konsolların COM ile açılan
+      `WindowsTerminal.exe < svchost` penceresine gittiğini ve öne geçtiğini gösterdi. Bunu yapan, paketin içinde `cmd.exe`
+      başlatan kendi deneme yardımcımdı (13:26–13:28, altı kez); yardımcı artık pencere açmayan bir başlatıcıdan geçiyor.
+- [x] agy konsolsuz ve süreç başlatma yasağıyla (deneme aracı): `/quota` yanıt verdi (çıkış 0, JSON). 15 dakika geçmişken ve
+      değişken yokken güncelleyici `Failed to spawn background update … İşlem oluşturma engellendi` ile kaldı, `.new` değişmedi.
+      Konsolla birlikte yasak agy'yi açtırmadı (0xC0000142, konsol sunucusu da alt süreç).
+- [x] Kurulu (JIT), Antigravity geçici olarak açık: ISLe8'in agy'si `Auto-update disabled via environment variable` yazdı,
+      altında `conhost` yok; `usage\state.json` Gemini: Ok, Live, 3 pencere. O çalışmadan kullanıcının masaüstünde pencere
+      çıkmadı. Ayarlar geri yüklendi: Antigravity kullanıcıda kapalıydı (`usageDisabledVendors: gemini`, 13:08).
+- [ ] Antigravity açıkken bir oyun boyunca hiç pencere çıkmaması (kullanıcıda).
+- [x] Klavye: 370 birim testi (geri sayım testleri çıktı). Ayarlar › Sistem'den kilitlendi, 126 sn sonra F24 hâlâ tutuluyordu,
+      kart duruyordu, geri sayım satırı yoktu, "Fare yoksa Ctrl+Alt+Del › Kilitle de açar." vardı (UI Automation). "Kilidi aç"
+      açtı; günlük: "keyboard lock: off after 0:02:07, 3 keys kept" (üçü de F24). Kullanıcı 12 dakikadır boştaydı; deneme
+      gerçek bir girişte hemen açacaktı.
+- [ ] Gözle: başlıktaki asma kilit ve kartın yeni satırı. Kullanıcıda "ekran yakalamada gizle" açık, ada görüntüye girmiyor.
+
+## Klavye temizliği (2026-10-31)
+
+Kullanıcı: "Klavye temizliği yapabilmemiz için tüm klavyeyi ve tuşları deaktif eden bir özellik. LAN yanına veya mouse
+işaretinin yanına koy. Takvim üzerine." Mac'teki karşılığı PORTING.md §3.21.
+
+- [x] 371 birim testi (yeni: geri sayımın 2:00'dan başlaması ve yuvarlanması, iki dakikada bitmesi); derleme uyarısız; Mac'ten
+      gelen metinler Mac kataloğuyla aynı.
+- [x] Kurulu (JIT): Ayarlar › Sistem › "Klavyeyi kilitle" (UI Automation) kilitledi; `SendInput` ile gönderilen F24 kilitliyken
+      Windows'a ulaşmadı (iki kez), önce ve sonra ulaştı.
+- [x] Kilitliyken ada açık kaldı: başlıkta LAN'ın yanında vurgu renginde "1:59", sekmenin yerinde "Klavye kilitli" kartı,
+      "Kilit 1:59 sonra kendiliğinden açılır" ve "Kilidi aç". Beyaz vurgulu temada düğmenin yazısı siyah.
+- [x] "Kilidi aç" kilidi kaldırdı, ada kapandı. İlk denemede başlıktaki düğmenin ipucu ada kapandıktan sonra ekranda kalıyordu
+      (kart gidince odak o düğmeye geçiyordu); iki düğme de artık odak almıyor, ipucu kalmadı.
+- [x] Kilitsizken klavye düğmesi başlıkta LAN'ın yanında, takvimin üstünde (`isle8 open home`).
+- [x] Gerçek tuşlar: bir deneme sırasında kullanıcı klavyeyi kullanıyordu; kilit 1:33 açık kaldı, 112 tuş yutuldu (günlük:
+      "keyboard lock: off after 1:33, 114 keys kept", ikisi F24). Kullanıcı kilidi adadan açtı, iki kez daha kilitleyip açtı.
+- [x] ~~İki dakika dolunca kendiliğinden açılması~~: kullanıcı süreyi kaldırttı (üstteki bölüm).
+- [ ] Ctrl+Alt+Del › Kilitle ile kilidin kalkması; yönetici olarak çalışan bir pencere öndeyken.
+- [ ] Yayın (AOT) derlemesinde.
+
 ## Kullanıcının ikinci listesi (0.2.9, 2026-10-31)
 
 Ekran görüntüleri: Ajanlar'da ChatGPT ve Claude Code "Bulunamadı"; Genel'de Performans göstergesi. İstenenler: hatalar,
@@ -49,12 +116,15 @@ yönlendirilmiş, gerçek ayarlardan yalıtılmış olarak denendi.
 - [x] Yeniden üretildi: zip güncellemesi "Cannot rename the item … because it is in use" ile bozuluyor, eski sürüm geri
       açılıyordu (ISLe8 kendi klasöründe çalışır başlatılınca; Gezgin böyle başlatır). Düzeltmeden sonra aynı deneme
       (0.2.6.99 → yayınlanan 0.2.7 zip'i, Ayarlar › Güncelle UI Automation ile): 4 sn'de kapandı, dosyalar değişti, 0.2.7 açıldı.
-- [ ] Yayınlanan 0.2.8 AOT derlemesinde Ayarlar'ın güncelleme varken açılması (0.2.9 çıkınca görülecek).
 - [x] Microsoft Defender, güncelleyicinin açtığı 0.2.7 `ISLe8.exe`'yi "Trojan:Win32/Bearfoos.A!ml" diye karantinaya aldı
       (21:47, 22:00, 22:02); sonra yayınlanan 0.2.7 exe'si kendi başına da işaretli oldu (22:04). 0.2.6 ve yerel derlemeler temiz.
 - [x] Zip güncellemesi PowerShell'siz (`UpdateFinisher`): yerel 0.2.6.99 çalışırken yerel 0.2.8.1 `--finish-update` ile
       klasörü 2 sn'de değiştirdi, eski klasörü sildi, 0.2.8.1'i açtı; 20 sn sonra hâlâ açık, Defender yeni bir şey yakalamadı.
-- [ ] Yayınlanan 0.2.8'in Defender'dan geçmesi ve 0.2.8'den sonraki sürüme güncelleme (indirilmiş dosyayla).
+- [x] Yayınlanan 0.2.8'in Defender'dan geçmesi ve 0.2.8'den sonraki sürüme güncelleme (indirilmiş dosyayla), 2026-10-31:
+      yayınlanan 0.2.8 x64 zip'i (AOT) Claude'un kapsayıcısında açıldı, Ayarlar › Genel › "Güncellemeleri denetle" ve
+      "0.2.9 sürümüne güncelle" UI Automation ile; 0.2.8 6 sn'de indirip kapandı, `UpdateFinisher` 1 sn'de klasörü değiştirdi,
+      eski klasörü sildi, 0.2.9 aynı klasörden açıldı ve açık kaldı. Defender yeni bir şey yakalamadı.
+- [x] Yayınlanan 0.2.8 AOT derlemesinde Ayarlar güncelleme varken açıldı (yukarıdaki denemede, 0.2.9 çıkmışken).
 - [x] 0.2.7 kodunun bağımsız incelemesi, bulunanlar düzeltildi: oyun algılayıcının geri çağrısı; performans örnekleyicisinin
       her açılıp kapanmada yeniden kurulması, ilk ölçümün %0 çıkması, ETW oturum yarışı ve günlük şişmesi; FPS'in olayın
       geldiği ana göre sayılması (artık 100 ms'de bir boşaltılıyor); Alt+Tab'den sonra yanlış "oyun"; "Etkin ekran"da oyun

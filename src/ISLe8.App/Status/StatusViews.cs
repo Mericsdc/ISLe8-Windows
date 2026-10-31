@@ -3,6 +3,7 @@ using ISLe8.Core.Devices;
 using ISLe8.Core.Geometry;
 using ISLe8.Core.Motion;
 using ISLe8.Core.Status;
+using ISLe8.Core.Theming;
 using ISLe8.Devices;
 using ISLe8.Localization;
 using ISLe8.UI;
@@ -417,4 +418,126 @@ internal sealed class StatusChips
             Child = new StackPanel { Orientation = Orientation.Horizontal, Spacing = spacing, VerticalAlignment = VerticalAlignment.Center, Children = { icon, text } },
         };
     }
+}
+
+/// <summary>
+/// The header's keyboard button, beside the devices (Windows only; user's request: "LAN yanına veya mouse
+/// işaretinin yanına"): a keyboard in a capsule, like pin and settings, that locks the keyboard for cleaning
+/// (<see cref="KeyboardLock"/>). Locked, it takes the accent and a padlock; pressing it again unlocks.
+/// </summary>
+internal sealed class KeyboardChip
+{
+    private readonly FontIcon _icon = new() { Glyph = Glyphs.Keyboard, FontSize = 12, VerticalAlignment = VerticalAlignment.Center };
+    private readonly FontIcon _padlock = new() { Glyph = Glyphs.Lock, FontSize = 10, VerticalAlignment = VerticalAlignment.Center };
+    private readonly Color _accent;
+    private bool? _locked;
+
+    public KeyboardChip(IslandTheme theme)
+    {
+        _accent = theme.Accent.ToColor();
+        Root = new Button
+        {
+            Height = 24,
+            MinWidth = 26,
+            Padding = new Thickness(7, 0, 7, 0),
+            CornerRadius = new CornerRadius(12),
+            BorderThickness = new Thickness(0),
+            Content = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4, VerticalAlignment = VerticalAlignment.Center, Children = { _icon, _padlock } },
+            // Its tooltip would show for the focus and outlive the island closing.
+            IsTabStop = false,
+        };
+        Root.Resources["ButtonBackgroundPointerOver"] = Ui.White(0x24);
+        Root.Resources["ButtonBackgroundPressed"] = Ui.White(0x18);
+        Root.Resources["ButtonBorderBrushPointerOver"] = Ui.Clear();
+        Root.Resources["ButtonBorderBrushPressed"] = Ui.Clear();
+        Root.Click += (_, _) => Clicked?.Invoke();
+        Show(false);
+    }
+
+    public Button Root { get; }
+
+    public event Action? Clicked;
+
+    public void Show(bool locked)
+    {
+        if (locked == _locked) return;
+        _locked = locked;
+        _padlock.Visibility = locked ? Visibility.Visible : Visibility.Collapsed;
+        _icon.Foreground = locked ? new SolidColorBrush(_accent) : Ui.White(0xCC);
+        _padlock.Foreground = new SolidColorBrush(_accent);
+        Root.Background = locked ? new SolidColorBrush(Color.FromArgb(0x33, _accent.R, _accent.G, _accent.B)) : Ui.White(0x12);
+        ToolTipService.SetToolTip(Root, L.Get(locked ? "Keyboard_Unlock" : "Keyboard_Lock"));
+    }
+}
+
+/// <summary>
+/// Over the open island's tab while the keyboard is locked (KeyboardLockWindow.swift): what is going on, the way
+/// out without a mouse, and the button that ends it. The Mac puts this card in the middle of the screen and counts
+/// down its two minutes; here there is no limit (user's request), and the island stays open on the card, under the
+/// header's keyboard button, in one row so it fits the smallest Home.
+/// </summary>
+internal sealed class KeyboardCard
+{
+    public KeyboardCard(IslandTheme theme)
+    {
+        var accent = theme.Accent.ToColor();
+        var badge = new Border
+        {
+            Width = 34,
+            Height = 34,
+            CornerRadius = new CornerRadius(17),
+            Background = new SolidColorBrush(Color.FromArgb(0x33, accent.R, accent.G, accent.B)),
+            VerticalAlignment = VerticalAlignment.Center,
+            Child = new FontIcon { Glyph = Glyphs.Keyboard, FontSize = 16, Foreground = new SolidColorBrush(accent) },
+        };
+        var title = Ui.Text(13, semibold: true);
+        title.Text = L.Get("Keyboard_Locked");
+        var note = Ui.Text(11, alpha: 0xA6);
+        note.Text = L.Get("Keyboard_LockedNote");
+        var way = Ui.Text(11, alpha: 0x73);
+        way.Text = L.Get("Keyboard_LockedWayOut");
+        var label = Ui.Text(13, semibold: true);
+        label.Text = L.Get("Keyboard_Unlock");
+        // White or near-white accents (some themes) need dark letters.
+        var light = accent.R * 0.2126 + accent.G * 0.7152 + accent.B * 0.0722 > 160;
+        label.Foreground = new SolidColorBrush(light ? Color.FromArgb(0xFF, 0, 0, 0) : Color.FromArgb(0xFF, 0xFF, 0xFF, 0xFF));
+        var unlock = new Button
+        {
+            Content = label,
+            Height = 32,
+            Padding = new Thickness(18, 0, 18, 0),
+            CornerRadius = new CornerRadius(16),
+            BorderThickness = new Thickness(0),
+            Background = new SolidColorBrush(accent),
+            VerticalAlignment = VerticalAlignment.Center,
+            // Never holds the focus: going away with it would hand it to the header's button, whose tooltip then stayed on screen.
+            IsTabStop = false,
+        };
+        unlock.Resources["ButtonBackgroundPointerOver"] = new SolidColorBrush(Color.FromArgb(0xD9, accent.R, accent.G, accent.B));
+        unlock.Resources["ButtonBackgroundPressed"] = new SolidColorBrush(Color.FromArgb(0xB3, accent.R, accent.G, accent.B));
+        unlock.Resources["ButtonBorderBrushPointerOver"] = Ui.Clear();
+        unlock.Resources["ButtonBorderBrushPressed"] = Ui.Clear();
+        unlock.Click += (_, _) => Unlock?.Invoke();
+        var text = new StackPanel { Spacing = 1, VerticalAlignment = VerticalAlignment.Center, Children = { title, note, way } };
+        Root = new Grid
+        {
+            Height = 64,
+            Padding = new Thickness(12, 0, 12, 0),
+            ColumnSpacing = 12,
+            CornerRadius = new CornerRadius(14),
+            Background = theme.Surface.ToBrush(),
+            VerticalAlignment = VerticalAlignment.Center,
+            Visibility = Visibility.Collapsed,
+            ColumnDefinitions = { new ColumnDefinition { Width = GridLength.Auto }, new ColumnDefinition(), new ColumnDefinition { Width = GridLength.Auto } },
+            Children = { badge, text, unlock },
+        };
+        Grid.SetColumn(text, 1);
+        Grid.SetColumn(unlock, 2);
+    }
+
+    public Grid Root { get; }
+
+    public event Action? Unlock;
+
+    public void Show(bool locked) => Root.Visibility = locked ? Visibility.Visible : Visibility.Collapsed;
 }

@@ -1582,6 +1582,42 @@
     <value>Wired connection (LAN)</value>
     <comment>mac: Kablolu bağlantı (LAN)</comment>
   </data>
+  <data name="Settings_KeyboardCleaning" xml:space="preserve">
+    <value>Keyboard cleaning</value>
+    <comment>mac: Klavye temizliği</comment>
+  </data>
+  <data name="Settings_LockKeyboard" xml:space="preserve">
+    <value>Lock keyboard</value>
+    <comment>mac: Klavyeyi kilitle</comment>
+  </data>
+  <data name="Settings_LockKeyboardNote" xml:space="preserve">
+    <value>Locks the keyboard until you unlock it, so wiping it types nothing. The mouse and touchpad keep working, and the island's button unlocks it any time; with no mouse, Ctrl+Alt+Del › Lock does too. A window running as administrator may still get keys while it is in front.</value>
+  </data>
+  <data name="Settings_KeyboardButton" xml:space="preserve">
+    <value>Keyboard button in the header</value>
+  </data>
+  <data name="Settings_KeyboardButtonNote" xml:space="preserve">
+    <value>On the open island's top row, beside the devices; press it to lock the keyboard.</value>
+  </data>
+  <data name="Keyboard_Lock" xml:space="preserve">
+    <value>Clean the keyboard</value>
+    <comment>mac: Klavyeyi temizle</comment>
+  </data>
+  <data name="Keyboard_Locked" xml:space="preserve">
+    <value>Keyboard locked</value>
+    <comment>mac: Klavye kilitli</comment>
+  </data>
+  <data name="Keyboard_LockedNote" xml:space="preserve">
+    <value>Pressing keys types nothing, so wipe away.</value>
+    <comment>mac: Tuşlara basmak bir şey yazmaz; gönül rahatlığıyla silebilirsin.</comment>
+  </data>
+  <data name="Keyboard_LockedWayOut" xml:space="preserve">
+    <value>No mouse? Ctrl+Alt+Del › Lock unlocks it too.</value>
+  </data>
+  <data name="Keyboard_Unlock" xml:space="preserve">
+    <value>Unlock</value>
+    <comment>mac: Kilidi aç</comment>
+  </data>
   <data name="Settings_Island" xml:space="preserve">
     <value>Island</value>
   </data>
@@ -1716,7 +1752,7 @@
     <value>Thin bar when idle</value>
   </data>
   <data name="Settings_IdleBarNote" xml:space="preserve">
-    <value>With nothing going on the island shrinks to a thin bar, and opens when the pointer comes. The space around the bar takes the pointer too.</value>
+    <value>With nothing going on the island shrinks to a thin bar, and opens when the pointer reaches it. Only the bar takes the pointer, so tabs and buttons around it stay clickable.</value>
   </data>
   <data name="Settings_Performance" xml:space="preserve">
     <value>Performance on the pill</value>

@@ -43,7 +43,7 @@ namespace ISLe8.Island;
 ///    ├─ AlertLayer    a banner under an empty top row, or the HUD and status ears in it (IslandView.swift, AlertView)
 ///    └─ ExpandedLayer the open island (IslandView.swift, ExpandedView)
 ///       ├─ Header     chips · pin, settings
-///       ├─ content    one view per tab; the shown one only
+///       ├─ content    one view per tab, the shown one only; the keyboard lock's card in their place while locked
 ///       └─ Dock       the tabs
 /// </code>
 /// </summary>
@@ -52,6 +52,8 @@ internal sealed class IslandView
     private readonly Image _pillArtwork;
     private readonly RowDefinition _contentRow = new();
     private readonly Dictionary<IslandTab, FrameworkElement> _tabs = [];
+    /// <summary>The tabs, put away as one while the keyboard lock's card stands in for them.</summary>
+    private readonly Grid _tabsHost = new();
     private readonly FrameworkElement[] _mediaEar;
     private readonly AppSettings _settings;
 
@@ -133,8 +135,11 @@ internal sealed class IslandView
         foreach (var view in _tabs.Values)
         {
             view.Visibility = Visibility.Collapsed;
-            content.Children.Add(view);
+            _tabsHost.Children.Add(view);
         }
+        content.Children.Add(_tabsHost);
+        KeyboardCard = new KeyboardCard(theme);
+        content.Children.Add(KeyboardCard.Root);
 
         Header = new HeaderBar();
         // Battery, LAN, the watts, the devices: the devices chip goes first when they don't fit, then the watts.
@@ -146,6 +151,9 @@ internal sealed class IslandView
         Header.AddChip(DevicesChip.Root, drop: 1);
         DevicesChip.Refreshed += () => Header.Want(DevicesChip.Root, DevicesChip.Wanted);
         Header.Want(DevicesChip.Root, DevicesChip.Wanted);
+        // Beside the devices, and never dropped: it is a button, and the only way back while the keyboard is locked.
+        KeyboardChip = new KeyboardChip(theme);
+        Header.AddChip(KeyboardChip.Root, drop: 0);
         Dock = new TabDock(theme);
         Dock.Root.Margin = new Thickness(0, IslandSizes.DockTop, 0, IslandSizes.DockBottom);
         Dock.Root.VerticalAlignment = VerticalAlignment.Top;
@@ -256,6 +264,8 @@ internal sealed class IslandView
     public AgentEarView AgentEar { get; }
     public DevicesTabView Devices { get; }
     public DevicesChip DevicesChip { get; }
+    public KeyboardChip KeyboardChip { get; }
+    public KeyboardCard KeyboardCard { get; }
     public TimerEar TimerEar { get; }
     public AudioBars Bars { get; }
     public PillTitle PillTitle { get; }
@@ -368,6 +378,18 @@ internal sealed class IslandView
         Header.Want(StatusChips.Lan, settings.ShowNetworkChip && status.Network.Link == NetworkLink.Wired);
         if (status.Watts.Watts is { } watts) StatusChips.ShowWatts(watts);
         Header.Want(StatusChips.Watts, settings.ShowBatteryChip && status.Watts.Watts is not null);
+    }
+
+    /// <summary>
+    /// The keyboard lock. Locked, the header's button shows even with the setting off, and the card stands in for
+    /// the tab, which can't be typed in anyway.
+    /// </summary>
+    public void ShowKeyboardLock(AppSettings settings, bool locked)
+    {
+        KeyboardChip.Show(locked);
+        Header.Want(KeyboardChip.Root, settings.ShowKeyboardCleaning || locked);
+        KeyboardCard.Show(locked);
+        _tabsHost.Visibility = locked ? Visibility.Collapsed : Visibility.Visible;
     }
 
     /// <summary>Where the drop target's zones sit while files are dragged onto the island.</summary>

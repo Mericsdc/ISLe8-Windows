@@ -7,10 +7,10 @@ namespace ISLe8.Usage;
 
 /// <summary>
 /// One vendor CLI asked one question (UsageCli). It starts suspended, so it is in its Job Object before it can
-/// start anything, and on a desktop of ISLe8's own that nobody sees: a CLI that opens a console window of its own
-/// opens it there. agy did, updating itself, and a terminal window came and went every few minutes; the setting
-/// that stops that (UsageService) is agy's own, and not every version has it. Its standard streams are pipes, the
-/// only handles it inherits.
+/// start anything, and on a desktop of ISLe8's own that nobody sees, where a window it opens stays. Windows Terminal
+/// may not: it opens a new console itself, through COM, on the user's desktop. agy's updater asked for one every
+/// quarter of an hour, a terminal window coming and going in the middle of a game; agy now runs with its updates off
+/// (UsageService) and alone (<c>Start</c>'s <c>alone</c>). Its standard streams are pipes, the only handles it inherits.
 /// </summary>
 internal sealed unsafe partial class UsageChild : IDisposable
 {
@@ -33,8 +33,11 @@ internal sealed unsafe partial class UsageChild : IDisposable
 
     public int ExitCode => GetExitCodeProcess(_process, out var code) ? (int)code : -1;
 
-    /// <summary>Null when Windows wouldn't start it.</summary>
-    public static UsageChild? Start(string binary, IEnumerable<string> arguments, IReadOnlyDictionary<string, string> environment, string folder)
+    /// <summary>
+    /// Null when Windows wouldn't start it. <paramref name="alone"/>: Windows refuses it every process it starts, an
+    /// updater's included; a console host is one too, so it runs with no console at all.
+    /// </summary>
+    public static UsageChild? Start(string binary, IEnumerable<string> arguments, IReadOnlyDictionary<string, string> environment, string folder, bool alone = false)
     {
         var pipes = new nint[6];
         var started = false;
@@ -52,9 +55,11 @@ internal sealed unsafe partial class UsageChild : IDisposable
             var mine = new[] { pipes[0], pipes[3], pipes[5] };
 
             nuint size = 0;
-            InitializeProcThreadAttributeList(null, 1, 0, &size);
+            var attributes = alone ? 2u : 1u;
+            InitializeProcThreadAttributeList(null, attributes, 0, &size);
             var list = stackalloc byte[(int)size];
-            if (!InitializeProcThreadAttributeList(list, 1, 0, &size)) return null;
+            if (!InitializeProcThreadAttributeList(list, attributes, 0, &size)) return null;
+            var policy = 1u /* PROCESS_CREATION_CHILD_PROCESS_RESTRICTED */;
             try
             {
                 fixed (nint* handles = mine)
@@ -64,6 +69,7 @@ internal sealed unsafe partial class UsageChild : IDisposable
                 {
                     // Only the three pipe ends are inherited, whatever else ISLe8 has open.
                     if (!UpdateProcThreadAttribute(list, 0, 0x20002 /* PROC_THREAD_ATTRIBUTE_HANDLE_LIST */, handles, (nuint)(mine.Length * sizeof(nint)), null, null)) return null;
+                    if (alone && !UpdateProcThreadAttribute(list, 0, 0x2000E /* PROC_THREAD_ATTRIBUTE_CHILD_PROCESS_POLICY */, &policy, sizeof(uint), null, null)) return null;
                     var startup = new StartupInfoEx
                     {
                         Info = new StartupInfo
@@ -77,8 +83,8 @@ internal sealed unsafe partial class UsageChild : IDisposable
                         },
                         AttributeList = list,
                     };
-                    const uint flags = 0x4 /* CREATE_SUSPENDED */ | 0x08000000 /* CREATE_NO_WINDOW */ | 0x400 /* CREATE_UNICODE_ENVIRONMENT */
-                        | 0x80000 /* EXTENDED_STARTUPINFO_PRESENT */ | 0x4000 /* BELOW_NORMAL_PRIORITY_CLASS */;
+                    var flags = 0x4 /* CREATE_SUSPENDED */ | (alone ? 0x8u /* DETACHED_PROCESS */ : 0x08000000u /* CREATE_NO_WINDOW */)
+                        | 0x400 /* CREATE_UNICODE_ENVIRONMENT */ | 0x80000 /* EXTENDED_STARTUPINFO_PRESENT */ | 0x4000 /* BELOW_NORMAL_PRIORITY_CLASS */;
                     if (!CreateProcessW(null, commandLine, null, null, true, flags, block, folder, &startup, out var info)) return null;
                     var job = Job();
                     if (job == 0 || !AssignProcessToJobObject(job, info.Process)) Log.Info($"usage: no job for {Path.GetFileName(binary)} ({Marshal.GetLastPInvokeError()})");
